@@ -297,8 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </svg>`,
             media: Array.from({ length: 15 }, (_, i) => ({
                 type: 'image',
-                url: `assets/images/tika-mate/tika-${i + 1}.png`,
-                label: `TIKA-${i + 1}.PNG`
+                url: `assets/images/tika-mate/tika-${i + 1}.jpg`,
+                label: `TIKA-${i + 1}.JPG`
             }))
         },
         nature_photo: {
