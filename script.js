@@ -295,13 +295,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <line x1="185" y1="115" x2="215" y2="85" stroke="#E30613" stroke-width="1"/>
                 <text x="35" y="42" font-family="monospace" font-size="10" fill="#000">TIKA_MATE // BRAND_CAN</text>
             </svg>`,
-media: Array.from({ length: 15 }, (_, i) => ({
-                 type: 'image',
--                url: `assets/images/tika-mate/tika-${i + 1}.png`,
--                label: `TIKA-${i + 1}.PNG`
-+                url: `assets/images/tika-mate/tika-${i + 1}.jpg`,
-+                label: `TIKA-${i + 1}.JPG`
-             }))
+media: [
+                { type: 'image', url: 'assets/images/tika-mate/tika-1.jpg', label: 'TIKA-1.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-2.jpg', label: 'TIKA-2.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-3.jpg', label: 'TIKA-3.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-4.jpg', label: 'TIKA-4.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-5.jpg', label: 'TIKA-5.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-6.jpg', label: 'TIKA-6.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-7.jpg', label: 'TIKA-7.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-8.jpg', label: 'TIKA-8.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-9.jpg', label: 'TIKA-9.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-10.jpg', label: 'TIKA-10.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-11.jpg', label: 'TIKA-11.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-12.jpg', label: 'TIKA-12.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-13.jpg', label: 'TIKA-13.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-14.jpg', label: 'TIKA-14.JPG' },
+                { type: 'image', url: 'assets/images/tika-mate/tika-15.jpg', label: 'TIKA-15.JPG' }
+            ]
         },
         nature_photo: {
             id: 'JB-PRJ-11',
