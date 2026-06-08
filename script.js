@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-3.webp', label: 'DORFFEST-3.WEBP' },
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-4.webp', label: 'DORFFEST-4.WEBP' },
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-5.jpg', label: 'DORFFEST-5.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-6.jpg', label: 'DORFFEST-6.JPG' },
+                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-6.webp', label: 'DORFFEST-6.WEBP' },
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-7.jpg', label: 'DORFFEST-7.JPG' },
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-8.jpg', label: 'DORFFEST-8.JPG' },
                 { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-9.jpg', label: 'DORFFEST-9.JPG' },
