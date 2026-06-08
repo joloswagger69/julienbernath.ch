@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julien Bernath // Red Signal OS Portfolio</title>
+    <meta name="description" content="Swiss graphic designer, video editor, and content creator. Experience a futuristic red signal operating system themed portfolio.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="mode-light">
+
+    <!-- Outer System Borders & Coordinates -->
+    <div class="system-frame hide-mobile">
+        <div class="frame-edge frame-top">
+            <span class="frame-center-line"></span>
+        </div>
+        <div class="frame-edge frame-left">
+            <div class="frame-vertical-label">COPPER_SIGNAL_UPLINK</div>
+        </div>
+    </div>
+
+    <!-- Interactive Grid Canvas Background -->
+    <canvas id="grid-canvas"></canvas>
+
+    <!-- Scanning Line Overlay -->
+    <div class="scanline"></div>
+
+    <!-- Custom Cursor (X-icon + coordinates) -->
+    <div id="custom-cursor">
+        <span class="cursor-cross"></span>
+        <span id="cursor-coords" class="monospace hide-mobile">X: 000 Y: 000</span>
+    </div>
+    <div id="click-ripple-container"></div>
+
+    <!-- Top Dashboard Header -->
+    <header id="main-header">
+        <button class="header-logo" id="logo-home-btn" aria-label="Zurück nach oben" title="Zurück nach oben">
+            <span class="pulse-dot"></span>
+            <span class="logo-text">julienbernath.ch</span>
+        </button>
+        
+        <div class="header-info monospace hide-mobile">
+            <span class="info-item"><span class="label">SYS_TIME:</span> <span id="sys-time">18:12:00</span></span>
+        </div>
+
+        <nav id="main-nav">
+            <a href="#about" class="nav-link"><span class="nav-num">01.</span> Info</a>
+            <a href="#projekte" class="nav-link"><span class="nav-num">02.</span> Projekte</a>
+            <a href="#skills" class="nav-link"><span class="nav-num">03.</span> Skills</a>
+            <a href="#werdegang" class="nav-link"><span class="nav-num">04.</span> Werdegang</a>
+            <a href="#kontakt" class="nav-link"><span class="nav-num">05.</span> Kontakt</a>
+        </nav>
+
+        <div class="header-actions">
+            <!-- Search Bar -->
+            <div class="search-bar-container" role="search">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/>
+                    <line x1="16.5" y1="16.5" x2="22" y2="22"/>
+                </svg>
+                <input type="search" id="site-search" class="monospace" placeholder="Suche... (z.B. /projekte)" aria-label="Seitensuche" autocomplete="off">
+            </div>
+            <!-- LinkedIn Link -->
+            <a href="https://linkedin.com/in/julienbernath" target="_blank" rel="noopener noreferrer" id="linkedin-header-btn" class="linkedin-header-btn" title="LinkedIn Profil" aria-label="LinkedIn Profil">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                <span class="monospace linkedin-label hide-mobile">LI</span>
+            </a>
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" class="dark-mode-btn" title="Dark Mode umschalten" aria-label="Dark Mode umschalten">
+                <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <span class="monospace toggle-label">DARK</span>
+            </button>
+            <!-- Hamburger Menu for Mobile -->
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menü öffnen" aria-expanded="false">
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Right Side Scroll Progress Indicator -->
+    <div id="scroll-telemetry" class="monospace hide-mobile">
+        <div class="telemetry-bar-outer">
+            <div id="telemetry-bar-inner"></div>
+        </div>
+        <div id="telemetry-text">SCROLL: 000%</div>
+    </div>
+
+    <!-- Scrollable Content Wrapper (confines scrollbar to grid column) -->
+    <div id="content-scroll">
+
+    <!-- Main Container -->
+    <main class="grid-container">
+
+        <!-- 1. Hero / Landing Section -->
+        <section id="hero" class="grid-section full-width">
+            <div class="section-decor top-decor">
+                <span class="coord-label monospace">SYS_INIT_SEC_01 // COORD: 0.0.0</span>
+                <span class="bracket-label monospace">[ ACTIVE_SYS ]</span>
+            </div>
+
+            <div class="hero-content">
+                <div class="hero-header-container">
+                    <h1 class="hero-title select-none">
+                        <span class="title-row" id="typewriter-line1"></span>
+                        <span class="title-row text-signal" id="typewriter-line2"></span>
+                    </h1>
+
+                    <div class="hero-telemetry-box monospace">
+                        <div class="telemetry-header">
+                            <span class="telemetry-title">SIGNAL DIAGNOSTICS</span>
+                            <span class="telemetry-status">RUNNING</span>
+                        </div>
+                        <div class="telemetry-body">
+                            <p class="diag-line">> CONNECTION STATUS: OK</p>
+                            <p class="diag-line">> VISUAL FEED: ONLINE</p>
+                            <p class="diag-line">> CORE OBJECTIVE: REDEFINE DIGITAL EXPRESSION</p>
+                            <p class="diag-line">> CURRENT RESOLUTION: <span id="screen-res">1920x1080</span></p>
+                        </div>
+                        <div class="telemetry-footer">
+                            <span>SYS_READY_V2.6.0</span>
+                            <a href="#projekte" class="cta-link-arrow">PROJEKTE EINSTEIGEN [→]</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-role-marquee">
+                    <div class="marquee-track monospace">
+                        <span>MEDIAMATIKER // DESIGNER // VIDEO EDITOR // CONTENT CREATOR // SWISS PRECISION // </span>
+                        <span>MEDIAMATIKER // DESIGNER // VIDEO EDITOR // CONTENT CREATOR // SWISS PRECISION // </span>
+                        <span>MEDIAMATIKER // DESIGNER // VIDEO EDITOR // CONTENT CREATOR // SWISS PRECISION // </span>
+                        <span>MEDIAMATIKER // DESIGNER // VIDEO EDITOR // CONTENT CREATOR // SWISS PRECISION // </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="crosshairs">
+                <div class="ch ch-top-left"></div>
+                <div class="ch ch-top-right"></div>
+                <div class="ch ch-bottom-left"></div>
+                <div class="ch ch-bottom-right"></div>
+            </div>
+        </section>
+
+        <!-- 2. About Section -->
+        <section id="about" class="grid-section split-layout">
+            <div class="section-decor">
+                <span class="coord-label monospace">INFO_SEC_02 // SYSTEM_SPECS</span>
+                <span class="bracket-label monospace">[ PROFILE ]</span>
+            </div>
+
+            <div class="split-col-left">
+                <h2 class="section-title">KREATIVE PRÄZISION AUS DER SCHWEIZ.</h2>
+                <div class="about-text">
+                    <p class="lead">Ich bin Julien Bernath — ein Mediamatiker, Designer und Video Editor, der an der Schnittstelle von präziser Schweizer Gestaltung und experimentellen digitalen Oberflächen arbeitet.</p>
+                    <p>Meine Arbeit ist laut, präzise und kompromisslos. Ich breche Standard-Designmuster auf, um Erlebnisse zu schaffen, die im Kopf bleiben. Als Mediamatiker vereine ich technisches Know-how mit gestalterischer Freiheit – von der Markenidentität über High-End Videoschnitt bis hin zur interaktiven Web-Entwicklung.</p>
+                    <div class="button-row">
+                        <a href="#kontakt" class="btn btn-signal monospace">KONTAKTIERE MICH</a>
+                        <a href="#projekte" class="btn btn-outline monospace">ARBEITEN ANSEHEN</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="split-col-right">
+                <div class="specs-window monospace specs-window-interactive">
+                    <div class="specs-title-bar">
+                        <span class="dot dot-webcam"></span>
+                        <span class="specs-title">JULIEN_BERNATH.SPEC</span>
+                        <span class="window-control">x</span>
+                    </div>
+                    <div class="specs-body">
+                        <div class="spec-row">
+                            <span class="spec-label">NAME:</span>
+                            <span class="spec-val">Julien Bernath</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">ALTER:</span>
+                            <span class="spec-val">21 Jahre</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">WOHNORT:</span>
+                            <span class="spec-val">Baden, Aargau</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">AUSBILDUNG:</span>
+                            <span class="spec-val">Mediamatiker EFZ</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">EXPERTISE:</span>
+                            <span class="spec-val">Video Editing, Social Media, Fotografie</span>
+                        </div>
+                    </div>
+                    <div class="specs-footer">
+                        <span>SECURE_DATA_CONNECTION</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Selected Projects Section -->
+        <section id="projekte" class="grid-section full-width">
+            <div class="section-decor">
+                <span class="coord-label monospace">PROJECT_DATA_SEC_03 // ARTIFACTS</span>
+                <span class="bracket-label monospace">[ PORTFOLIO ]</span>
+            </div>
+
+            <div class="section-header-row">
+                <h2 class="section-title">AUSGEWÄHLTE PROJEKTE</h2>
+                
+                <!-- Project Filters -->
+                <div class="project-filters monospace" role="group" aria-label="Projektfilter">
+                    <button class="filter-btn active" data-filter="all">[ ALL_PROJECTS ]</button>
+                    <button class="filter-btn" data-filter="branding">[ BRANDING ]</button>
+                    <button class="filter-btn" data-filter="video">[ VIDEO ]</button>
+                    <button class="filter-btn" data-filter="web">[ WEB ]</button>
+                    <button class="filter-btn" data-filter="print">[ PRINT ]</button>
+                    <button class="filter-btn" data-filter="photo">[ PHOTO ]</button>
+                </div>
+            </div>
+
+            <!-- Projects Grid -->
+            <div class="projects-grid">
+                <!-- Project 1: Branding -->
+                <article class="project-card" data-category="branding" data-id="sirius" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-01</span>
+                        <span class="card-status monospace">STATUS: ENGAGED</span>
+                    </div>
+                    <div class="project-visual bg-pattern-1">
+                        <!-- Simulated technical graph using inline SVG -->
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <line x1="10" y1="100" x2="390" y2="100" stroke="#000" stroke-dasharray="4" />
+                            <circle cx="200" cy="100" r="60" fill="none" stroke="#E30613" stroke-width="2" />
+                            <circle cx="200" cy="100" r="10" fill="#E30613" />
+                            <path d="M 50 100 Q 125 20, 200 100 T 350 100" fill="none" stroke="#000" stroke-width="1.5" />
+                        </svg>
+                        <div class="project-tag monospace">BRANDING</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">PROJECT: SIRIUS</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Kompakte Markenidentität und Branding-System für eine Schweizer Kreativagentur in den Alpen.</p>
+                        <div class="project-meta monospace">
+                            <span>#IDENTITY</span> <span>#FIGMA</span> <span>#VECTOR-GRID</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Project 2: Video -->
+                <article class="project-card" data-category="video" data-id="swisshorizon" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-02</span>
+                        <span class="card-status monospace">STATUS: RENDERED</span>
+                    </div>
+                    <div class="project-visual bg-pattern-2">
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="50" y="30" width="300" height="140" fill="none" stroke="#000" stroke-width="1" />
+                            <polygon points="170,70 250,100 170,130" fill="#E30613" stroke="#E30613" stroke-width="2" />
+                            <line x1="200" y1="10" x2="200" y2="190" stroke="#000" stroke-dasharray="2 4" />
+                        </svg>
+                        <div class="project-tag monospace">VIDEO</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">SWISS HORIZON</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Konzeption, Dreh und Postproduktion für einen hochenergetischen Imagefilm über Outdoorsport im Wallis.</p>
+                        <div class="project-meta monospace">
+                            <span>#PREMIERE-PRO</span> <span>#COLOR-GRADING</span> <span>#SOUND-DESIGN</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Project 3: Web -->
+                <article class="project-card" data-category="web" data-id="aether" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-03</span>
+                        <span class="card-status monospace">STATUS: DEPLOYED</span>
+                    </div>
+                    <div class="project-visual bg-pattern-3">
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20,180 L80,120 L150,150 L250,60 L320,100 L380,30" fill="none" stroke="#000" stroke-width="2" />
+                            <circle cx="380" cy="30" r="6" fill="#E30613" />
+                            <circle cx="250" cy="60" r="4" fill="#000" />
+                            <line x1="250" y1="60" x2="250" y2="200" stroke="#E30613" stroke-dasharray="2" />
+                            <text x="260" y="80" font-family="monospace" font-size="10" fill="#000">X: 250 Y: 60</text>
+                        </svg>
+                        <div class="project-tag monospace">WEB</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">AETHER LABS</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Web-Plattform für experimentelle Audiovisualisierungen. Stark performant und interaktiv.</p>
+                        <div class="project-meta monospace">
+                            <span>#WEBGL</span> <span>#JAVASCRIPT</span> <span>#GRID-SYSTEM</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Project 4: Social Media / Campaign -->
+                <article class="project-card" data-category="branding" data-id="pulse2026" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-04</span>
+                        <span class="card-status monospace">STATUS: ACTIVE</span>
+                    </div>
+                    <div class="project-visual bg-pattern-4">
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 20 100 Q 65 20, 110 100 T 200 100 T 290 100 T 380 100" fill="none" stroke="#E30613" stroke-width="3" />
+                            <path d="M 20 100 Q 65 180, 110 100 T 200 100 T 290 100 T 380 100" fill="none" stroke="#000" stroke-width="1.5" />
+                        </svg>
+                        <div class="project-tag monospace">CAMPAIGN</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">PULSE 2026</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Social Media Kampagne für ein Schweizer Elektronik-Musikfestival. Dynamischer Content und Reels.</p>
+                        <div class="project-meta monospace">
+                            <span>#AFTER-EFFECTS</span> <span>#INSTAGRAM</span> <span>#3D-MOTION</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Project 5: Print -->
+                <article class="project-card" data-category="print" data-id="helvetica" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-05</span>
+                        <span class="card-status monospace">STATUS: ARCHIVED</span>
+                    </div>
+                    <div class="project-visual bg-pattern-5">
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="40" y="20" width="140" height="160" fill="none" stroke="#000" stroke-width="1.5" />
+                            <rect x="220" y="20" width="140" height="160" fill="none" stroke="#000" stroke-width="1.5" />
+                            <line x1="200" y1="20" x2="200" y2="180" stroke="#E30613" stroke-width="2" />
+                            <text x="50" y="50" font-family="sans-serif" font-weight="bold" font-size="28" fill="#000">H.</text>
+                            <text x="230" y="50" font-family="sans-serif" font-weight="bold" font-size="28" fill="#E30613">R.</text>
+                        </svg>
+                        <div class="project-tag monospace">PRINT</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">HELVETICA REDUX</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Brutalistisches Print-Magazin. Layout-Experimente auf Basis klassischer Schweizer Typografie-Prinzipien.</p>
+                        <div class="project-meta monospace">
+                            <span>#INDESIGN</span> <span>#LAYOUT-GRID</span> <span>#TYPOGRAPHY</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Project 6: Photo -->
+                <article class="project-card" data-category="photo" data-id="alpine" tabindex="0">
+                    <div class="card-border-details">
+                        <span class="card-id monospace">ID: JB-PRJ-06</span>
+                        <span class="card-status monospace">STATUS: ARCHIVED</span>
+                    </div>
+                    <div class="project-visual bg-pattern-6">
+                        <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="200" cy="100" r="70" fill="none" stroke="#000" stroke-width="1" />
+                            <polygon points="120,150 200,60 280,150" fill="none" stroke="#000" stroke-width="1.5" />
+                            <polygon points="170,150 220,100 270,150" fill="none" stroke="#E30613" stroke-width="1" />
+                            <circle cx="300" cy="60" r="8" fill="#E30613" />
+                        </svg>
+                        <div class="project-tag monospace">PHOTO</div>
+                    </div>
+                    <div class="project-info">
+                        <div class="project-header">
+                            <h3 class="project-title">ALPINE ECHOES</h3>
+                            <span class="arrow-icon">[↗]</span>
+                        </div>
+                        <p class="project-desc">Experimentelle Fotoserie der Schweizer Alpen, nachbearbeitet mit kontrastreichen Mustern.</p>
+                        <div class="project-meta monospace">
+                            <span>#PHOTOSHOP</span> <span>#RAW-DEVELOP</span> <span>#RETOUCH</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- 4. Skills / Tools Section -->
+        <section id="skills" class="grid-section full-width">
+            <div class="section-decor">
+                <span class="coord-label monospace">SKILLSET_DATA_SEC_04 // UTILITIES</span>
+                <span class="bracket-label monospace">[ CONSOLE ]</span>
+            </div>
+
+            <div class="section-header-row">
+                <h2 class="section-title">SKILLS & WERKZEUGE</h2>
+                <div class="telemetry-pill monospace hide-mobile">
+                    <span>SYS_COMPILER: ACT_v2.0</span>
+                </div>
+            </div>
+
+            <!-- Interactive Skills Grid Console -->
+            <div class="skills-console-grid">
+                <!-- Skill Widget 1 -->
+                <div class="console-widget" tabindex="0" data-skill="Photoshop">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_PHOTOSHOP.EXE</span>
+                        <span class="widget-stat">85%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 85%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: RETOUCH, EXPOSURE, GRAPHICS ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 2 -->
+                <div class="console-widget" tabindex="0" data-skill="Illustrator">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_ILLUSTRATOR.EXE</span>
+                        <span class="widget-stat">80%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 80%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: VECTOR, ASSETS, LOGO_CREATION, ICON_DESIGN ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 3 -->
+                <div class="console-widget" tabindex="0" data-skill="InDesign">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_INDESIGN.EXE</span>
+                        <span class="widget-stat">80%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 80%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: EDITORIAL, PRINT ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 4 -->
+                <div class="console-widget" tabindex="0" data-skill="After Effects">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_AFTER_EFFECTS.EXE</span>
+                        <span class="widget-stat">75%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 75%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: VFX, MOTION_DESIGN ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 5 -->
+                <div class="console-widget" tabindex="0" data-skill="Premiere Pro">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_PREMIERE_PRO.EXE</span>
+                        <span class="widget-stat">100%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 100%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: EXPERT ]</div>
+                        <div>[ MAIN_USE: CUTTING, GRADING, EDITING, STORYTELLING ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 6 -->
+                <div class="console-widget" tabindex="0" data-skill="Lightroom">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_LIGHTROOM.EXE</span>
+                        <span class="widget-stat">90%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 90%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: SENIOR ]</div>
+                        <div>[ MAIN_USE: RAW_DEVELOPMENT ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 7 -->
+                <div class="console-widget" tabindex="0" data-skill="Audition">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">ADOBE_AUDITION.EXE</span>
+                        <span class="widget-stat">50%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 50%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: BASIC ]</div>
+                        <div>[ MAIN_USE: AUDIO_CLEANUP ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 8 -->
+                <div class="console-widget" tabindex="0" data-skill="Canva">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">CANVA_SYSTEM.SYS</span>
+                        <span class="widget-stat">70%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 70%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: CONTENT_TEMPLATES ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 9 -->
+                <div class="console-widget" tabindex="0" data-skill="Filmen">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">FILMEN_RECORDING.RAW</span>
+                        <span class="widget-stat">90%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 90%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: SENIOR ]</div>
+                        <div>[ MAIN_USE: DIRECTION, CAMERA, DRONE, INTERVIEWS ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 10 -->
+                <div class="console-widget" tabindex="0" data-skill="Fotografieren">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">FOTOGRAFIEREN_OPTICS.RAW</span>
+                        <span class="widget-stat">80%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 80%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: ADVANCED ]</div>
+                        <div>[ MAIN_USE: STILLS, EXHIBITION, NATURE, ANIMALS ]</div>
+                    </div>
+                </div>
+
+                <!-- Skill Widget 11 -->
+                <div class="console-widget" tabindex="0" data-skill="Social Media">
+                    <div class="widget-header monospace">
+                        <span class="widget-name">SOCIAL_MEDIA_STRATEGY.NET</span>
+                        <span class="widget-stat">99%</span>
+                    </div>
+                    <div class="widget-visual">
+                        <div class="bar-fill-indicator" style="--percent: 99%;"></div>
+                        <div class="widget-signal-lines">
+                            <span class="line-pulse"></span>
+                        </div>
+                    </div>
+                    <div class="widget-details monospace">
+                        <div>[ COMP_LEVEL: EXPERT ]</div>
+                        <div>[ MAIN_USE: INSTAGRAM, TIKTOK, YOUTUBE, LINKEDIN, INTRANET ]</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Experience Section (Werdegang) -->
+        <section id="werdegang" class="grid-section full-width">
+            <div class="section-decor">
+                <span class="coord-label monospace">TIMELINE_DATA_SEC_05 // RECORDS</span>
+                <span class="bracket-label monospace">[ HISTORY ]</span>
+            </div>
+
+            <div class="section-header-row">
+                <h2 class="section-title">WERDEGANG</h2>
+                <div class="telemetry-pill monospace hide-mobile">
+                    <span>SYS_INDEX: SECURE</span>
+                </div>
+            </div>
+
+            <!-- Oscilloscope styled Timeline -->
+            <div class="timeline-container">
+                <div class="timeline-line">
+                    <div class="timeline-pulse-node" id="timeline-pulse"></div>
+                </div>
+
+                <!-- Timeline Item 1 -->
+                <div class="timeline-item" data-date="2024">
+                    <div class="timeline-meta monospace">
+                        <span class="timeline-date">2024 - HEUTE</span>
+                        <span class="timeline-loc">ZÜRICH</span>
+                    </div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3 class="timeline-title">Selbstständiger Mediamatiker & Creative Lead</h3>
+                        <p class="timeline-company">JB Creative Solutions</p>
+                        <p class="timeline-desc">Konzeption und Umsetzung von plattformübergreifenden Design-Systemen, Social-Media-Kampagnen und Videoproduktionen für KMUs und Kulturprojekte in der Schweiz.</p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="timeline-item" data-date="2020">
+                    <div class="timeline-meta monospace">
+                        <span class="timeline-date">2020 - 2024</span>
+                        <span class="timeline-loc">BERN / ZÜRICH</span>
+                    </div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3 class="timeline-title">Ausbildung zum Mediamatiker EFZ</h3>
+                        <p class="timeline-company">Swisscom AG & Berufsschule</p>
+                        <p class="timeline-desc">Umfassende Ausbildung an der Schnittstelle von Design, Marketing, IT und Projektleitung. Vertiefung in Videoproduktion, Kampagnenplanung und Interface-Design.</p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="timeline-item" data-date="2018">
+                    <div class="timeline-meta monospace">
+                        <span class="timeline-date">2018 - 2020</span>
+                        <span class="timeline-loc">ZÜRICH</span>
+                    </div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <h3 class="timeline-title">Freier Content Creator & Video Editor</h3>
+                        <p class="timeline-company">Freiberuflich</p>
+                        <p class="timeline-desc">Erste kommerzielle Gehversuche im Bereich Videoschnitt für YouTube-Kanäle und lokale Sportvereine. Aufbau von Fachwissen in Premiere Pro und After Effects.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Contact Section (Kontakt) -->
+        <section id="kontakt" class="grid-section full-width last-section">
+            <div class="section-decor">
+                <span class="coord-label monospace">SIGNAL_OUT_SEC_07 // UPLINK</span>
+                <span class="bracket-label monospace">[ CONTACT ]</span>
+            </div>
+
+            <h2 class="section-title">EINE VERBINDUNG HERSTELLEN.</h2>
+            <div class="contact-info-block">
+                <p class="lead">Lust auf ein revolutionäres Projekt oder ein klassisches Schweizer Design? Lass uns zusammen etwas Großes bauen.</p>
+
+                <!-- High-Tech Uplink Email Terminal -->
+                <div class="terminal-container monospace">
+                    <div class="terminal-header">
+                        <span class="pulse-dot"></span>
+                        <span class="terminal-title">EMAIL_UPLINK.SH</span>
+                        <span class="terminal-status text-signal">SYS_KNOTEN: STANDBY</span>
+                    </div>
+                    <div class="terminal-body">
+                        <p class="terminal-line">> EMPFÄNGER: hello@julienbernath.ch</p>
+                        <p class="terminal-line">> PROTOKOLL: SMTP // UPLINK_TLS</p>
+                        <p class="terminal-line">> KANAL: CLIENT_AUTO_REDIRECT</p>
+                        <div class="form-status-msg text-accent" id="terminal-uplink-status">> BEREIT FÜR COMMAND...</div>
+                        <div class="terminal-action-row">
+                            <button id="email-trigger-btn" class="btn btn-signal monospace">SIGNAL_SENDEN.EXE [→]</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="direct-channels monospace">
+                    <div class="channel-row">
+                        <span class="channel-label">E-MAIL:</span>
+                        <a href="mailto:hello@julienbernath.ch" class="channel-val text-signal">hello@julienbernath.ch</a>
+                    </div>
+                    <div class="channel-row">
+                        <span class="channel-label">LOC:</span>
+                        <span class="channel-val">ZÜRICH // SCHWEIZ</span>
+                    </div>
+                </div>
+
+                <div class="social-links monospace">
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="social-link social-link-linkedin">[ LINKEDIN ]</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer id="main-footer" class="monospace">
+        <div class="footer-left">
+            <span>© 2026 JULIEN BERNATH</span>
+            <span class="separator">//</span>
+            <span>SWISS MEDIAMATIKER PORTFOLIO</span>
+        </div>
+        <div class="footer-right">
+            <span>COORDS_TRACKER: ACTIVE</span>
+            <span class="separator">//</span>
+            <a href="#" class="footer-link">IMPRESSUM</a>
+            <span class="separator">//</span>
+            <a href="#" class="footer-link">DATENSCHUTZ</a>
+        </div>
+    </footer>
+
+    </div><!-- /#content-scroll -->
+
+    <!-- 8. Interactive Modals -->
+
+    <!-- Search Results Dialog -->
+    <dialog id="command-palette-modal">
+        <div class="palette-container monospace">
+            <div class="palette-header">
+                <span class="label">SCHNELLNAVIGATION</span>
+                <span class="close-hint">Esc zum Schließen</span>
+            </div>
+            <div class="palette-input-wrapper">
+                <svg class="prompt-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"/>
+                    <line x1="16.5" y1="16.5" x2="22" y2="22"/>
+                </svg>
+                <input type="text" id="palette-input" placeholder="Abschnitt suchen... (z.B. projekte, skills, kontakt)" autofocus autocomplete="off">
+            </div>
+            <ul id="palette-suggestions">
+                <li data-action="go-about" class="selected"><span class="highlight">/info</span> - Zur Info / Specs springen</li>
+                <li data-action="go-projekte"><span class="highlight">/projekte</span> - Ausgewählte Projekte ansehen</li>
+                <li data-action="go-skills"><span class="highlight">/skills</span> - Skills-Konsole ansehen</li>
+                <li data-action="go-werdegang"><span class="highlight">/werdegang</span> - Timeline / Verlauf ansehen</li>
+                <li data-action="go-kontakt"><span class="highlight">/kontakt</span> - Mail-Terminal öffnen</li>
+            </ul>
+            <!-- Diagnostic Screen inside Command Palette (hidden by default) -->
+            <div id="palette-diagnostic" class="diag-output-box"></div>
+        </div>
+    </dialog>
+
+    <!-- Project Detail Modal -->
+    <dialog id="project-detail-modal">
+        <!-- Floating Prev/Next Buttons -->
+        <button id="modal-prev-floating-btn" class="modal-nav-floating-btn prev" aria-label="Vorheriges Projekt">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button id="modal-next-floating-btn" class="modal-nav-floating-btn next" aria-label="Nächstes Projekt">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+
+        <div class="modal-box">
+            <div class="modal-header monospace">
+                <div class="modal-title-bar">
+                    <span class="pulse-dot"></span>
+                    <span id="modal-project-id">ID: JB-PRJ-XX</span>
+                    <span class="separator">//</span>
+                    <span id="modal-project-cat">CATEGORY</span>
+                </div>
+                <div class="modal-controls">
+                    <button id="modal-prev-btn" class="modal-nav-btn" aria-label="Vorheriges Projekt">[ ←_PREV ]</button>
+                    <button id="modal-next-btn" class="modal-nav-btn" aria-label="Nächstes Projekt">[ NEXT_→ ]</button>
+                    <button id="modal-close-btn" class="close-btn">[ X_CLOSE ]</button>
+                </div>
+            </div>
+            
+            <div class="modal-grid">
+                <div class="modal-visual-panel" id="modal-project-visual">
+                    <!-- Loaded dynamically via script -->
+                </div>
+                
+                <div class="modal-info-panel">
+                    <h3 id="modal-project-title" class="project-title">PROJECT TITLE</h3>
+                    <p id="modal-project-long-desc" class="project-long-desc">Detailed project description goes here.</p>
+                    
+                    <div class="project-spec-sheet monospace">
+                        <div class="sheet-row">
+                            <span class="sheet-label">KUNDE:</span>
+                            <span id="modal-project-client" class="sheet-val">Client Name</span>
+                        </div>
+                        <div class="sheet-row">
+                            <span class="sheet-label">JAHR:</span>
+                            <span id="modal-project-year" class="sheet-val">2026</span>
+                        </div>
+                        <div class="sheet-row">
+                            <span class="sheet-label">ROLLE:</span>
+                            <span id="modal-project-role" class="sheet-val">Designer / Developer</span>
+                        </div>
+                        <div class="sheet-row">
+                            <span class="sheet-label">RESULTATE:</span>
+                            <span id="modal-project-deliverables" class="sheet-val">Deliverables</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-cta-row">
+                        <a href="#kontakt" id="modal-cta-btn" class="btn btn-signal monospace">PROJEKT ANFRAGEN</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Mobile Nav Overlay -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay" aria-hidden="true">
+        <div class="mobile-nav-inner monospace">
+            <div class="mobile-nav-header">
+                <span class="logo-text">BERNATH.SYS</span>
+                <button id="mobile-nav-close" class="mobile-nav-close" aria-label="Menü schließen">[ X ]</button>
+            </div>
+            <nav class="mobile-nav-links">
+                <a href="#about" class="mobile-nav-link"><span class="nav-num">01.</span> Info</a>
+                <a href="#projekte" class="mobile-nav-link"><span class="nav-num">02.</span> Projekte</a>
+                <a href="#skills" class="mobile-nav-link"><span class="nav-num">03.</span> Skills</a>
+                <a href="#werdegang" class="mobile-nav-link"><span class="nav-num">04.</span> Werdegang</a>
+                <a href="#kontakt" class="mobile-nav-link"><span class="nav-num">05.</span> Kontakt</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="script.js"></script>
+</body>
+</html>
