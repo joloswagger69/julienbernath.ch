@@ -295,11 +295,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <line x1="185" y1="115" x2="215" y2="85" stroke="#E30613" stroke-width="1"/>
                 <text x="35" y="42" font-family="monospace" font-size="10" fill="#000">TIKA_MATE // BRAND_CAN</text>
             </svg>`,
-            media: Array.from({ length: 15 }, (_, i) => ({
-                type: 'image',
-                url: `assets/images/tika-mate/tika-${i + 1}.jpg`,
-                label: `TIKA-${i + 1}.JPG`
-            }))
+media: Array.from({ length: 15 }, (_, i) => ({
+                 type: 'image',
+-                url: `assets/images/tika-mate/tika-${i + 1}.png`,
+-                label: `TIKA-${i + 1}.PNG`
++                url: `assets/images/tika-mate/tika-${i + 1}.jpg`,
++                label: `TIKA-${i + 1}.JPG`
+             }))
         },
         nature_photo: {
             id: 'JB-PRJ-11',
