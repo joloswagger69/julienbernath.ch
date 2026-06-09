@@ -1,6 +1,5 @@
 /* ==========================================================================
-   JULIEN BERNATH // PORTFOLIO JAVASCRIPT
-   Swiss Design Grid Canvas Engine & Interactive Dashboard Core
+   JULIEN BERNATH
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-01',
             category: 'PHOTOGRAPHY / SPORT',
             title: 'Fotoserie EHC Kloten',
+            previewImage: 'assets/images/ehc-kloten/ehck-14.webp',
             client: 'EHC Kloten',
             year: '2025',
             role: 'Fotograf / Mediamatiker',
@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-03',
             category: 'PHOTOGRAPHY / SPORT',
             title: 'Fotoserie EV Zug Damen',
+            previewImage: 'assets/images/ev-zug/evz-13.jpg',
             client: 'EV Zug Damen',
             year: '2025',
             role: 'Sportfotograf',
@@ -94,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-04',
             category: 'PHOTOGRAPHY / SPORT',
             title: 'Fotoserie UHC Limmattal',
+            previewImage: 'assets/images/uhc-limmattal/limmattal-26.webp',
             client: 'UHC Limmattal',
             year: '2024',
             role: 'Fotograf',
@@ -125,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-06',
             category: 'PRINT DESIGN',
             title: 'Dorffestflyer Ehrendingen',
+            previewImage: 'assets/images/uhc-dorffest/dorffest-7.jpg',
             client: 'OK Dorffest Ehrendingen',
             year: '2025',
             role: 'Grafikdesigner / Mediamatiker',
@@ -163,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-07',
             category: 'PHOTOGRAPHY / SPORT',
             title: 'Fotoserie FC Wil',
+            previewImage: 'assets/images/fc-wil/fcw-1.jpg',
             client: 'FC Wil 1900',
             year: '2025',
             role: 'Sportfotograf',
@@ -244,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'JB-PRJ-09',
             category: 'VIDEO / CONCEPT',
             title: 'Vertiefungsarbeit "ITSON"',
+            previewImage: 'assets/images/itson/itson-8.webp',
             client: 'Berufsschule (Eigenprojekt)',
             year: '2024',
             role: 'Lead Designer & Konzept-Entwickler',
@@ -364,6 +369,7 @@ media: [
             id: 'JB-PRJ-12',
             category: 'BRANDING / SOCIAL MEDIA',
             title: 'Matchday-Grafiken UHC Bulldogs',
+            previewImage: 'assets/images/uhc-grafiken/uhc-grafiken-9.webp',
             client: 'UHC Bulldogs Ehrendingen',
             year: '2024 - 2026',
             role: 'Social Media Designer',
@@ -398,6 +404,7 @@ media: [
             id: 'JB-PRJ-13',
             category: 'BRANDING / GRAPHICS',
             title: 'Sonstige Arbeiten',
+            previewImage: 'assets/images/sonstiges/sonst-6.webp',
             client: 'Diverse',
             year: '2023 - 2025',
             role: 'Designer / Editor',
@@ -996,6 +1003,60 @@ media: [
     const filterBtns = document.querySelectorAll('.filter-btn');
     const projectCards = document.querySelectorAll('.project-card');
 
+    /* --- Project card photo previews ---
+       Uses the first real image from projectsData.media as the preview image.
+       This keeps the card previews photographic, while videos can still exist inside the detail modal. */
+    const projectPreviewFallbacks = {
+        kloten_tiktok: 'assets/images/ehc-kloten/ehck-6.webp',
+
+    };
+
+    function getProjectPreviewUrl(projectId) {
+        const data = projectsData[projectId];
+        if (!data) return '';
+
+        if (data.previewImage) return data.previewImage;
+
+        const firstImage = Array.isArray(data.media)
+            ? data.media.find(item => item && item.type === 'image' && item.url)
+            : null;
+
+        return firstImage ? firstImage.url : (projectPreviewFallbacks[projectId] || '');
+    }
+
+    function injectProjectPhotoPreviews() {
+        projectCards.forEach(card => {
+            const projectId = card.getAttribute('data-id');
+            const data = projectsData[projectId];
+            const visual = card.querySelector('.project-visual');
+            if (!visual || !data) return;
+
+            const previewUrl = getProjectPreviewUrl(projectId);
+            if (!previewUrl || visual.querySelector('.project-preview-img')) return;
+
+            const img = document.createElement('img');
+            img.className = 'project-preview-img';
+            img.src = previewUrl;
+            img.alt = `Vorschaubild zum Projekt ${data.title}`;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+
+            img.addEventListener('load', () => {
+                visual.classList.add('has-preview');
+            });
+
+            img.addEventListener('error', () => {
+                visual.classList.remove('has-preview');
+                img.remove();
+                console.warn(`Projekt-Vorschaubild nicht gefunden: ${previewUrl}`);
+            });
+
+            visual.prepend(img);
+        });
+    }
+
+    injectProjectPhotoPreviews();
+
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             // Update button states
@@ -1504,4 +1565,3 @@ media: [
     }
 
 });
-
