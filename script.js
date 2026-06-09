@@ -22,9 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
             previewImage: 'assets/images/ehc-kloten/ehck-14.webp',
             client: 'EHC Kloten',
             year: '2026',
-            role: 'Fotograf / Mediamatiker',
+            role: 'Sportfotograf / Mediamatiker',
             deliverables: 'Action-Fotografie, Spieltags-Reportage, Bildbearbeitung',
-            description: 'Dynamische Action- und Reportagefotos der Heimspiele des EHC Kloten in der Swiss Arena. Die Aufnahmen fangen die extreme Intensität auf dem Eis, die Emotionen in der Fankurve und die packende Matchday-Atmosphäre ein. Professionelle RAW-Entwicklung und schnelle Bereitstellung für Social Media und Presse.',
+            description: 'Dynamische Actionshots eines Heimspiels des EHC Kloten gegen den HC Lugano in der Swiss Arena. Die Aufnahmen fangen die extreme Intensität auf dem Eis, die Emotionen in der Fankurve und die packende Matchday-Atmosphäre ein. Fotografiert und gefilmt wurde mit zwei Kameras und einem Gimbal.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="20" y="20" width="360" height="160" rx="8" fill="none" stroke="#000" stroke-width="1.5"/>
                 <line x1="200" y1="20" x2="200" y2="180" stroke="#000" stroke-width="1.5" stroke-dasharray="2 4"/>
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2025',
             role: 'Video Editor & Content Creator',
             deliverables: 'Kurzvideo-Konzeption, Schnitt, Sound Design, Grading',
-            description: 'Hochenergetische Kurzvideos für den TikTok-Kanal des EHC Kloten. Die Videos kombinieren rasante Schnitte mit passenden Sound-Effekten, um die Interaktionsrate unter den Eishockey-Fans zu maximieren. Speziell optimiert für mobile Displays und virale Relevanz.',
+            description: 'Energetisches Kurzvideo für den offiziellen TikTok-Kanal des EHC Kloten. Das Video kombiniert rasante Schnitte mit passenden Sound-Effekten, um die Interaktionsrate unter den Eishockey-Fans zu maximieren. Speziell optimiert für mobile Displays und virale Relevanz.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="150" y="15" width="100" height="170" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
                 <polygon points="190,85 220,100 190,115" fill="#E30613"/>
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2026',
             role: 'Sportfotograf',
             deliverables: 'Action-Shooting, Bildredaktion, Postproduction',
-            description: 'Fotografische Reportage über die Damenmannschaft des EV Zug. Im Fokus stehen Athletik, Leidenschaft und die Dynamik des Frauen-Eishockeys. Die kontrastreichen Schwarz-Weiss- und Farbaufnahmen heben die Physis und den emotionalen Siegeswillen des Teams hervor.',
+            description: 'Actionreiche Aufnahmen über die Damenmannschaft des EV Zug. Im Fokus stehen Athletik, Leidenschaft und die Dynamik des Frauen-Eishockeys. Die kontrastreichen Schwarz-Weiss- und Farbaufnahmen heben die Physis und den emotionalen Siegeswillen des Teams hervor, den sie mit dem Sieg der Meisterschaft auch bewiesen haben.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="30" y="20" width="340" height="160" fill="none" stroke="#000" stroke-width="1"/>
                 <line x1="143" y1="20" x2="143" y2="180" stroke="#000" stroke-opacity="0.2" stroke-width="1"/>
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             previewImage: 'assets/images/uhc-limmattal/limmattal-26.webp',
             client: 'UHC Limmattal',
             year: '2026',
-            role: 'Fotograf',
+            role: 'Sportfotograf',
             deliverables: 'Spielszenen-Fotografie, Social Media Assets',
             description: 'Actionreiche Hallenfotografie für den Schweizer Unihockeyclub Limmattal. Die Serie dokumentiert schnelle Angriffsmanöver, präzise Schüsse und die emotionale Atmosphäre in der Sporthalle. Perfekt farbkorrigierte Aufnahmen für die Vereins-Website und Matchflyer.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2025',
             role: 'Grafikdesigner / Mediamatiker',
             deliverables: 'Visual Identity, Flyer-Design, Plakate, Druckdaten',
-            description: 'Umfassendes Print-Design für das Ehrendinger Dorffest. Die Gestaltung vereint traditionelle Schweizer Festlichkeit mit modernen typografischen Rastern. Das Endergebnis wurde als Flyer im A5-Format sowie als Plakat gedruckt und verteilt.',
+            description: 'Umfassendes Print-Design für den Stand der UHC Bulldogs Ehrendingen am Ehrendinger Dorffest. Die Gestaltung vereint traditionelle Festlichkeit mit modernen typografischen Rastern. Einzelne Designs wurde als Flyer im A5-Format, A4-Format sowie als Plakat gedruckt, verteilt und aufgehängt.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="80" y="20" width="240" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
                 <circle cx="50" cy="100" r="10" fill="none" stroke="#000" stroke-width="1"/>
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2023',
             role: 'Sportfotograf',
             deliverables: 'Spieltags-Fotografie, Fankultur-Dokumentation, RAW',
-            description: 'Professionelle Sportfotografie der Meisterschaftsspiele des FC Wil 1900 in der Challenge League. Die Reportage beleuchtet packende Zweikämpfe auf dem Platz, emotionale Reaktionen der Spieler sowie die lebendige Fankultur im Stadion.',
+            description: 'Sportfotografie eines Pre-Game-Trainings des FC Wil in der Challenge League. Die Bilder beleuchtet die ansteigende Intensität auf dem Platz, emotionale Reaktionen der Spieler sowie die Arbeit des Team-Staff.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <line x1="150" y1="180" x2="200" y2="60" stroke="#000" stroke-width="2"/>
                 <line x1="250" y1="180" x2="200" y2="60" stroke="#000" stroke-width="2"/>
@@ -251,9 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
             previewImage: 'assets/images/itson/itson-8.webp',
             client: 'Berufsschule (Eigenprojekt)',
             year: '2025',
-            role: 'Lead Designer & Konzept-Entwickler',
-            deliverables: 'Multimediales Konzept, UI/UX Design System, Video-Visualisierung',
-            description: 'Konzeption und multimediale Präsentation der Abschlussarbeit "ITSON". Das Projekt umfasst eine umfassende Video-Visualisierung des fiktiven IT-Branding-Konzepts, die Definition grafischer Raster-Systeme und die Ausarbeitung eines digitalen User-Experience-Konzepts.',
+            role: 'Organisator & Videograf',
+            deliverables: 'Multimediales Konzept, Droneshots, Video-Visualisierung',
+            description: 'Vertiefungsarbeit (VA) in Form eines Kurzfilms. Das Projekt "ITSON", In The Silence Of Nature, umfasst eine umfassende Vorbereitung und eine noch längere Bearbeitungs-Phase. Gefilmt wurde abseits von Bevölkerung und moderner Infrastruktur.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="40" y="20" width="320" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
                 <line x1="40" y1="50" x2="360" y2="50" stroke="#000" stroke-width="1.5"/>
@@ -326,7 +326,7 @@ media: [
             year: '2023 - 2026',
             role: 'Naturfotograf',
             deliverables: 'Outdoor-Fotografie, Makro-Aufnahmen, Color-Grading',
-            description: 'Eine fortlaufende, persönliche Fotoserie über die Schweizer Tier- und Pflanzenwelt. Die Aufnahmen entstanden mit hoher Brennweite und Makroobjektiven, um kleinste Strukturen und seltene Wildtiere in ihrer natürlichen Umgebung detailreich festzuhalten.',
+            description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Event-Posts der UHC Bulldogs Ehrendingen auf Instagram. Entwickelt und designed in Adobe Photoshop.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="120" y="20" width="160" height="160" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
                 <line x1="200" y1="20" x2="200" y2="180" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
@@ -373,7 +373,7 @@ media: [
             client: 'UHC Bulldogs Ehrendingen',
             year: '2024 - 2026',
             role: 'Social Media Designer',
-            deliverables: 'Figma Templates, Spieltagsankündigungen, Resultatgrafiken',
+            deliverables: 'Photoshop Templates, Spieltagsankündigungen, Resultatgrafiken',
             description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Live-Ergebnis-Posts der UHC Bulldogs Ehrendingen auf Instagram. Entwickelt in Figma für einfache, mobile Pflege durch den Verein.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <line x1="20" y1="40" x2="380" y2="40" stroke="#000" stroke-width="1.5"/>
@@ -444,8 +444,8 @@ media: [
             client: 'Eigenprojekt',
             year: '2026',
             role: 'Frontend Developer & UI Designer',
-            deliverables: 'Swiss Grid System, Custom Canvas Engine, Interactive Command Center',
-            description: 'Konzeption, Design und Entwicklung der eigenen Portfolio-Plattform julienbernath.ch. Die Website nutzt ein maßgeschneidertes, futuristisches "Red Signal Operating System"-Theme mit einem interaktiven Grid-Hintergrund, der auf Mausbewegungen reagiert, einer voll funktionsfähigen Befehlspalette zur Schnellnavigation und einem reaktiven E-Mail-Terminal.',
+            deliverables: 'Grid System, Personal Portfolio, Interactive Command Center',
+            description: 'Konzeption, Design und Entwicklung der eigenen Portfolio-Plattform julienbernath.ch. Die Website nutzt ein massgeschneidertes, futuristisches Theme mit einem interaktiven Grid-Hintergrund, der auf Mausbewegungen reagiert, einer voll funktionsfähigen Befehlspalette zur Schnellnavigation und einem reaktiven E-Mail-Terminal.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="20" y="20" width="360" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
                 <line x1="20" y1="50" x2="380" y2="50" stroke="#000" stroke-width="1.5"/>
