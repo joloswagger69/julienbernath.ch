@@ -1390,7 +1390,7 @@ media: [
                 
                 setTimeout(() => {
                     terminalStatus.textContent = '> STATUS: ERFOLG. ÖFFNE STANDARD-E-MAIL-CLIENT...';
-                    window.location.href = 'mailto:hello@julienbernath.ch';
+                    window.location.href = 'mailto:julien.bernath@gmx.ch';
                     
                     setTimeout(() => {
                         emailBtn.disabled = false;
@@ -1467,6 +1467,36 @@ media: [
     });
 
 
+
+    /* --- 11c. DATENSCHUTZ MODAL --- */
+    const privacyOpenBtn = document.getElementById('privacy-open-btn');
+    const privacyModal = document.getElementById('privacy-modal');
+    const privacyCloseBtn = document.getElementById('privacy-close-btn');
+
+    function openPrivacyModal() {
+        if (!privacyModal) return;
+        privacyModal.showModal();
+    }
+
+    function closePrivacyModal() {
+        if (!privacyModal) return;
+        privacyModal.close();
+    }
+
+    if (privacyOpenBtn && privacyModal) {
+        privacyOpenBtn.addEventListener('click', openPrivacyModal);
+
+        privacyModal.addEventListener('click', (e) => {
+            if (e.target === privacyModal) {
+                closePrivacyModal();
+            }
+        });
+    }
+
+    if (privacyCloseBtn) {
+        privacyCloseBtn.addEventListener('click', closePrivacyModal);
+    }
+
     /* --- 12. MOBILE NAVIGATION OVERLAY --- */
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
@@ -1506,6 +1536,9 @@ media: [
         if (e.key === 'Escape') {
             if (cmdDialog && cmdDialog.open) {
                 closeCommandPalette();
+            }
+            if (privacyModal && privacyModal.open) {
+                closePrivacyModal();
             }
             if (mobileNavOverlay && mobileNavOverlay.classList.contains('is-open')) {
                 closeMobileNav();

@@ -981,56 +981,61 @@
                 </div>
 
                 <!-- Oscilloscope styled Timeline -->
+                <p class="timeline-intro">
+                    Mein Werdegang verbindet Gestaltung, Medien und praktische Erfahrung. Von der Oberstufe über den
+                    gestalterischen Vorkurs bis zur Lehre als Mediamatiker EFZ konnte ich Schritt für Schritt ein
+                    breites Verständnis für Design, Foto, Video, Web und Kommunikation aufbauen.
+                </p>
+
                 <div class="timeline-container">
                     <div class="timeline-line">
                         <div class="timeline-pulse-node" id="timeline-pulse"></div>
                     </div>
 
                     <!-- Timeline Item 1 -->
-                    <div class="timeline-item" data-date="2024">
+                    <div class="timeline-item" data-date="2022">
                         <div class="timeline-meta monospace">
-                            <span class="timeline-date">2024 - HEUTE</span>
-                            <span class="timeline-loc">ZÜRICH</span>
+                            <span class="timeline-date">2022 - 2026</span>
+                            <span class="timeline-loc">AARGAU / BADEN</span>
                         </div>
                         <div class="timeline-marker"></div>
                         <div class="timeline-content">
-                            <h3 class="timeline-title">Selbstständiger Mediamatiker & Creative Lead</h3>
-                            <p class="timeline-company">JB Creative Solutions</p>
-                            <p class="timeline-desc">Konzeption und Umsetzung von plattformübergreifenden
-                                Design-Systemen, Social-Media-Kampagnen und Videoproduktionen für KMUs und
-                                Kulturprojekte in der Schweiz.</p>
+                            <h3 class="timeline-title">Lehre als Mediamatiker EFZ</h3>
+                            <p class="timeline-company">Kanton Aargau & BBBaden</p>
+                            <p class="timeline-desc">Ausbildung mit Basislehrjahr beim Kanton Aargau. Berufsschule an
+                                der BBBaden. Schwerpunkte in Gestaltung, Fotografie, Video, Web, Kommunikation und
+                                digitalen Medien.</p>
                         </div>
                     </div>
 
                     <!-- Timeline Item 2 -->
-                    <div class="timeline-item" data-date="2020">
+                    <div class="timeline-item" data-date="2021">
                         <div class="timeline-meta monospace">
-                            <span class="timeline-date">2020 - 2024</span>
-                            <span class="timeline-loc">BERN / ZÜRICH</span>
+                            <span class="timeline-date">2021 - 2022</span>
+                            <span class="timeline-loc">SKDZ</span>
                         </div>
                         <div class="timeline-marker"></div>
                         <div class="timeline-content">
-                            <h3 class="timeline-title">Ausbildung zum Mediamatiker EFZ</h3>
-                            <p class="timeline-company">Swisscom AG & Berufsschule</p>
-                            <p class="timeline-desc">Umfassende Ausbildung an der Schnittstelle von Design, Marketing,
-                                IT und Projektleitung. Vertiefung in Videoproduktion, Kampagnenplanung und
-                                Interface-Design.</p>
+                            <h3 class="timeline-title">Gestalterischer Vorkurs</h3>
+                            <p class="timeline-company">SKDZ</p>
+                            <p class="timeline-desc">Vertiefung der gestalterischen Grundlagen und erste bewusste
+                                Auseinandersetzung mit Bildsprache, Layout, Typografie, Komposition und kreativen
+                                Arbeitsprozessen.</p>
                         </div>
                     </div>
 
                     <!-- Timeline Item 3 -->
-                    <div class="timeline-item" data-date="2018">
+                    <div class="timeline-item" data-date="2019">
                         <div class="timeline-meta monospace">
-                            <span class="timeline-date">2018 - 2020</span>
-                            <span class="timeline-loc">ZÜRICH</span>
+                            <span class="timeline-date">2019</span>
+                            <span class="timeline-loc">SCHWEIZ</span>
                         </div>
                         <div class="timeline-marker"></div>
                         <div class="timeline-content">
-                            <h3 class="timeline-title">Freier Content Creator & Video Editor</h3>
-                            <p class="timeline-company">Freiberuflich</p>
-                            <p class="timeline-desc">Erste kommerzielle Gehversuche im Bereich Videoschnitt für
-                                YouTube-Kanäle und lokale Sportvereine. Aufbau von Fachwissen in Premiere Pro und After
-                                Effects.</p>
+                            <h3 class="timeline-title">Abschluss Oberstufe</h3>
+                            <p class="timeline-company">Schulabschluss</p>
+                            <p class="timeline-desc">Abschluss der obligatorischen Schulzeit und Grundlage für den
+                                weiteren gestalterischen und beruflichen Weg.</p>
                         </div>
                     </div>
                 </div>
@@ -1072,7 +1077,7 @@
                         <div class="channel-row">
                             <span class="channel-label">E-MAIL:</span>
                             <a href="mailto:julien.bernath@gmx.ch"
-                                class="channel-val text-signal">julienb.ernath@gmx.ch</a>
+                                class="channel-val text-signal">julien.bernath@gmx.ch</a>
                         </div>
                         <div class="channel-row">
                             <span class="channel-label">LOC:</span>
@@ -1099,9 +1104,7 @@
             <div class="footer-right">
                 <span>COORDS_TRACKER: ACTIVE</span>
                 <span class="separator">//</span>
-                <a href="#" class="footer-link">IMPRESSUM</a>
-                <span class="separator">//</span>
-                <a href="#" class="footer-link">DATENSCHUTZ</a>
+                <button type="button" id="privacy-open-btn" class="footer-link footer-button">DATENSCHUTZ</button>
             </div>
         </footer>
 
@@ -1210,6 +1213,97 @@
 
 
                 </div>
+            </div>
+        </div>
+    </dialog>
+
+
+    <!-- Datenschutz Modal -->
+    <dialog id="privacy-modal" aria-labelledby="privacy-modal-title">
+        <div class="privacy-modal-box">
+            <div class="modal-header monospace">
+                <div class="modal-title-bar">
+                    <span class="pulse-dot"></span>
+                    <span id="privacy-modal-title">DATENSCHUTZ</span>
+                    <span class="separator">//</span>
+                    <span>JULIENBERNATH.CH</span>
+                </div>
+                <div class="modal-controls">
+                    <button id="privacy-close-btn" class="close-btn" type="button">[ X_CLOSE ]</button>
+                </div>
+            </div>
+
+            <div class="privacy-modal-content">
+                <p class="privacy-lead">
+                    Der Schutz persönlicher Daten ist mir wichtig. Diese Datenschutzerklärung erklärt kurz, welche
+                    Daten beim Besuch dieser Website verarbeitet werden können und wofür sie verwendet werden.
+                </p>
+
+                <h3>1. Verantwortliche Person</h3>
+                <p>
+                    Julien Bernath<br>
+                    Schweiz<br>
+                    E-Mail: <a href="mailto:julien.bernath@gmx.ch">julien.bernath@gmx.ch</a>
+                </p>
+
+                <h3>2. Zweck dieser Website</h3>
+                <p>
+                    Diese Website dient als persönliches Portfolio. Sie zeigt Arbeiten, Projekte, Fähigkeiten und
+                    Kontaktmöglichkeiten von Julien Bernath.
+                </p>
+
+                <h3>3. Technische Daten beim Besuch der Website</h3>
+                <p>
+                    Beim Aufruf der Website können durch den Hosting-Anbieter automatisch technische Daten verarbeitet
+                    werden. Dazu können IP-Adresse, Datum und Uhrzeit des Zugriffs, aufgerufene Seiten oder Dateien,
+                    Browsertyp, Betriebssystem, Referrer-URL und technische Verbindungsdaten gehören.
+                </p>
+                <p>
+                    Diese Daten werden verwendet, damit die Website angezeigt werden kann, sicher funktioniert und
+                    technische Fehler nachvollzogen werden können.
+                </p>
+
+                <h3>4. Kontaktaufnahme per E-Mail</h3>
+                <p>
+                    Wenn Sie mich per E-Mail kontaktieren, werden die übermittelten Angaben zur Bearbeitung der Anfrage
+                    verwendet. Diese Daten werden nicht ohne Einwilligung an Dritte weitergegeben.
+                </p>
+
+                <h3>5. Externe Dienste und Links</h3>
+                <p>
+                    Diese Website kann externe Dienste oder Links verwenden, zum Beispiel Google Fonts, LinkedIn,
+                    YouTube, TikTok oder GitHub. Beim Aufruf externer Inhalte oder beim Anklicken externer Links können
+                    Daten an die jeweiligen Anbieter übertragen werden. Für die Datenbearbeitung dieser Anbieter gelten
+                    deren eigene Datenschutzbestimmungen.
+                </p>
+
+                <h3>6. Lokale Speicherung</h3>
+                <p>
+                    Die Website kann Einstellungen wie den Dark Mode lokal im Browser speichern. Diese Speicherung dient
+                    nur der Darstellung und Komfortfunktion der Website.
+                </p>
+
+                <h3>7. Cookies und Tracking</h3>
+                <p>
+                    Diese Website verwendet kein eigenes aktives Tracking und keine Analyse-Tools. Falls externe Inhalte
+                    eingebunden oder externe Plattformen geöffnet werden, können diese Anbieter eigene Cookies oder
+                    ähnliche Technologien einsetzen.
+                </p>
+
+                <h3>8. Rechte betroffener Personen</h3>
+                <p>
+                    Sie können im Rahmen des geltenden Schweizer Datenschutzrechts Auskunft über die Bearbeitung Ihrer
+                    Personendaten verlangen. Je nach Situation können Sie ausserdem die Berichtigung oder Löschung von
+                    Personendaten verlangen.
+                </p>
+
+                <h3>9. Änderungen</h3>
+                <p>
+                    Diese Datenschutzerklärung kann angepasst werden, wenn sich die Website, die verwendeten Dienste oder
+                    die rechtlichen Anforderungen ändern.
+                </p>
+
+                <p class="privacy-date monospace">Stand: Juni 2026</p>
             </div>
         </div>
     </dialog>
