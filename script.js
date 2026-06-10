@@ -976,6 +976,7 @@ media: [
             `  - PREMIERE PRO: OK (100% OUTPUT)`,
             `  - LIGHTROOM: OK (90% OUTPUT)`,
             `  - AUDITION: OK (50% OUTPUT)`,
+            `  - BLENDER: OK (5% OUTPUT)`,
             `  - CANVA: OK (70% OUTPUT)`,
             `  - FILMEN: OK (90% OUTPUT)`,
             `  - FOTOGRAFIEREN: OK (80% OUTPUT)`,

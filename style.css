@@ -1569,51 +1569,134 @@ body.mode-dark {
 }
 
 /* --- 9. SKILLS SECTION CONSOLE --- */
-.skills-console-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
-}
 
-.console-widget {
-    border: var(--border-width) solid var(--color-text);
-    background-color: var(--color-bg);
-    padding: 1rem;
+/* Category groupings */
+.skills-categories {
     display: flex;
     flex-direction: column;
+    gap: 3rem;
+}
+
+.skill-category-header {
+    display: flex;
+    align-items: center;
     gap: 10px;
-    cursor: pointer;
-    transition: border-color var(--transition-speed-fast), box-shadow var(--transition-speed-fast);
+    margin-bottom: 1.25rem;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+}
+
+.category-icon {
+    color: var(--color-signal);
+    font-size: 0.6rem;
+}
+
+.category-title {
+    white-space: nowrap;
+    color: var(--color-text);
+}
+
+.category-line {
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(var(--color-text-rgb), 0.25), transparent);
+}
+
+.category-count {
+    opacity: 0.4;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+/* Grid layout */
+.skills-console-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+/* Individual Skill Widget */
+.console-widget {
+    border: var(--border-width) solid rgba(var(--color-text-rgb), 0.2);
+    background-color: var(--color-bg);
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: default;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .console-widget:hover {
     border-color: var(--color-signal);
-    box-shadow: 4px 4px 0px var(--color-text);
+    box-shadow: 4px 4px 0px var(--color-signal);
+    transform: translateY(-3px);
 }
 
+/* Widget Header: Skill name + Level */
 .widget-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.widget-skill-name {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    line-height: 1.1;
+}
+
+.widget-level {
+    font-size: 0.6rem;
     font-weight: bold;
-    font-size: 0.7rem;
-}
-
-.widget-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border: 1px solid rgba(var(--color-text-rgb), 0.15);
+    color: var(--color-accent);
+    background-color: rgba(var(--color-accent-rgb), 0.06);
     white-space: nowrap;
-    max-width: 75%;
+    flex-shrink: 0;
 }
 
-.widget-stat {
-    color: var(--color-signal);
+/* System-style name: hidden by default, slides in on hover */
+.widget-sys-name {
+    font-size: 0.62rem;
+    opacity: 0;
+    letter-spacing: 0.02em;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, height 0.3s ease, margin 0.3s ease;
+    color: var(--color-accent);
 }
 
+.console-widget:hover .widget-sys-name {
+    opacity: 0.45;
+    height: 14px;
+    margin-top: -2px;
+}
+
+/* Visual bar area: track + percentage side by side */
 .widget-visual {
-    height: 16px;
-    border: var(--border-width) solid var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.bar-track {
+    flex-grow: 1;
+    height: 14px;
+    border: var(--border-width) solid rgba(var(--color-text-rgb), 0.15);
     position: relative;
-    background-color: rgba(var(--color-text-rgb), 0.05);
+    background-color: rgba(var(--color-text-rgb), 0.04);
     overflow: hidden;
 }
 
@@ -1624,55 +1707,85 @@ body.mode-dark {
     position: absolute;
     top: 0;
     left: 0;
-    transition: width var(--transition-speed-slow) cubic-bezier(0.1, 0.8, 0.3, 1);
+    overflow: hidden;
+    transition: width 0.8s cubic-bezier(0.1, 0.8, 0.3, 1), background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
+/* On hover: bar turns signal-red with a subtle glow */
 .console-widget:hover .bar-fill-indicator {
     background-color: var(--color-signal);
+    box-shadow: 0 0 8px rgba(var(--color-signal-rgb), 0.35);
 }
 
-.widget-signal-lines {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.line-pulse {
+/* Scan-line animation: only triggers on hover */
+.bar-shimmer {
     position: absolute;
     top: 0;
+    left: -40px;
+    width: 40px;
     height: 100%;
-    width: 66px; /* 6 cells of 11px (8px fill + 3px gap) */
-    left: -66px;
     pointer-events: none;
-    background-image: 
-        /* Segments the trail to match the progress bar style */
-        repeating-linear-gradient(90deg, transparent 0px, transparent 8px, var(--color-bg) 8px, var(--color-bg) 11px),
-        /* Scanline gradient: grey -> red -> white -> transparent */
-        linear-gradient(
-            to right,
-            transparent 0px,
-            rgba(120, 120, 120, 0.85) 11px, /* grey trail */
-            rgba(227, 6, 19, 0.9) 33px,     /* red trail */
-            rgba(255, 255, 255, 0.95) 55px, /* white scanner head */
-            transparent 66px
-        );
-    animation: bar-sweep 3s infinite linear;
+    opacity: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(var(--color-signal-rgb), 0.15) 15%,
+        rgba(255, 255, 255, 0.85) 48%,
+        rgba(255, 255, 255, 0.95) 52%,
+        rgba(var(--color-signal-rgb), 0.15) 85%,
+        transparent 100%
+    );
+    transition: opacity 0.15s ease;
 }
 
-@keyframes bar-sweep {
-    0% { left: -66px; }
-    100% { left: 100%; }
+.console-widget:hover .bar-shimmer {
+    opacity: 1;
+    animation: bar-scan-loop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
-.widget-details {
+@keyframes bar-scan-loop {
+    0% { left: -40px; }
+    65% { left: calc(100% + 40px); }
+    100% { left: calc(100% + 40px); }
+}
+
+/* Percentage label */
+.widget-stat {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--color-signal);
+    min-width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Use-case tags: appear on hover */
+.widget-tags {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-size: 0.65rem;
-    opacity: 0.6;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease;
 }
+
+.console-widget:hover .widget-tags {
+    max-height: 60px;
+    opacity: 1;
+    margin-top: 4px;
+}
+
+.widget-tags span {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border: 1px solid rgba(var(--color-signal-rgb), 0.2);
+    color: var(--color-signal);
+    opacity: 0.7;
+    letter-spacing: 0.01em;
+}
+
 
 /* --- 10. EXPERIENCE TIMELINE (WERDEGANG) --- */
 .timeline-intro {
@@ -1710,13 +1823,13 @@ body.mode-dark {
     z-index: 5;
 }
 
-body.mode-light #timeline-pulse {
+#timeline-pulse {
     animation: timeline-node-anim 3s infinite linear;
 }
 
 @keyframes timeline-node-anim {
-    0% { top: 0%; }
-    100% { top: 100%; }
+    0% { top: 100%; }
+    100% { top: 0%; }
 }
 
 .timeline-item {
@@ -2458,7 +2571,7 @@ body.mode-dark dialog::backdrop {
     }
     
     .skills-console-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .services-grid {
