@@ -631,6 +631,102 @@ body.cursor-hover .cursor-cross::after {
     letter-spacing: 0.05em;
 }
 
+/* Accent Color Picker Dropdown */
+.accent-color-container {
+    position: relative;
+    display: inline-block;
+}
+
+.accent-color-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: var(--color-bg);
+    border: var(--border-width) solid var(--color-text);
+    padding: 12px;
+    width: 190px;
+    z-index: 1001;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: opacity var(--transition-speed-fast), transform var(--transition-speed-fast);
+}
+
+.accent-color-dropdown .dropdown-header {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    border-bottom: var(--border-width) solid rgba(var(--color-text-rgb), 0.15);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+    letter-spacing: 0.05em;
+}
+
+.accent-color-dropdown .dropdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+}
+
+.accent-color-dropdown label {
+    font-weight: bold;
+}
+
+.accent-color-dropdown input[type="color"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 22px;
+    background-color: transparent;
+    border: var(--border-width) solid var(--color-text);
+    cursor: pointer;
+    padding: 0;
+}
+
+.accent-color-dropdown input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.accent-color-dropdown input[type="color"]::-webkit-color-swatch {
+    border: none;
+}
+
+.accent-color-dropdown input[type="color"]::-moz-color-swatch {
+    border: none;
+}
+
+.accent-color-dropdown .dropdown-reset-btn {
+    background: none;
+    border: var(--border-width) solid var(--color-signal);
+    color: var(--color-signal);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 6px;
+    cursor: pointer;
+    transition: background-color var(--transition-speed-fast), color var(--transition-speed-fast), border-color var(--transition-speed-fast);
+    text-align: center;
+}
+
+.accent-color-dropdown .dropdown-reset-btn:hover {
+    background-color: var(--color-signal);
+    color: var(--color-bg);
+}
+
+/* SVG Color overrides to support dynamic accent colors in inline SVGs */
+svg [stroke="#E30613"],
+svg [stroke="#e30613"] {
+    stroke: var(--color-signal) !important;
+}
+
+svg [fill="#E30613"],
+svg [fill="#e30613"] {
+    fill: var(--color-signal) !important;
+}
+
 /* LinkedIn Header Button */
 .linkedin-header-btn {
     display: flex;
@@ -1152,6 +1248,158 @@ body.mode-dark {
 .btn-outline:hover {
     background-color: var(--color-text);
     color: var(--color-bg);
+}
+
+/* About Collapsible Disclosures */
+.about-collapsibles {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.about-details {
+    border: var(--border-width) solid var(--color-text);
+    background-color: rgba(var(--color-text-rgb), 0.02);
+    transition: all var(--transition-speed-normal);
+}
+
+.about-details[open] {
+    background-color: rgba(var(--color-text-rgb), 0.04);
+}
+
+.about-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none; /* Hide default arrow */
+    user-select: none;
+    border-bottom: none;
+    transition: background-color var(--transition-speed-fast), color var(--transition-speed-fast);
+}
+
+.about-summary::-webkit-details-marker {
+    display: none; /* Hide default arrow on Safari */
+}
+
+.about-summary:hover {
+    background-color: var(--color-signal);
+    color: #fff;
+}
+
+.about-details[open] .about-summary {
+    border-bottom: var(--border-width) solid var(--color-text);
+}
+
+.details-content {
+    padding: 16px;
+    font-size: 0.85rem;
+    overflow-x: auto; /* Allow horizontal scroll for long lines on small mobile screens */
+}
+
+/* Bucket list content styles */
+.bucket-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.bucket-category-title {
+    color: var(--color-accent);
+    font-weight: bold;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed rgba(var(--color-text-rgb), 0.15);
+    padding-bottom: 4px;
+}
+
+.bucket-list-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bucket-list-items li {
+    display: flex;
+    align-items: center; /* Center checkmarks vertically with text */
+    gap: 8px;
+    opacity: 0.85;
+    white-space: nowrap; /* Prevent text wrapping to double-line */
+}
+
+.bucket-list-items .checkbox {
+    color: var(--color-signal);
+    font-weight: bold;
+    flex-shrink: 0; /* Prevent checkbox compression */
+}
+
+/* Apple Playlist Styles */
+.playlist-intro {
+    opacity: 0.7;
+    margin-bottom: 12px;
+}
+
+.playlist-embed-wrapper {
+    margin-bottom: 12px;
+    border: var(--border-width) solid var(--color-text);
+    background-color: transparent;
+    overflow: hidden;
+    line-height: 0;
+}
+
+.playlist-link-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-top: 1px dashed rgba(var(--color-text-rgb), 0.15);
+    padding-top: 10px;
+}
+
+.playlist-link-row .link-label {
+    opacity: 0.5;
+}
+
+.summary-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Equalizer Bouncing Bars Icon */
+.music-icon-equalizer {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    width: 13px;
+    height: 11px;
+}
+
+.eq-bar {
+    display: inline-block;
+    width: 2px;
+    height: 100%;
+    background-color: var(--color-signal);
+    animation: eq-bounce 0.8s ease-in-out infinite alternate;
+    transform-origin: bottom;
+}
+
+/* Vary animation speeds to look organic */
+.eq-bar.bar-1 { animation-delay: 0.15s; animation-duration: 0.75s; }
+.eq-bar.bar-2 { animation-delay: 0.3s; animation-duration: 0.9s; }
+.eq-bar.bar-3 { animation-delay: 0.0s; animation-duration: 0.65s; }
+.eq-bar.bar-4 { animation-delay: 0.45s; animation-duration: 0.85s; }
+
+/* Invert colors when parent hover changes background to red */
+.about-summary:hover .eq-bar {
+    background-color: #fff;
+}
+
+@keyframes eq-bounce {
+    0% { transform: scaleY(0.18); }
+    100% { transform: scaleY(1.0); }
 }
 
 /* Specs Window */

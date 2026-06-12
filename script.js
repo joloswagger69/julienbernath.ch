@@ -10,7 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
         mouse: { x: 0, y: 0, targetX: 0, targetY: 0 },
         scrollPercent: 0,
         isCustomCursorActive: true,
-        currentMediaIndex: 0
+        currentMediaIndex: 0,
+        gridStyle: parseInt(localStorage.getItem('jb-grid-style') || '0', 10),
+        topoPhase: 0,
+        gridOffset: 0
     };
 
     // Project Data Cache
@@ -625,156 +628,302 @@ media: [
             if (!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 4.1 DRAW COCKPIT HUD RADAR (Center of the screen)
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            
-            radarAngle = (radarAngle + 0.003) % (Math.PI * 2);
-            
-            const strokeColor = state.isDark ? 'rgba(255, 34, 53, 0.035)' : 'rgba(227, 6, 19, 0.035)';
+            const bodyStyle = getComputedStyle(document.body);
+            const sigRGB = bodyStyle.getPropertyValue('--color-signal-rgb').trim() || (state.isDark ? '255, 34, 53' : '227, 6, 19');
+            const strokeColor = `rgba(${sigRGB}, 0.035)`;
             const accentStroke = state.isDark ? 'rgba(224, 154, 95, 0.05)' : 'rgba(200, 117, 51, 0.05)';
             const textColor = state.isDark ? 'rgba(239, 239, 239, 0.12)' : 'rgba(0, 0, 0, 0.12)';
-            
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = 1;
-            
-            // Draw axis crosshairs
-            ctx.beginPath();
-            ctx.moveTo(cx - 380, cy);
-            ctx.lineTo(cx + 380, cy);
-            ctx.moveTo(cx, cy - 380);
-            ctx.lineTo(cx, cy + 380);
-            ctx.stroke();
-            
-            // Draw ticks on crosshairs
-            ctx.beginPath();
-            for (let i = -350; i <= 350; i += 50) {
-                if (i === 0) continue;
-                ctx.moveTo(cx + i, cy - 3);
-                ctx.lineTo(cx + i, cy + 3);
-                ctx.moveTo(cx - 3, cy + i);
-                ctx.lineTo(cx + 3, cy + i);
-            }
-            ctx.stroke();
-            
-            // Inner circle
-            ctx.beginPath();
-            ctx.arc(cx, cy, 100, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Middle dashed circle (copper accent)
-            ctx.save();
-            ctx.strokeStyle = accentStroke;
-            ctx.setLineDash([3, 5]);
-            ctx.beginPath();
-            ctx.arc(cx, cy, 220, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-            
-            // Outer measured circle
-            ctx.beginPath();
-            ctx.arc(cx, cy, 340, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Sweep radar beam
-            ctx.save();
-            ctx.strokeStyle = state.isDark ? 'rgba(255, 34, 53, 0.08)' : 'rgba(227, 6, 19, 0.07)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            ctx.lineTo(cx + Math.cos(radarAngle) * 340, cy + Math.sin(radarAngle) * 340);
-            ctx.stroke();
-            ctx.restore();
-            
-            // Degrees & text info
-            ctx.fillStyle = textColor;
-            ctx.font = '8px Space Mono, monospace';
-            ctx.fillText("N // 000°", cx - 22, cy - 352);
-            ctx.fillText("S // 180°", cx - 22, cy + 360);
-            ctx.fillText("E // 090°", cx + 352, cy + 3);
-            ctx.fillText("W // 270°", cx - 402, cy + 3);
-            ctx.fillText("SYS_RADAR: SCANNING_BEAM", cx - 60, cy - 115);
-            ctx.fillText("SYS_REF: BERNATH.SYS_GRID", cx - 62, cy + 122);
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
 
-            // 4.2 DRAW MESH CONNECTIONS FOR INTERACTIVE NODES
-            const connectionDistance = 75;
-            const mouseRange = 110;
-            const linkColor = state.isDark ? 'rgba(255, 34, 53, 0.08)' : 'rgba(227, 6, 19, 0.08)';
-            
-            // Filter nodes near the mouse cursor to optimize performance
-            const activeNodes = gridNodes.filter(node => {
-                const dx = state.mouse.targetX - node.x;
-                const dy = state.mouse.targetY - node.y;
-                return Math.hypot(dx, dy) < mouseRange;
-            });
-            
-            ctx.strokeStyle = linkColor;
-            ctx.lineWidth = 0.5;
-            for (let i = 0; i < activeNodes.length; i++) {
-                for (let j = i + 1; j < activeNodes.length; j++) {
-                    const dist = Math.hypot(activeNodes[i].x - activeNodes[j].x, activeNodes[i].y - activeNodes[j].y);
-                    if (dist < connectionDistance) {
+            if (state.gridStyle === 0) {
+                // ==========================================
+                // DESIGN 0: RADAR GRID (ORIGINAL)
+                // ==========================================
+                radarAngle = (radarAngle + 0.003) % (Math.PI * 2);
+
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1;
+                
+                // Draw axis crosshairs
+                ctx.beginPath();
+                ctx.moveTo(cx - 380, cy);
+                ctx.lineTo(cx + 380, cy);
+                ctx.moveTo(cx, cy - 380);
+                ctx.lineTo(cx, cy + 380);
+                ctx.stroke();
+                
+                // Draw ticks on crosshairs
+                ctx.beginPath();
+                for (let i = -350; i <= 350; i += 50) {
+                    if (i === 0) continue;
+                    ctx.moveTo(cx + i, cy - 3);
+                    ctx.lineTo(cx + i, cy + 3);
+                    ctx.moveTo(cx - 3, cy + i);
+                    ctx.lineTo(cx + 3, cy + i);
+                }
+                ctx.stroke();
+                
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(cx, cy, 100, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Middle dashed circle (copper accent)
+                ctx.save();
+                ctx.strokeStyle = accentStroke;
+                ctx.setLineDash([3, 5]);
+                ctx.beginPath();
+                ctx.arc(cx, cy, 220, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+                
+                // Outer measured circle
+                ctx.beginPath();
+                ctx.arc(cx, cy, 340, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Sweep radar beam
+                ctx.save();
+                ctx.strokeStyle = `rgba(${sigRGB}, ${state.isDark ? '0.08' : '0.07'})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(radarAngle) * 340, cy + Math.sin(radarAngle) * 340);
+                ctx.stroke();
+                ctx.restore();
+                
+                // Degrees & text info
+                ctx.fillStyle = textColor;
+                ctx.font = '8px Space Mono, monospace';
+                ctx.fillText("N // 000°", cx - 22, cy - 352);
+                ctx.fillText("S // 180°", cx - 22, cy + 360);
+                ctx.fillText("E // 090°", cx + 352, cy + 3);
+                ctx.fillText("W // 270°", cx - 402, cy + 3);
+                ctx.fillText("SYS_RADAR: SCANNING_BEAM", cx - 60, cy - 115);
+                ctx.fillText("SYS_REF: BERNATH.SYS_GRID", cx - 62, cy + 122);
+
+                // DRAW MESH CONNECTIONS FOR INTERACTIVE NODES
+                const connectionDistance = 75;
+                const mouseRange = 110;
+                const linkColor = `rgba(${sigRGB}, 0.08)`;
+                
+                const activeNodes = gridNodes.filter(node => {
+                    const dx = state.mouse.targetX - node.x;
+                    const dy = state.mouse.targetY - node.y;
+                    return Math.hypot(dx, dy) < mouseRange;
+                });
+                
+                ctx.strokeStyle = linkColor;
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < activeNodes.length; i++) {
+                    for (let j = i + 1; j < activeNodes.length; j++) {
+                        const dist = Math.hypot(activeNodes[i].x - activeNodes[j].x, activeNodes[i].y - activeNodes[j].y);
+                        if (dist < connectionDistance) {
+                            ctx.beginPath();
+                            ctx.moveTo(activeNodes[i].x, activeNodes[i].y);
+                            ctx.lineTo(activeNodes[j].x, activeNodes[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // DRAW NODES AS SWISS CROSSES
+                const crossColor = state.isDark ? 'rgba(239, 239, 239, 0.22)' : 'rgba(0, 0, 0, 0.18)';
+                ctx.lineWidth = 0.9;
+                
+                const mouseInteractionRadius = 120;
+                const glowRadius = 140;
+                
+                gridNodes.forEach(node => {
+                    node.floatSeed += 0.008;
+                    const floatOffsetVal = Math.sin(node.floatSeed) * 1.5;
+                    let targetX = node.origX + floatOffsetVal;
+                    let targetY = node.origY + floatOffsetVal;
+                    
+                    const dx = state.mouse.targetX - node.x;
+                    const dy = state.mouse.targetY - node.y;
+                    const dist = Math.hypot(dx, dy);
+                    
+                    if (dist < mouseInteractionRadius && state.isCustomCursorActive) {
+                        const force = (mouseInteractionRadius - dist) / mouseInteractionRadius;
+                        const angle = Math.atan2(dy, dx);
+                        targetX -= Math.cos(angle) * force * 15;
+                        targetY -= Math.sin(angle) * force * 15;
+                    }
+                    
+                    node.x += (targetX - node.x) * 0.12;
+                    node.y += (targetY - node.y) * 0.12;
+                    
+                    if (dist < glowRadius && state.isCustomCursorActive) {
+                        const t = 1 - (dist / glowRadius);
+                        const alpha = 0.25 + t * 0.7;
+                        ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
+                        ctx.shadowColor  = `rgba(${sigRGB}, ${t * 0.85})`;
+                        ctx.shadowBlur   = t * 14;
+                    } else {
+                        ctx.strokeStyle = crossColor;
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur  = 0;
+                    }
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(node.x - 2.5, node.y);
+                    ctx.lineTo(node.x + 2.5, node.y);
+                    ctx.moveTo(node.x, node.y - 2.5);
+                    ctx.lineTo(node.x, node.y + 2.5);
+                    ctx.stroke();
+                });
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+
+            } else if (state.gridStyle === 1) {
+                // ==========================================
+                // DESIGN 1: SPINNENNETZ (SPIDERWEB / CONSTELLATION)
+                // ==========================================
+                const webRange = 85;
+                const mouseWebRange = 160;
+                
+                // Let nodes float with larger seeds for organic movement
+                gridNodes.forEach(node => {
+                    node.floatSeed += 0.003;
+                    const floatX = Math.sin(node.floatSeed * 1.5) * 12;
+                    const floatY = Math.cos(node.floatSeed * 1.2) * 12;
+                    let targetX = node.origX + floatX;
+                    let targetY = node.origY + floatY;
+
+                    // Repelled by mouse
+                    const dx = state.mouse.targetX - node.x;
+                    const dy = state.mouse.targetY - node.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 130 && state.isCustomCursorActive) {
+                        const force = (130 - dist) / 130;
+                        const angle = Math.atan2(dy, dx);
+                        targetX -= Math.cos(angle) * force * 22;
+                        targetY -= Math.sin(angle) * force * 22;
+                    }
+
+                    node.x += (targetX - node.x) * 0.08;
+                    node.y += (targetY - node.y) * 0.08;
+                });
+
+                // Draw web connections
+                ctx.lineWidth = 0.4;
+                for (let i = 0; i < gridNodes.length; i += 2) { // step by 2 to keep performance high
+                    const nodeA = gridNodes[i];
+                    
+                    // Connect to nearby nodes
+                    for (let j = i + 1; j < gridNodes.length; j += 3) {
+                        const nodeB = gridNodes[j];
+                        const dist = Math.hypot(nodeA.x - nodeB.x, nodeA.y - nodeB.y);
+                        if (dist < webRange) {
+                            const alpha = (1 - (dist / webRange)) * 0.085;
+                            ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
+                            ctx.beginPath();
+                            ctx.moveTo(nodeA.x, nodeA.y);
+                            ctx.lineTo(nodeB.x, nodeB.y);
+                            ctx.stroke();
+                        }
+                    }
+
+                    // Connect directly to cursor if close (Spiderweb center effect)
+                    if (state.isCustomCursorActive) {
+                        const distToMouse = Math.hypot(state.mouse.targetX - nodeA.x, state.mouse.targetY - nodeA.y);
+                        if (distToMouse < mouseWebRange) {
+                            const alpha = (1 - (distToMouse / mouseWebRange)) * 0.16;
+                            ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
+                            ctx.lineWidth = 0.55;
+                            ctx.beginPath();
+                            ctx.moveTo(nodeA.x, nodeA.y);
+                            ctx.lineTo(state.mouse.targetX, state.mouse.targetY);
+                            ctx.stroke();
+                            ctx.lineWidth = 0.4;
+                        }
+                    }
+                }
+
+                // Draw dots/particles
+                ctx.fillStyle = state.isDark ? `rgba(${sigRGB}, 0.28)` : `rgba(${sigRGB}, 0.22)`;
+                gridNodes.forEach(node => {
+                    const distToMouse = Math.hypot(state.mouse.targetX - node.x, state.mouse.targetY - node.y);
+                    ctx.beginPath();
+                    if (distToMouse < 80 && state.isCustomCursorActive) {
+                        // Highlight nodes near mouse
+                        ctx.fillStyle = `rgba(${sigRGB}, 0.7)`;
+                        ctx.arc(node.x, node.y, 2.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = state.isDark ? `rgba(${sigRGB}, 0.28)` : `rgba(${sigRGB}, 0.22)`;
+                    } else {
+                        ctx.arc(node.x, node.y, 1.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+
+            } else if (state.gridStyle === 2) {
+                // ==========================================
+                // DESIGN 2: HEXAGONAL GRID (CYBER BEEHIVE)
+                // ==========================================
+                const hexRadius = 42;
+                const hexWidth = hexRadius * Math.sqrt(3);
+                const hexHeight = hexRadius * 1.5;
+                const mouseHexRange = 150;
+                
+                // Increased line width for cleaner visibility
+                ctx.lineWidth = 0.8;
+                
+                let timeSeed = Date.now() * 0.0008;
+
+                for (let row = 0; row * hexHeight < canvas.height + hexRadius; row++) {
+                    const y = row * hexHeight;
+                    const xOffset = (row % 2) * (hexWidth / 2);
+                    for (let col = 0; col * hexWidth + xOffset < canvas.width + hexRadius; col++) {
+                        const x = col * hexWidth + xOffset;
+                        
+                        // Calculate mouse interaction
+                        const dx = state.mouse.targetX - x;
+                        const dy = state.mouse.targetY - y;
+                        const dist = Math.hypot(dx, dy);
+                        
+                        // Dynamic organic pulse
+                        const pulse = Math.sin(timeSeed + row * 0.15 + col * 0.25) * 0.5 + 0.5;
+                        
+                        // Substantially increased base opacity (from ~0.03 to ~0.08)
+                        let opacity = 0.06 + pulse * 0.05;
+                        let drawAccent = false;
+
+                        if (dist < mouseHexRange && state.isCustomCursorActive) {
+                            const force = (mouseHexRange - dist) / mouseHexRange;
+                            // Highly enhanced interactive hover brightness
+                            opacity += force * 0.22;
+                            if (force > 0.6) {
+                                drawAccent = true;
+                            }
+                        }
+
+                        ctx.strokeStyle = drawAccent ? `rgba(${state.isDark ? '224, 154, 95' : '200, 117, 51'}, ${opacity})` : `rgba(${sigRGB}, ${opacity})`;
+                        
+                        // Draw hexagon
                         ctx.beginPath();
-                        ctx.moveTo(activeNodes[i].x, activeNodes[i].y);
-                        ctx.lineTo(activeNodes[j].x, activeNodes[j].y);
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (Math.PI / 3) * i;
+                            const hx = x + hexRadius * Math.cos(angle);
+                            const hy = y + hexRadius * Math.sin(angle);
+                            if (i === 0) ctx.moveTo(hx, hy);
+                            else ctx.lineTo(hx, hy);
+                        }
+                        ctx.closePath();
                         ctx.stroke();
+
+                        // Occasional tiny center dots in hexagons (also increased visibility)
+                        if (pulse > 0.88 && dist > mouseHexRange) {
+                            ctx.fillStyle = `rgba(${sigRGB}, 0.25)`;
+                            ctx.beginPath();
+                            ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                     }
                 }
             }
-
-            // 4.3 DRAW NODES AS SWISS CROSSES
-            const crossColor = state.isDark ? 'rgba(239, 239, 239, 0.22)' : 'rgba(0, 0, 0, 0.18)';
-            ctx.lineWidth = 0.9;
-            
-            const mouseInteractionRadius = 120;
-            const glowRadius = 140;
-            const sigRGB = state.isDark ? '255, 34, 53' : '227, 6, 19';
-            
-            gridNodes.forEach(node => {
-                node.floatSeed += 0.008;
-                const floatOffsetVal = Math.sin(node.floatSeed) * 1.5;
-                let targetX = node.origX + floatOffsetVal;
-                let targetY = node.origY + floatOffsetVal;
-                
-                const dx = state.mouse.targetX - node.x;
-                const dy = state.mouse.targetY - node.y;
-                const dist = Math.hypot(dx, dy);
-                
-                if (dist < mouseInteractionRadius && state.isCustomCursorActive) {
-                    const force = (mouseInteractionRadius - dist) / mouseInteractionRadius;
-                    const angle = Math.atan2(dy, dx);
-                    targetX -= Math.cos(angle) * force * 15;
-                    targetY -= Math.sin(angle) * force * 15;
-                }
-                
-                node.x += (targetX - node.x) * 0.12;
-                node.y += (targetY - node.y) * 0.12;
-                
-                // Red glow effect for nodes near the cursor
-                if (dist < glowRadius && state.isCustomCursorActive) {
-                    const t = 1 - (dist / glowRadius); // 0..1, strongest at center
-                    const alpha = 0.25 + t * 0.7;
-                    ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
-                    ctx.shadowColor  = `rgba(${sigRGB}, ${t * 0.85})`;
-                    ctx.shadowBlur   = t * 14;
-                } else {
-                    ctx.strokeStyle = crossColor;
-                    ctx.shadowColor = 'transparent';
-                    ctx.shadowBlur  = 0;
-                }
-                
-                // Draw a small Swiss cross (+)
-                ctx.beginPath();
-                ctx.moveTo(node.x - 2.5, node.y);
-                ctx.lineTo(node.x + 2.5, node.y);
-                ctx.moveTo(node.x, node.y - 2.5);
-                ctx.lineTo(node.x, node.y + 2.5);
-                ctx.stroke();
-            });
-            
-            // Always reset shadow after node pass to avoid bleeding into other draw calls
-            ctx.shadowBlur = 0;
-            ctx.shadowColor = 'transparent';
 
             requestAnimationFrame(drawGridMatrix);
         }
@@ -782,11 +931,18 @@ media: [
     }
 
 
-    /* --- 5. DARK MODE TOGGLE --- */
+    /* --- 5. DARK MODE TOGGLE & ACCENT COLOR PICKER --- */
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const iconMoon = document.getElementById('icon-moon');
     const iconSun = document.getElementById('icon-sun');
     const toggleLabel = darkModeToggle?.querySelector('.toggle-label');
+
+    // Accent Color Picker Elements
+    const accentColorContainer = document.querySelector('.accent-color-container');
+    const accentColorBtn = document.getElementById('accent-color-btn');
+    const accentColorDropdown = document.getElementById('accent-color-dropdown');
+    const accentColorInput = document.getElementById('accent-color-input');
+    const accentColorReset = document.getElementById('accent-color-reset');
 
     function applyDarkMode(isDark) {
         state.isDark = isDark;
@@ -797,6 +953,12 @@ media: [
         if (toggleLabel) toggleLabel.textContent = isDark ? 'LIGHT' : 'DARK';
         // Persist preference
         localStorage.setItem('jb-dark-mode', isDark ? '1' : '0');
+
+        // Update color input swatch if no custom color is active
+        const savedColor = localStorage.getItem('jb-accent-color');
+        if (!savedColor && accentColorInput) {
+            accentColorInput.value = isDark ? '#FF2235' : '#E30613';
+        }
     }
 
     if (darkModeToggle) {
@@ -812,6 +974,111 @@ media: [
     } else {
         applyDarkMode(false);
     }
+
+    // Hex to RGB string converter
+    function hexToRgbString(hex) {
+        const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
+    }
+
+    // Apply custom accent color
+    function applyAccentColor(color) {
+        if (color) {
+            document.body.style.setProperty('--color-signal', color);
+            const rgb = hexToRgbString(color);
+            if (rgb) {
+                document.body.style.setProperty('--color-signal-rgb', rgb);
+            }
+            localStorage.setItem('jb-accent-color', color);
+            if (accentColorInput) {
+                accentColorInput.value = color;
+            }
+        } else {
+            // Reset to stylesheet defaults
+            document.body.style.removeProperty('--color-signal');
+            document.body.style.removeProperty('--color-signal-rgb');
+            localStorage.removeItem('jb-accent-color');
+            if (accentColorInput) {
+                accentColorInput.value = state.isDark ? '#FF2235' : '#E30613';
+            }
+        }
+    }
+
+    // Toggle Dropdown Visibility
+    if (accentColorBtn && accentColorDropdown) {
+        accentColorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = accentColorDropdown.style.display === 'flex';
+            accentColorDropdown.style.display = isOpen ? 'none' : 'flex';
+        });
+        
+        // Prevent closing dropdown when clicking inside it
+        accentColorDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    // Color Input Event Handler
+    if (accentColorInput) {
+        accentColorInput.addEventListener('input', (e) => {
+            applyAccentColor(e.target.value);
+        });
+        accentColorInput.addEventListener('change', (e) => {
+            applyAccentColor(e.target.value);
+        });
+    }
+
+    // Reset Button Event Handler
+    if (accentColorReset) {
+        accentColorReset.addEventListener('click', () => {
+            applyAccentColor(null);
+        });
+    }
+
+    // Close Dropdown on Outside Click
+    document.addEventListener('click', () => {
+        if (accentColorDropdown && accentColorDropdown.style.display === 'flex') {
+            accentColorDropdown.style.display = 'none';
+        }
+    });
+
+    // Load saved accent color on page load
+    const savedAccentColor = localStorage.getItem('jb-accent-color');
+    if (savedAccentColor) {
+        applyAccentColor(savedAccentColor);
+    } else {
+        applyAccentColor(null);
+    }
+
+
+    /* --- 5b. BACKGROUND GRID STYLE SELECTOR --- */
+    const gridStyleBtn = document.getElementById('grid-style-btn');
+    const gridStyleLabel = document.getElementById('grid-style-label');
+    const gridStyleNames = ['RADAR', 'WEB', 'HEX'];
+
+    function applyGridStyle(styleIdx) {
+        // Sanitize style index for newly simplified list
+        if (styleIdx < 0 || styleIdx >= gridStyleNames.length || isNaN(styleIdx)) {
+            styleIdx = 0;
+        }
+        state.gridStyle = styleIdx;
+        localStorage.setItem('jb-grid-style', styleIdx);
+        if (gridStyleLabel) {
+            gridStyleLabel.textContent = gridStyleNames[styleIdx];
+        }
+    }
+
+    if (gridStyleBtn) {
+        gridStyleBtn.addEventListener('click', () => {
+            const nextStyle = (state.gridStyle + 1) % gridStyleNames.length;
+            applyGridStyle(nextStyle);
+        });
+    }
+
+    // Load saved grid style on page load
+    applyGridStyle(state.gridStyle);
 
 
     /* --- 6. SEARCH BAR + QUICK NAVIGATION (opens command palette dialog) --- */
@@ -1436,7 +1703,7 @@ media: [
         typewriterEffect(twLine1, 'JULIEN', 90, () => {
             // Brief pause between lines
             setTimeout(() => {
-                typewriterEffect(twLine2, 'BERNATH', 90, null);
+                typewriterEffect(twLine2, 'BERNATH', 90, () => {});
             }, 200);
         });
     }, twDelay);
@@ -1597,6 +1864,16 @@ media: [
             }, 400);
         });
     }
+
+    /* --- 15. ABOUT DETAILS TOGGLE HANDLER --- */
+    document.querySelectorAll('.about-details').forEach(details => {
+        details.addEventListener('toggle', () => {
+            const toggleText = details.querySelector('.summary-toggle');
+            if (toggleText) {
+                toggleText.textContent = details.open ? '[ CLOSE ]' : '[ OPEN ]';
+            }
+        });
+    });
 
 });
 

@@ -84,6 +84,42 @@
                 </svg>
                 <span class="monospace linkedin-label hide-mobile">LI</span>
             </a>
+            <!-- Accent Color Controller -->
+            <div class="accent-color-container">
+                <button id="accent-color-btn" class="dark-mode-btn" title="Akzentfarbe umschalten"
+                    aria-label="Akzentfarbe umschalten">
+                    <svg class="color-wheel-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        style="width:14px; height:14px; flex-shrink:0;">
+                        <circle cx="12" cy="12" r="10" />
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        <path d="M2 12h20" />
+                    </svg>
+                    <span class="monospace toggle-label hide-mobile">COLOR</span>
+                </button>
+                <div id="accent-color-dropdown" class="accent-color-dropdown monospace" style="display: none;">
+                    <div class="dropdown-header">> AKZENT_FARBE</div>
+                    <div class="dropdown-row">
+                        <label for="accent-color-input">Wählen:</label>
+                        <input type="color" id="accent-color-input" value="#E30613">
+                    </div>
+                    <button id="accent-color-reset" class="dropdown-reset-btn">[ RESET_RED ]</button>
+                </div>
+            </div>
+            <!-- Grid Style Switcher -->
+            <button id="grid-style-btn" class="dark-mode-btn" title="Hintergrund-Design umschalten"
+                aria-label="Hintergrund-Design umschalten">
+                <svg class="grid-style-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    style="width:14px; height:14px; flex-shrink:0;">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                <span class="monospace toggle-label hide-mobile">GRID: <span id="grid-style-label">RADAR</span></span>
+            </button>
             <!-- Dark Mode Toggle -->
             <button id="dark-mode-toggle" class="dark-mode-btn" title="Dark Mode umschalten"
                 aria-label="Dark Mode umschalten">
@@ -193,12 +229,102 @@
                 <div class="split-col-left">
                     <h2 class="section-title">Kreativität - Swiss Made</h2>
                     <div class="about-text">
-                        <p class="lead">Ich bin Julien. Kreativ unterwegs zwischen Design, Foto, Video und digitalen Projekten. Mich interessiert, wie man Ideen sichtbar macht, ob durch ein starkes Bild, ein sauberes Layout oder einen guten Schnitt.</p>
-                        <p>Ich bin gerne draussen, entdecke neue Orte und halte Momente fotografisch fest. Berge, Städte, Reisen, Lichtstimmungen und kleine Details im Alltag inspirieren mich.</p>
-                        <p>Mir ist es wichtig, dass Gestaltung ehrlich wirkt. Nicht überladen, nicht künstlich, sondern klar, durchdacht und mit Gefühl für Atmosphäre. Ich arbeite gerne an Projekten, bei denen Bild, Text, Bewegung und Technik zusammenkommen und am Ende etwas entsteht, das Persönlichkeit hat.</p>
+                        <p class="lead">Ich bin Julien. Kreativ unterwegs zwischen Design, Foto, Video und digitalen
+                            Projekten. Mich interessiert, wie man Ideen sichtbar macht, ob durch ein starkes Bild, ein
+                            sauberes Layout oder einen guten Schnitt.</p>
+                        <p>Ich bin gerne draussen, entdecke neue Orte und halte Momente fotografisch fest. Berge,
+                            Städte, Reisen, Lichtstimmungen und kleine Details im Alltag inspirieren mich.</p>
+                        <p>Mir ist es wichtig, dass Gestaltung ehrlich wirkt. Nicht überladen, nicht künstlich, sondern
+                            klar, durchdacht und mit Gefühl für Atmosphäre. Ich arbeite gerne an Projekten, bei denen
+                            Bild, Text, Bewegung und Technik zusammenkommen und am Ende etwas entsteht, das
+                            Persönlichkeit hat.</p>
                         <div class="button-row">
                             <a href="#kontakt" class="btn btn-signal monospace">KONTAKTIERE MICH</a>
                             <a href="#projekte" class="btn btn-outline monospace">ARBEITEN ANSEHEN</a>
+                        </div>
+
+                        <!-- High-Tech Collapsible Accordions -->
+                        <div class="about-collapsibles">
+                            <!-- Bucket List -->
+                            <details class="about-details monospace">
+                                <summary class="about-summary">
+                                    <span>[ BUCKET_LIST.TXT ]</span>
+                                    <span class="summary-toggle">[ OPEN ]</span>
+                                </summary>
+                                <div class="details-content">
+                                    <div class="bucket-grid">
+                                        <div class="bucket-col">
+                                            <div class="bucket-category-title">// REISEN & ORTE</div>
+                                            <ul class="bucket-list-items">
+                                                <li><span class="checkbox">[ ]</span> Kasachstan</li>
+                                                <li><span class="checkbox">[ ]</span> Hainan</li>
+                                                <li><span class="checkbox">[ ]</span> Weihnachtsinsel</li>
+                                                <li><span class="checkbox">[ ]</span> Falklandinseln</li>
+                                                <li><span class="checkbox">[ ]</span> Island</li>
+                                                <li><span class="checkbox">[ ]</span> Färöer Inseln</li>
+                                                <li><span class="checkbox">[ ]</span> Grönland</li>
+                                                <li><span class="checkbox">[ ]</span> Neufundland</li>
+                                                <li><span class="checkbox">[ ]</span> Spitzbergen</li>
+                                                <li><span class="checkbox">[ ]</span> Hebriden</li>
+                                                <li><span class="checkbox">[ ]</span> Patagonien</li>
+                                                <li><span class="checkbox">[ ]</span> ... und vieles mehr</li>
+                                            </ul>
+                                        </div>
+                                        <div class="bucket-col">
+                                            <div class="bucket-category-title">// AKTIVITÄTEN</div>
+                                            <ul class="bucket-list-items">
+                                                <li><span class="checkbox">[ ]</span> 50km Megamarsch</li>
+                                                <li><span class="checkbox">[ ]</span> Ponta do Pico besteigen</li>
+                                                <li><span class="checkbox">[ ]</span> Wildcampen in Schottland</li>
+                                                <li><span class="checkbox">[ ]</span> Von Kiruna nach Narvik</li>
+                                                <li><span class="checkbox">[ ]</span> Barrhorn besteigen</li>
+                                                <li><span class="checkbox">[ ]</span> Die ganze Welt entdecken</li>
+                                            </ul>
+                                        </div>
+                                        <div class="bucket-col">
+                                            <div class="bucket-category-title">// ANSCHAFFUNGEN</div>
+                                            <ul class="bucket-list-items">
+                                                <li><span class="checkbox">[ ]</span> SONY FX30</li>
+                                                <li><span class="checkbox">[ ]</span> ganz weisse Schuhe</li>
+                                                <li><span class="checkbox">[ ]</span> Täglich ein
+                                                    Tomaten-Mozzarella-Sandwich</li>
+                                                <li><span class="checkbox">[ ]</span> Red Bull Sugarfree</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <!-- Apple Music Playlist -->
+                            <details class="about-details monospace">
+                                <summary class="about-summary">
+                                    <span class="summary-title-wrapper">
+                                        <span class="music-icon-equalizer">
+                                            <span class="eq-bar bar-1"></span>
+                                            <span class="eq-bar bar-2"></span>
+                                            <span class="eq-bar bar-3"></span>
+                                            <span class="eq-bar bar-4"></span>
+                                        </span>
+                                        [ PLAYLIST_SOUND.WAV ]
+                                    </span>
+                                    <span class="summary-toggle">[ OPEN ]</span>
+                                </summary>
+                                <div class="details-content">
+                                    <p class="playlist-intro">// SOUNDTRACK ZUM ARBEITEN: MEINE FAVORITEN</p>
+                                    <div class="playlist-embed-wrapper">
+                                        <iframe allow="autoplay *; encrypted-media *;" frameborder="0" height="450"
+                                            style="width:100%;max-width:660px;overflow:hidden;background:transparent;border:none;"
+                                            sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
+                                            src="https://embed.music.apple.com/ch/playlist/juliens-favorites/pl.u-kExjC7PezJ40"></iframe>
+                                    </div>
+                                    <div class="playlist-link-row">
+                                        <span class="link-label">DIREKTLINK:</span>
+                                        <a href="https://music.apple.com/ch/playlist/juliens-favorites/pl.u-kExjC7PezJ40"
+                                            target="_blank" rel="noopener noreferrer" class="text-signal">[
+                                            APPLE_MUSIC_PLAYLIST ]</a>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
                 </div>
@@ -212,7 +338,8 @@
                         </div>
                         <!-- Webcam Viewport -->
                         <div class="webcam-viewport">
-                            <img src="assets/images/about-me/me-1.jpg" alt="Julien Bernath Webcam Feed" id="webcam-image">
+                            <img src="assets/images/about-me/me-1.jpg" alt="Julien Bernath Webcam Feed"
+                                id="webcam-image">
                             <div class="webcam-overlay">
                                 <span class="cam-label">CAM_01</span>
                             </div>
@@ -297,7 +424,8 @@
                                 <h3 class="project-title">Fotoserie EHC Kloten</h3>
                                 <span class="arrow-icon">[↗]</span>
                             </div>
-                            <p class="project-desc">Dynamische Action- und Reportagefotos eines Heimspiels des EHC Kloten
+                            <p class="project-desc">Dynamische Action- und Reportagefotos eines Heimspiels des EHC
+                                Kloten
                                 in der Swiss Arena.</p>
                             <div class="project-meta monospace">
                                 <span>#KLOTEN</span> <span>#HOCKEY</span> <span>#ACTION-PHOTO</span>
@@ -333,7 +461,8 @@
                                 <h3 class="project-title">TikTok-Video EHC Kloten</h3>
                                 <span class="arrow-icon">[↗]</span>
                             </div>
-                            <p class="project-desc">Energetisches TikTok für den offiziellen TikTok-Kanal des EHC Kloten,
+                            <p class="project-desc">Energetisches TikTok für den offiziellen TikTok-Kanal des EHC
+                                Kloten,
                                 optimiert für mobile Interaktion.</p>
                             <div class="project-meta monospace">
                                 <span>#TIKTOK</span> <span>#VIDEO-EDITING</span> <span>#CREATIVE-CUT</span>
@@ -373,7 +502,7 @@
                                 <h3 class="project-title">Fotoserie EV Zug Damen</h3>
                                 <span class="arrow-icon">[↗]</span>
                             </div>
-                            <p class="project-desc">Fotografische und filmische  Begleitung über das Damen-Team des EV
+                            <p class="project-desc">Fotografische und filmische Begleitung über das Damen-Team des EV
                                 Zug auf dem Eis im Playoff-Final gegen die SCB-Damen.</p>
                             <div class="project-meta monospace">
                                 <span>#EVZ-DAMEN</span> <span>#ICE-HOCKEY</span> <span>#REPORTAGE</span>
@@ -560,7 +689,8 @@
                                 <h3 class="project-title">Vertiefungsarbeit "ITSON"</h3>
                                 <span class="arrow-icon">[↗]</span>
                             </div>
-                            <p class="project-desc">Vertiefungsarbeit über die Ruhe und Schönheit der Schweizer Natur.</p>
+                            <p class="project-desc">Vertiefungsarbeit über die Ruhe und Schönheit der Schweizer Natur.
+                            </p>
                             <div class="project-meta monospace">
                                 <span>#VIDEO-PRODUCTION</span> <span>#CONCEPT</span> <span>#UI-UX-SYSTEM</span>
                             </div>
@@ -684,13 +814,17 @@
                         </div>
                         <div class="project-visual bg-pattern-4">
                             <svg class="tech-graphic" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="30" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                                <rect x="150" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                                <rect x="270" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                                <line x1="30" y1="60" x2="370" y2="60" stroke="#000" stroke-width="1"/>
-                                <circle cx="80" cy="100" r="15" fill="none" stroke="#E30613" stroke-width="2"/>
-                                <polygon points="190,90 210,100 190,110" fill="#E30613"/>
-                                <rect x="290" y="85" width="60" height="30" fill="none" stroke="#E30613" stroke-width="1.5"/>
+                                <rect x="30" y="30" width="100" height="140" fill="none" stroke="#000"
+                                    stroke-width="1.5" />
+                                <rect x="150" y="30" width="100" height="140" fill="none" stroke="#000"
+                                    stroke-width="1.5" />
+                                <rect x="270" y="30" width="100" height="140" fill="none" stroke="#000"
+                                    stroke-width="1.5" />
+                                <line x1="30" y1="60" x2="370" y2="60" stroke="#000" stroke-width="1" />
+                                <circle cx="80" cy="100" r="15" fill="none" stroke="#E30613" stroke-width="2" />
+                                <polygon points="190,90 210,100 190,110" fill="#E30613" />
+                                <rect x="290" y="85" width="60" height="30" fill="none" stroke="#E30613"
+                                    stroke-width="1.5" />
                                 <text x="35" y="45" font-family="monospace" font-size="8" fill="#000">IMG_POOL</text>
                                 <text x="155" y="45" font-family="monospace" font-size="8" fill="#000">YT_STREAM</text>
                                 <text x="275" y="45" font-family="monospace" font-size="8" fill="#000">LAYOUT.EXE</text>
@@ -702,7 +836,8 @@
                                 <h3 class="project-title">Sonstige Arbeiten</h3>
                                 <span class="arrow-icon">[↗]</span>
                             </div>
-                            <p class="project-desc">Kreative Vielfalt: Diverse Grafikdesigns, Fotografie-Pools und gestalterische Layout-Experimente.</p>
+                            <p class="project-desc">Kreative Vielfalt: Diverse Grafikdesigns, Fotografie-Pools und
+                                gestalterische Layout-Experimente.</p>
                             <div class="project-meta monospace">
                                 <span>#MIXED</span> <span>#GRAPHICS</span> <span>#LAYOUTS</span>
                             </div>
@@ -785,7 +920,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_PREMIERE_PRO.EXE</span></div>
                                 <div class="widget-visual" data-percent="100">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 100%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 100%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">100%</span>
                                 </div>
@@ -802,7 +939,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_LIGHTROOM.EXE</div>
                                 <div class="widget-visual" data-percent="90">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 90%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 90%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">90%</span>
                                 </div>
@@ -819,7 +958,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_PHOTOSHOP.EXE</div>
                                 <div class="widget-visual" data-percent="85">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 85%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 85%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">85%</span>
                                 </div>
@@ -836,7 +977,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_ILLUSTRATOR.EXE</div>
                                 <div class="widget-visual" data-percent="80">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 80%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 80%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">80%</span>
                                 </div>
@@ -853,7 +996,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_INDESIGN.EXE</div>
                                 <div class="widget-visual" data-percent="80">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 80%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 80%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">80%</span>
                                 </div>
@@ -870,7 +1015,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_AFTER_EFFECTS.EXE</div>
                                 <div class="widget-visual" data-percent="75">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 75%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 75%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">75%</span>
                                 </div>
@@ -887,7 +1034,9 @@
                                 <div class="widget-sys-name monospace">CANVA_SYSTEM.SYS</div>
                                 <div class="widget-visual" data-percent="70">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 70%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 70%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">70%</span>
                                 </div>
@@ -904,7 +1053,9 @@
                                 <div class="widget-sys-name monospace">ADOBE_AUDITION.EXE</div>
                                 <div class="widget-visual" data-percent="50">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 50%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 50%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">50%</span>
                                 </div>
@@ -921,7 +1072,9 @@
                                 <div class="widget-sys-name monospace">BLENDER_3D.EXE</div>
                                 <div class="widget-visual" data-percent="5">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 5%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 5%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">5%</span>
                                 </div>
@@ -951,7 +1104,9 @@
                                 <div class="widget-sys-name monospace">FILMEN_RECORDING.RAW</div>
                                 <div class="widget-visual" data-percent="90">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 90%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 90%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">90%</span>
                                 </div>
@@ -968,7 +1123,9 @@
                                 <div class="widget-sys-name monospace">FOTOGRAFIEREN_OPTICS.RAW</div>
                                 <div class="widget-visual" data-percent="80">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 80%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 80%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">80%</span>
                                 </div>
@@ -998,7 +1155,9 @@
                                 <div class="widget-sys-name monospace">SOCIAL_MEDIA_STRATEGY.NET</div>
                                 <div class="widget-visual" data-percent="99">
                                     <div class="bar-track">
-                                        <div class="bar-fill-indicator" style="--percent: 99%;"><div class="bar-shimmer"></div></div>
+                                        <div class="bar-fill-indicator" style="--percent: 99%;">
+                                            <div class="bar-shimmer"></div>
+                                        </div>
                                     </div>
                                     <span class="widget-stat monospace">99%</span>
                                 </div>
@@ -1141,12 +1300,9 @@
 
         </main>
 
-        <!-- Footer -->
         <footer id="main-footer" class="monospace">
             <div class="footer-left">
                 <span>© 2026 JULIEN BERNATH</span>
-                <span class="separator">//</span>
-                <span>SWISS MEDIAMATIKER PORTFOLIO</span>
             </div>
             <div class="footer-right">
                 <span>COORDS_TRACKER: ACTIVE</span>
@@ -1221,12 +1377,14 @@
             <div class="modal-grid">
                 <div class="modal-visual-panel" id="modal-project-visual">
                     <button id="modal-media-prev-btn" class="modal-media-nav-btn prev" aria-label="Vorheriges Bild">
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5"
+                            fill="none">
                             <polyline points="15 18 9 12 15 6"></polyline>
                         </svg>
                     </button>
                     <button id="modal-media-next-btn" class="modal-media-nav-btn next" aria-label="Nächstes Bild">
-                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5"
+                            fill="none">
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </button>
@@ -1346,7 +1504,8 @@
 
                 <h3>9. Änderungen</h3>
                 <p>
-                    Diese Datenschutzerklärung kann angepasst werden, wenn sich die Website, die verwendeten Dienste oder
+                    Diese Datenschutzerklärung kann angepasst werden, wenn sich die Website, die verwendeten Dienste
+                    oder
                     die rechtlichen Anforderungen ändern.
                 </p>
 
@@ -1373,7 +1532,7 @@
     </div>
 
     <!-- Script -->
-    <script src="script.js"></script>
+    <script src="script.js?v=2.6.1"></script>
 </body>
 
 </html>
