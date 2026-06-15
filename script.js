@@ -329,7 +329,7 @@ media: [
             year: '2023 - 2026',
             role: 'Naturfotograf',
             deliverables: 'Outdoor-Fotografie, Makro-Aufnahmen, Color-Grading',
-            description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Event-Posts der UHC Bulldogs Ehrendingen auf Instagram. Entwickelt und designed in Adobe Photoshop.',
+            description: 'Fotografische Einblicke in die Tierwelt und verschiedene Naturlandschaften. Im Mittelpunkt stehen natürliche Lichtverhältnisse, ruhige Kompositionen und echte Begegnungen. Die Bilder dokumentieren besondere Momente draussen und zeigen die Vielfalt und Atmosphäre der Natur aus einer persönlichen Perspektive.',
             graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                 <rect x="120" y="20" width="160" height="160" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
                 <line x1="200" y1="20" x2="200" y2="180" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
