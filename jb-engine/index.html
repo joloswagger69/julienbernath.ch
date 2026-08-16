@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JB | ENGINE — Real-time Visual Lab</title>
+<meta name="description" content="Real-time WebGL image & video effects lab. Stack shaders, remix palettes and export stills or video, all in the browser." />
+<meta property="og:title" content="JB | ENGINE — Real-time Visual Lab" />
+<meta property="og:description" content="Stack ASCII, halftone, glitch and animated shader effects on images or video and export instantly." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="jb-app">
+  <header class="top-bar">
+    <div class="logo">JB <span class="badge">ENGINE</span></div>
+
+    <div class="global-controls" id="paletteContainer" role="group" aria-label="Global color palettes"></div>
+
+    <div class="actions">
+      <button class="secondary-btn" id="liveCameraBtn" type="button">LIVE FEED</button>
+      <button class="secondary-btn" id="exportVidBtn" type="button">EXPORT VIDEO</button>
+      <button class="primary-btn" id="exportBtn" type="button">EXPORT PICTURE</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="panel effect-stack">
+      <div class="panel-header">
+        <h3>PIPELINE</h3>
+        <div class="header-actions">
+          <button class="tool-btn" id="clearBtn" type="button" title="Remove every effect">CLEAR</button>
+          <button class="tool-btn accent" id="randomizeBtn" type="button">RANDOM</button>
+        </div>
+      </div>
+
+      <div class="effect-browser">
+        <input type="search" id="effectSearch" class="effect-search" placeholder="Search effects…" aria-label="Search effects" autocomplete="off" />
+        <div class="add-effect-menu" id="addEffectMenu"></div>
+      </div>
+
+      <div class="layer-list" id="layerList">
+        <p class="helper-text empty-pipeline">Your pipeline is empty. Add an effect above or hit RANDOM.</p>
+      </div>
+    </aside>
+
+    <section class="canvas-container" id="dropZone">
+      <div class="empty-state" id="emptyState">
+        <h2>INITIATE SEQUENCE</h2>
+        <p>Drop an image or video here</p>
+        <button class="primary-btn" id="browseBtn" type="button" style="margin-top:16px">BROWSE FILES</button>
+        <button class="secondary-btn" id="sampleBtn" type="button" style="margin-top:10px">LOAD SAMPLE</button>
+        <input type="file" id="fileInput" accept="image/*,video/*" hidden />
+      </div>
+
+      <button id="zoomLockBtn" class="zoom-lock-btn" type="button" hidden title="Toggle magnifier">🔍</button>
+      <button id="compareBtn" class="compare-btn" type="button" hidden title="Hold to view the original">HOLD TO COMPARE</button>
+
+      <canvas id="mainCanvas"></canvas>
+
+      <div class="canvas-bottom-bar" id="canvasTools" hidden>
+        <span class="canvas-meta" id="canvasMeta"></span>
+        <button class="tool-btn" id="cropBtn" type="button">CROP: ORIG</button>
+        <button class="tool-btn danger" id="resetBtn" type="button">RESET ALL</button>
+      </div>
+    </section>
+
+    <aside class="panel properties">
+      <div class="panel-header">
+        <h3 id="currentEffectName">NO EFFECT</h3>
+        <div class="header-actions" id="propHeaderActions" hidden>
+          <button class="tool-btn" id="resetParamsBtn" type="button" title="Reset this effect's parameters">DEFAULTS</button>
+        </div>
+      </div>
+      <div class="controls-container" id="controlsContainer">
+        <p class="helper-text">Select an effect in the pipeline to adjust its parameters.</p>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
