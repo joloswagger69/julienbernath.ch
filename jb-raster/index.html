@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Raster | Bildaufbau & Zuschnitt</title>
+<meta name="description" content="Drittel-Regel, Goldener Schnitt und Spirale über dein Foto legen und es direkt fürs richtige Format zuschneiden.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .stage { position: relative; display: grid; place-items: center; min-height: 420px; background: #111; border-radius: 6px; overflow: hidden; }
+    #cv { display: block; max-width: 100%; touch-action: none; cursor: grab; }
+    #cv.dragging { cursor: grabbing; }
+    .stage .drop { width: min(420px, 90%); color: #aaa; border-color: #555; }
+    .stage .drop strong { color: #fff; }
+    .seg.multi { flex-wrap: wrap; }
+    .seg.multi button { flex: 1 0 30%; }
+    .info { font-family: var(--mono); font-size: .85rem; color: var(--muted); margin-top: 10px; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Raster</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn" id="newimg" type="button">Neues Bild</button>
+        <button class="btn solid" id="dl" type="button">Zuschnitt speichern</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap layout">
+    <div>
+        <div class="panel">
+            <h2>Raster</h2>
+            <div class="seg multi" id="grid">
+                <button type="button" data-v="thirds" aria-pressed="true">Drittel</button>
+                <button type="button" data-v="golden" aria-pressed="false">Goldener Schnitt</button>
+                <button type="button" data-v="spiral" aria-pressed="false">Spirale</button>
+                <button type="button" data-v="diag" aria-pressed="false">Diagonalen</button>
+                <button type="button" data-v="center" aria-pressed="false">Mitte</button>
+                <button type="button" data-v="none" aria-pressed="false">Keins</button>
+            </div>
+            <div class="btns" style="margin-top:10px"><button class="btn" id="rotate" type="button">Spirale drehen</button></div>
+        </div>
+        <div class="panel">
+            <h2>Zuschnitt</h2>
+            <div class="seg multi" id="ratio">
+                <button type="button" data-v="0" aria-pressed="true">Original</button>
+                <button type="button" data-v="1" aria-pressed="false">1:1</button>
+                <button type="button" data-v="0.8" aria-pressed="false">4:5</button>
+                <button type="button" data-v="0.5625" aria-pressed="false">9:16</button>
+                <button type="button" data-v="1.7778" aria-pressed="false">16:9</button>
+                <button type="button" data-v="1.5" aria-pressed="false">3:2</button>
+            </div>
+            <div class="field" style="margin-top:12px"><label for="size">Grösse</label><input id="size" type="range" min="20" max="100" value="100"></div>
+            <div class="field"><label for="max">Exportbreite</label>
+                <select id="max"><option value="0">Original</option><option value="1080" selected>1080 px (Instagram)</option><option value="2048">2048 px</option><option value="3840">3840 px</option></select>
+            </div>
+            <p class="note">Ziehen verschiebt den Ausschnitt, Mausrad ändert die Grösse.</p>
+            <div class="info" id="info"></div>
+        </div>
+    </div>
+    <div class="stage preview" id="stage">
+        <label class="drop" id="drop"><input id="file" type="file" accept="image/*" hidden><strong>Foto wählen</strong><span>oder hierher ziehen</span></label>
+        <canvas id="cv" hidden></canvas>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    const cv = $('#cv'), ctx = cv.getContext('2d');
+    const PHI = 0.618;
+    let img = null, scale = 1, crop = null, ratio = 0, grid = 'thirds', orient = 0, size = 1;
+    const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1600); };
+
+    function load(file) {
+        const i = new Image();
+        i.onload = () => { img = i; $('#drop').hidden = true; cv.hidden = false; layout(); resetCrop(); };
+        i.src = URL.createObjectURL(file);
+    }
+    function layout() {
+        if (!img) return;
+        const maxW = $('#stage').clientWidth, maxH = Math.max(380, innerHeight - 140);
+        scale = Math.min(maxW / img.width, maxH / img.height);
+        const dpr = Math.min(2, devicePixelRatio || 1);
+        cv.width = Math.round(img.width * scale * dpr); cv.height = Math.round(img.height * scale * dpr);
+        cv.style.width = `${img.width * scale}px`; cv.style.height = `${img.height * scale}px`;
+        ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+        draw();
+    }
+    function resetCrop() {
+        const r = ratio || img.width / img.height;
+        let w = img.width, h = w / r;
+        if (h > img.height) { h = img.height; w = h * r; }
+        w *= size; h *= size;
+        const cx = crop ? crop.x + crop.w / 2 : img.width / 2, cy = crop ? crop.y + crop.h / 2 : img.height / 2;
+        crop = clamp({ x: cx - w / 2, y: cy - h / 2, w, h });
+        draw();
+    }
+    const clamp = (c) => ({ ...c, x: Math.max(0, Math.min(img.width - c.w, c.x)), y: Math.max(0, Math.min(img.height - c.h, c.y)) });
+
+    function spiral(x, y, w, h) {
+        ctx.beginPath();
+        for (let i = 0; i < 11; i++) {
+            switch (i % 4) {
+                case 0: { const w1 = w * PHI; ctx.ellipse(x + w1, y + h, w1, h, 0, Math.PI, 1.5 * Math.PI); x += w1; w -= w1; break; }
+                case 1: { const h1 = h * PHI; ctx.ellipse(x, y + h1, w, h1, 0, 1.5 * Math.PI, 2 * Math.PI); y += h1; h -= h1; break; }
+                case 2: { const w1 = w * PHI; ctx.ellipse(x + w - w1, y, w1, h, 0, 0, 0.5 * Math.PI); w -= w1; break; }
+                case 3: { const h1 = h * PHI; ctx.ellipse(x + w, y + h - h1, w, h1, 0, 0.5 * Math.PI, Math.PI); h -= h1; break; }
+            }
+        }
+        ctx.stroke();
+    }
+
+    function draw() {
+        if (!img || !crop) return;
+        ctx.clearRect(0, 0, img.width, img.height);
+        ctx.drawImage(img, 0, 0);
+        const { x, y, w, h } = crop;
+        // Aussenbereich abdunkeln
+        ctx.fillStyle = 'rgba(0,0,0,.6)';
+        ctx.beginPath(); ctx.rect(0, 0, img.width, img.height); ctx.rect(x, y + h, w, -h); ctx.fill('evenodd');
+        const lw = 1.5 / scale;
+        ctx.lineWidth = lw;
+        ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.strokeRect(x, y, w, h);
+        ctx.strokeStyle = 'rgba(255,255,255,.75)';
+        const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+        if (grid === 'thirds' || grid === 'golden') {
+            const a = grid === 'thirds' ? 1 / 3 : 1 - PHI, b = 1 - a;
+            [a, b].forEach(f => { line(x + w * f, y, x + w * f, y + h); line(x, y + h * f, x + w, y + h * f); });
+            ctx.fillStyle = '#E30613';
+            [a, b].forEach(fx => [a, b].forEach(fy => { ctx.beginPath(); ctx.arc(x + w * fx, y + h * fy, 4 / scale, 0, 6.283); ctx.fill(); }));
+        } else if (grid === 'diag') {
+            line(x, y, x + w, y + h); line(x + w, y, x, y + h);
+            // Baroque-Diagonalen über Lote
+            ctx.setLineDash([6 / scale, 6 / scale]);
+            const k = (w * w) / (w * w + h * h);
+            line(x + w, y, x + w * (1 - k), y + h * k); line(x, y + h, x + w * k, y + h * (1 - k));
+            ctx.setLineDash([]);
+        } else if (grid === 'center') {
+            line(x + w / 2, y, x + w / 2, y + h); line(x, y + h / 2, x + w, y + h / 2);
+            ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) * 0.12, 0, 6.283); ctx.stroke();
+        } else if (grid === 'spiral') {
+            ctx.save();
+            ctx.translate(x + w / 2, y + h / 2);
+            ctx.scale(orient & 1 ? -1 : 1, orient & 2 ? -1 : 1);
+            ctx.translate(-(x + w / 2), -(y + h / 2));
+            ctx.strokeStyle = '#E30613'; ctx.lineWidth = 2.5 / scale;
+            spiral(x, y, w, h);
+            ctx.restore();
+        }
+        $('#info').textContent = `Ausschnitt ${Math.round(w)} × ${Math.round(h)} px`;
+    }
+
+    // Ziehen & Zoomen
+    let drag = null;
+    const toImg = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / scale, (e.clientY - r.top) / scale]; };
+    cv.addEventListener('pointerdown', (e) => { const [px, py] = toImg(e); drag = { px, py, x: crop.x, y: crop.y }; cv.setPointerCapture(e.pointerId); cv.classList.add('dragging'); });
+    cv.addEventListener('pointermove', (e) => { if (!drag) return; const [px, py] = toImg(e); crop = clamp({ ...crop, x: drag.x + px - drag.px, y: drag.y + py - drag.py }); draw(); });
+    const end = () => { drag = null; cv.classList.remove('dragging'); };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+    cv.addEventListener('wheel', (e) => { e.preventDefault(); size = Math.min(1, Math.max(0.2, size - e.deltaY * 0.0008)); $('#size').value = Math.round(size * 100); resetCrop(); }, { passive: false });
+    $('#size').addEventListener('input', (e) => { size = e.target.value / 100; if (img) resetCrop(); });
+
+    const seg = (id, cb) => $(id).addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        [...$(id).children].forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        cb(b.dataset.v);
+    });
+    seg('#grid', (v) => { grid = v; draw(); });
+    seg('#ratio', (v) => { ratio = Number(v); if (img) resetCrop(); });
+    $('#rotate').addEventListener('click', () => { orient = (orient + 1) % 4; if (grid !== 'spiral') { grid = 'spiral'; [...$('#grid').children].forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === 'spiral'))); } draw(); });
+
+    $('#dl').addEventListener('click', () => {
+        if (!img) { toast('Zuerst ein Foto laden'); return; }
+        const max = Number($('#max').value);
+        const outW = max ? Math.min(max, Math.round(crop.w)) : Math.round(crop.w);
+        const outH = Math.round(outW * crop.h / crop.w);
+        const c = document.createElement('canvas'); c.width = outW; c.height = outH;
+        const x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+        x.drawImage(img, crop.x, crop.y, crop.w, crop.h, 0, 0, outW, outH);
+        c.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `zuschnitt-${outW}x${outH}.jpg`; a.click(); toast('Zuschnitt gespeichert'); }, 'image/jpeg', 0.92);
+    });
+
+    const picker = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', hidden: true });
+    document.body.appendChild(picker);
+    picker.addEventListener('change', (e) => { if (e.target.files[0]) { crop = null; load(e.target.files[0]); } picker.value = ''; });
+    $('#newimg').addEventListener('click', () => picker.click());
+    $('#file').addEventListener('change', (e) => e.target.files[0] && load(e.target.files[0]));
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) { crop = null; load(f); } });
+    addEventListener('resize', layout);
+})();
+</script>
+</body>
+</html>

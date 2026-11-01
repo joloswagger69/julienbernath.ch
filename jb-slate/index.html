@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>JB Slate | Digitale Filmklappe</title>
+<meta name="description" content="Digitale Filmklappe fürs Handy mit Timecode, Take-Zähler und Sync-Blitz.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<style>
+    html, body { background: #000; color: #F2F2EE; height: 100%; overflow: hidden; }
+    .slate { position: fixed; inset: 0; display: grid; grid-template-rows: auto auto 1fr auto; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); user-select: none; }
+    .top { position: relative; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #000; }
+    .sticks { position: relative; z-index: 1; margin-top: 10px; }
+    .top a { color: #F2F2EE; text-decoration: none; font-weight: 900; font-size: 1.3rem; font-variation-settings: "wdth" 110; }
+    .top a b { color: #E30613; }
+    .top .spacer { flex: 1; }
+    .top .backlink { color: #fff; text-decoration: none; border: 1px solid #fff; border-radius: 3px; padding: 6px 10px; font-size: .85rem; font-weight: 600; }
+    .top .backlink:hover { background: #fff; color: #000; }
+    @media (max-width: 520px) { .top .backlink .long, .top .info { display: none; } }
+    .top button { background: none; border: 1px solid #444; color: #ddd; border-radius: 3px; padding: 6px 10px; font-size: .85rem; }
+    .sticks { height: 96px; display: grid; grid-template-rows: 1fr 1fr; gap: 4px; padding: 0 0 6px; touch-action: manipulation; cursor: pointer; }
+    .sticks span { background: repeating-linear-gradient(-55deg, #F2F2EE 0 34px, #000 34px 68px); }
+    .sticks span:first-child { transform-origin: 0 100%; transform: rotate(-9deg); transition: transform .12s cubic-bezier(.5,0,.9,.4); }
+    .sticks.clap span:first-child { transform: rotate(0); transition: transform .07s ease-in; }
+    .board { display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto 1fr auto; border-top: 2px solid #F2F2EE; }
+    .cell { padding: 10px 14px; border-bottom: 2px solid #F2F2EE; border-right: 2px solid #F2F2EE; min-width: 0; }
+    .cell:nth-child(3n) { border-right: 0; }
+    .cell.wide { grid-column: 1 / -1; border-right: 0; }
+    .cell small { display: block; font-size: .78rem; color: #999; font-weight: 600; }
+    .cell input { all: unset; width: 100%; font-weight: 800; font-size: clamp(1.4rem, 5vw, 2.6rem); font-variation-settings: "wdth" 70; line-height: 1.1; }
+    .take { display: flex; align-items: center; gap: 10px; }
+    .take button { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid #555; background: none; color: #fff; font-size: 1.4rem; font-weight: 800; }
+    .take output { font-weight: 900; font-size: clamp(2.4rem, 9vw, 4.6rem); font-variation-settings: "wdth" 62; line-height: 1; min-width: 2ch; text-align: center; }
+    .tcbig { grid-column: 1 / -1; display: grid; place-items: center; font-family: var(--mono); font-size: clamp(2.4rem, 12vw, 8rem); color: #ff2d3a; text-shadow: 0 0 22px rgba(255, 45, 58, .55); letter-spacing: .02em; }
+    .foot { display: flex; gap: 10px; padding: 10px 14px; align-items: center; flex-wrap: wrap; }
+    .foot .clap-btn { flex: 1; padding: 18px; font-size: 1.3rem; font-weight: 900; letter-spacing: .06em; background: #E30613; border: 0; color: #fff; border-radius: 4px; }
+    .foot label { font-size: .85rem; color: #aaa; display: flex; gap: 6px; align-items: center; }
+    @media (max-width: 520px) {
+        .board { grid-template-columns: 1fr 1.3fr 1fr; }
+        .cell { padding: 8px 10px; }
+        .take { gap: 4px; justify-content: space-between; }
+        .take button { width: 34px; height: 34px; font-size: 1.1rem; }
+    }
+    .flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .flash.on { animation: fl .25s ease-out; }
+    @keyframes fl { from { opacity: 1; } to { opacity: 0; } }
+    .info { font-family: var(--mono); font-size: .8rem; color: #888; }
+</style>
+</head>
+<body>
+<div class="slate">
+    <div class="top">
+        <a href="../index.html" class="brandlink">J<b>B</b></a>
+        <span class="info" id="date"></span>
+        <span class="spacer"></span>
+        <select id="fps" style="width:auto;background:#111;color:#ddd;border:1px solid #444"><option>24</option><option selected>25</option><option>30</option><option>50</option></select>
+        <button type="button" id="fs">Vollbild</button>
+        <a class="backlink" href="../index.html#extras">Zurück<span class="long"> zur Website</span></a>
+    </div>
+    <div class="sticks" id="sticks" aria-hidden="true"><span></span><span></span></div>
+    <div class="board">
+        <div class="cell wide"><small>Produktion</small><input id="prod" value="julienbernath.ch"></div>
+        <div class="cell"><small>Szene</small><input id="scene" value="1A"></div>
+        <div class="cell"><small>Take</small>
+            <div class="take"><button type="button" id="minus" aria-label="Take minus">−</button><output id="take">1</output><button type="button" id="plus" aria-label="Take plus">+</button></div>
+        </div>
+        <div class="cell"><small>Rolle / Kamera</small><input id="roll" value="A001"></div>
+        <div class="tcbig" id="tc">00:00:00:00</div>
+        <div class="cell"><small>Regie</small><input id="dir" value="J. Bernath"></div>
+        <div class="cell"><small>Kamera</small><input id="cam" value="FX30"></div>
+        <div class="cell"><small>Notiz</small><input id="note" value="" placeholder="MOS, Interview …"></div>
+    </div>
+    <div class="foot">
+        <button type="button" class="clap-btn" id="clap">KLAPPE</button>
+        <label><input type="checkbox" id="auto" checked> Take danach +1</label>
+        <label><input type="checkbox" id="beep" checked> Sync-Ton</label>
+    </div>
+</div>
+<div class="flash" id="flash"></div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    const KEYS = ['prod', 'scene', 'roll', 'dir', 'cam', 'note'];
+    const saved = JSON.parse(localStorage.getItem('jb-slate') || '{}');
+    KEYS.forEach(k => { if (saved[k] !== undefined) $('#' + k).value = saved[k]; $('#' + k).addEventListener('input', save); });
+    let take = saved.take || 1;
+    function save() { const o = { take }; KEYS.forEach(k => o[k] = $('#' + k).value); localStorage.setItem('jb-slate', JSON.stringify(o)); }
+    const setTake = (v) => { take = Math.max(1, v); $('#take').textContent = take; save(); };
+    setTake(take);
+    $('#plus').addEventListener('click', () => setTake(take + 1));
+    $('#minus').addEventListener('click', () => setTake(take - 1));
+    $('#date').textContent = new Date().toLocaleDateString('de-CH');
+
+    // Timecode = Tageszeit
+    const p = (n) => String(n).padStart(2, '0');
+    (function tick() {
+        const fps = Number($('#fps').value), d = new Date();
+        const f = Math.floor(d.getMilliseconds() / 1000 * fps);
+        $('#tc').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}:${p(f)}`;
+        requestAnimationFrame(tick);
+    })();
+
+    let actx;
+    function beep() {
+        try {
+            actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.frequency.value = 1000; g.gain.value = 0.4;
+            o.connect(g).connect(actx.destination);
+            o.start(); o.stop(actx.currentTime + 0.08);
+        } catch (e) {}
+    }
+    function clap() {
+        const s = $('#sticks');
+        s.classList.add('clap');
+        setTimeout(() => {
+            $('#flash').classList.remove('on'); void $('#flash').offsetWidth; $('#flash').classList.add('on');
+            if ($('#beep').checked) beep();
+            navigator.vibrate?.(40);
+        }, 70);
+        setTimeout(() => { s.classList.remove('clap'); if ($('#auto').checked) setTake(take + 1); }, 650);
+    }
+    $('#clap').addEventListener('click', clap);
+    $('#sticks').addEventListener('click', clap);
+    addEventListener('keydown', (e) => { if (e.key === ' ' && !e.target.matches('input')) { e.preventDefault(); clap(); } });
+
+    // Bildschirm wach halten + Vollbild
+    let lock;
+    const wake = async () => { try { lock = await navigator.wakeLock?.request('screen'); } catch (e) {} };
+    wake(); document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+    $('#fs').addEventListener('click', () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()));
+})();
+</script>
+</body>
+</html>

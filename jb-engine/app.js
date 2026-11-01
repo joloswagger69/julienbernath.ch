@@ -14,6 +14,17 @@ const PALETTES = {
     "Acid Mint":        ["#04140f", "#0b6b4f", "#ccff00", "#00ffc8"],
 };
 
+/* Default colours for palette-driven effects when no global palette is active.
+   (Previously referenced as PALETTES["Thermal Default"] / PALETTES["Vaporwave"],
+   which did not exist → render crashed every frame for Thermal Scan / Gradient Map.) */
+const EFFECT_DEFAULT_PALETTES = {
+    thermal:     ["#00000a", "#5d00ff", "#ff0055", "#ffee00"],
+    gradientmap: ["#1a0033", "#7b2cbf", "#ff6ec7", "#7df9ff"],
+};
+const NEUTRAL_PALETTE = PALETTES["Neutral / Reset"];
+
+const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 /* ---------------------------------------------------------------------
    Shared GLSL helpers (WebGL 1 / ES 1.00 safe)
    --------------------------------------------------------------------- */
@@ -781,6 +792,7 @@ class VisualLabEngine {
         this.cropModes = ["ORIG", "1:1", "4:5", "16:9", "9:16"];
         this.cropIndex = 0;
 
+        this.canvas.addEventListener("webglcontextlost", e => { e.preventDefault(); this.toast("GPU context lost — reload the page."); });
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
         this.initWebGL();
         this.buildEffectMenu();
@@ -847,7 +859,7 @@ class VisualLabEngine {
         }
         const catKeys = Object.keys(cats);
         if (catKeys.length === 0) {
-            menu.innerHTML = `<p class="no-results">No effects match “${filter}”.</p>`;
+            menu.innerHTML = `<p class="no-results">No effects match “${escapeHTML(filter)}”.</p>`;
             return;
         }
         const added = this.effectStack.map(e => e.type);
@@ -978,13 +990,21 @@ class VisualLabEngine {
         img.src = c.toDataURL();
     }
 
+    /* Release the previous blob URL so repeated uploads don't leak memory. */
+    setObjectURL(file) {
+        if (this._objectURL) URL.revokeObjectURL(this._objectURL);
+        this._objectURL = URL.createObjectURL(file);
+        return this._objectURL;
+    }
+
     handleMedia(file) {
         if (this.cameraStream) this.stopCamera();
+        if (this.sourceMedia instanceof HTMLVideoElement) this.sourceMedia.pause();
         if (file.type.startsWith("video/")) {
             this.isVideo = true;
             const v = document.createElement("video");
             v.loop = true; v.muted = true; v.playsInline = true;
-            v.src = URL.createObjectURL(file);
+            v.src = this.setObjectURL(file);
             v.onloadeddata = () => { v.play(); this.sourceMedia = v; this.setupMedia(); };
             v.onerror = () => this.toast("Could not load that video.");
         } else if (file.type.startsWith("image/")) {
@@ -992,7 +1012,7 @@ class VisualLabEngine {
             const img = new Image();
             img.onload = () => { this.sourceMedia = img; this.setupMedia(); };
             img.onerror = () => this.toast("Could not load that image.");
-            img.src = URL.createObjectURL(file);
+            img.src = this.setObjectURL(file);
         } else {
             this.toast("Unsupported file type.");
         }
@@ -1105,7 +1125,7 @@ class VisualLabEngine {
             gl.shaderSource(sh, src);
             gl.compileShader(sh);
             if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-                console.error(`[v0] Shader compile failed (${label}):`, gl.getShaderInfoLog(sh));
+                console.error(`[JB Engine] Shader compile failed (${label}):`, gl.getShaderInfoLog(sh));
                 gl.deleteShader(sh);
                 return null;
             }
@@ -1117,7 +1137,7 @@ class VisualLabEngine {
         const p = gl.createProgram();
         gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
         if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
-            console.error(`[v0] Program link failed (${label}):`, gl.getProgramInfoLog(p));
+            console.error(`[JB Engine] Program link failed (${label}):`, gl.getProgramInfoLog(p));
             return null;
         }
         return p;
@@ -1136,10 +1156,10 @@ class VisualLabEngine {
 
     setupFBOs() {
         const gl = this.gl;
-        // Need 3 ping-pong targets: 2 for effect chain + 1 accumulator for compositing.
+        // 4 targets: [0],[1] ping-pong for the effect chain, [2] accumulator, [3] cropped source.
         this.fbos.forEach(f => { gl.deleteFramebuffer(f.fbo); gl.deleteTexture(f.texture); });
         this.fbos = [];
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             const tex = this.createTexture();
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.canvas.width, this.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
             const fbo = gl.createFramebuffer();
@@ -1395,12 +1415,20 @@ class VisualLabEngine {
 
     /* ---- Rendering ---- */
     hexToRgb(hex) {
-        const h = hex.replace("#", "");
-        return [parseInt(h.substring(0, 2), 16) / 255, parseInt(h.substring(2, 4), 16) / 255, parseInt(h.substring(4, 6), 16) / 255];
+        this._rgbCache = this._rgbCache || new Map();
+        let rgb = this._rgbCache.get(hex);
+        if (!rgb) {
+            const h = hex.replace("#", "");
+            rgb = [parseInt(h.substring(0, 2), 16) / 255, parseInt(h.substring(2, 4), 16) / 255, parseInt(h.substring(4, 6), 16) / 255];
+            this._rgbCache.set(hex, rgb);
+        }
+        return rgb;
     }
 
-    uploadSourceTexture(force = false) {
+    uploadSourceTexture() {
         if (!this.sourceMedia) return;
+        // Skip frames the video element can't provide yet (avoids WebGL warnings).
+        if (this.sourceMedia instanceof HTMLVideoElement && this.sourceMedia.readyState < 2) return;
         const gl = this.gl;
         try {
             gl.bindTexture(gl.TEXTURE_2D, this.sourceTexture);
@@ -1455,11 +1483,23 @@ class VisualLabEngine {
         if (active.length === 0) { this.drawPassthrough(this.sourceTexture); return; }
 
         // Global palette resolution.
-        let gColors = ["#000000", "#555555", "#aaaaaa", "#ffffff"];
+        let gColors = NEUTRAL_PALETTE;
         if (this.activePalette && this.activePalette !== "Neutral / Reset" && PALETTES[this.activePalette]) gColors = PALETTES[this.activePalette];
 
-        // FBO roles: [0] and [1] ping-pong for effect output, [2] accumulator.
-        const A = this.fbos[0], B = this.fbos[1], ACC = this.fbos[2];
+        // FBO roles: [0] and [1] ping-pong for effect output, [2] accumulator, [3] cropped source.
+        const A = this.fbos[0], B = this.fbos[1], ACC = this.fbos[2], SRC = this.fbos[3];
+
+        // Bake the crop into a canvas-sized texture once, so every following pass
+        // (effects AND the blend/composite step) samples the same, correctly cropped image.
+        gl.bindFramebuffer(gl.FRAMEBUFFER, SRC.fbo);
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        gl.useProgram(this.programs.passthrough);
+        this.bindGeometry(this.programs.passthrough, true);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.sourceTexture);
+        gl.uniform1i(this.getUniform(this.programs.passthrough, "u_image"), 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
         let accum = null; // texture holding composited result so far
         let ping = 0;
 
@@ -1472,18 +1512,17 @@ class VisualLabEngine {
             gl.bindFramebuffer(gl.FRAMEBUFFER, outFbo.fbo);
             gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
             gl.useProgram(prog);
-            this.bindGeometry(prog, i === 0);
+            this.bindGeometry(prog, false);
             gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, accum ? accum : this.sourceTexture);
+            gl.bindTexture(gl.TEXTURE_2D, accum ? accum : SRC.texture);
             gl.uniform1i(this.getUniform(prog, "u_image"), 0);
 
             const uT = this.getUniform(prog, "u_time"); if (uT) gl.uniform1f(uT, this.time);
             const uR = this.getUniform(prog, "u_resolution"); if (uR) gl.uniform2f(uR, this.canvas.width, this.canvas.height);
 
             let colors = gColors;
-            if (!this.activePalette || this.activePalette === "Neutral / Reset") {
-                if (eff.type === "thermal") colors = PALETTES["Thermal Default"];
-                if (eff.type === "gradientmap") colors = PALETTES["Vaporwave"];
+            if ((!this.activePalette || this.activePalette === "Neutral / Reset") && EFFECT_DEFAULT_PALETTES[eff.type]) {
+                colors = EFFECT_DEFAULT_PALETTES[eff.type];
             }
             const setPal = (name, hex) => { const l = this.getUniform(prog, name); if (l) gl.uniform3f(l, ...this.hexToRgb(hex)); };
             setPal("u_pal1", colors[0]); setPal("u_pal2", colors[1]); setPal("u_pal3", colors[2]); setPal("u_pal4", colors[3]);
@@ -1514,11 +1553,10 @@ class VisualLabEngine {
                 gl.bindTexture(gl.TEXTURE_2D, outFbo.texture);
                 gl.uniform1i(this.getUniform(cprog, "u_image"), 0);
                 gl.activeTexture(gl.TEXTURE1);
-                gl.bindTexture(gl.TEXTURE_2D, first ? this.sourceTexture : accum);
+                gl.bindTexture(gl.TEXTURE_2D, first ? SRC.texture : accum);
                 gl.uniform1i(this.getUniform(cprog, "u_prev"), 1);
                 gl.uniform1f(this.getUniform(cprog, "u_opacity"), eff.opacity);
                 gl.uniform1f(this.getUniform(cprog, "u_blend"), eff.blend);
-                // For the composite we need source coords only when reading the raw source as prev (first layer).
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
 
                 // Copy ACC into a ping target so ACC is reusable next iteration.
@@ -1553,12 +1591,17 @@ class VisualLabEngine {
     /* ---- Export ---- */
     exportFrame() {
         if (!this.sourceMedia) { this.toast("Load media first."); return; }
-        this.needsRender = true; this.render();
-        const a = document.createElement("a");
-        a.download = `jb-engine-${Date.now()}.png`;
-        a.href = this.canvas.toDataURL("image/png");
-        a.click();
-        this.toast("Picture exported.");
+        this.render();
+        this.canvas.toBlob(blob => {
+            if (!blob) { this.toast("Export failed."); return; }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.download = `jb-engine-${Date.now()}.png`;
+            a.href = url;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
+            this.toast("Picture exported.");
+        }, "image/png");
     }
 
     toggleRecordVideo() {
@@ -1572,16 +1615,20 @@ class VisualLabEngine {
         }
         if (!this.canvas.captureStream) { this.toast("Recording not supported here."); return; }
         const stream = this.canvas.captureStream(30);
-        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
-        this.mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+        const mime = ["video/webm;codecs=vp9", "video/webm", "video/mp4"].find(t => MediaRecorder.isTypeSupported(t));
+        if (!mime) { this.toast("Recording not supported here."); return; }
+        const ext = mime.startsWith("video/mp4") ? "mp4" : "webm";
+        this.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12_000_000 });
         this.recordedChunks = [];
         this.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) this.recordedChunks.push(e.data); };
         this.mediaRecorder.onstop = () => {
-            const blob = new Blob(this.recordedChunks, { type: "video/webm" });
+            const blob = new Blob(this.recordedChunks, { type: mime.split(";")[0] });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `jb-engine-${Date.now()}.webm`;
+            a.href = url;
+            a.download = `jb-engine-${Date.now()}.${ext}`;
             a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 4000);
             this.toast("Video saved.");
         };
         this.mediaRecorder.start();

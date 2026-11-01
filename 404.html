@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Kein Signal | Julien Bernath</title>
+<meta name="description" content="Diese Seite wurde nicht gefunden.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    /* Alles in dieser Datei, damit die Seite auch bei kaputten Pfaden und fehlenden Dateien funktioniert. */
+    :root {
+        --base: #DCDDD8; --panel: #F4F4F1; --ink: #000; --ink-soft: #3E3F3B; --muted: #6B6C66;
+        --line: rgba(0,0,0,.16); --line-strong: rgba(0,0,0,.6); --ink-rgb: 0,0,0; --red: #E30613; --red-ink: #B8000C;
+        --cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M27 30h6M30 27v6' stroke='%23000' stroke-opacity='.16' stroke-width='1'/%3E%3C/svg%3E");
+        --font: 'Archivo', 'Arial Narrow', Arial, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+        --ease: cubic-bezier(.2,.7,.1,1); color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+        --base: #1E1F1C; --panel: #2A2B27; --ink: #F1F1EC; --ink-soft: #CFCFC8; --muted: #9A9B93; --line: rgba(255,255,255,.14); --line-strong: rgba(255,255,255,.55); --ink-rgb: 241,241,236; --red-ink: #FF4D58;
+        --cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M27 30h6M30 27v6' stroke='%23fff' stroke-opacity='.14' stroke-width='1'/%3E%3C/svg%3E"); color-scheme: dark; } }
+    :root[data-theme="dark"] {
+        --base: #1E1F1C; --panel: #2A2B27; --ink: #F1F1EC; --ink-soft: #CFCFC8; --muted: #9A9B93; --line: rgba(255,255,255,.14); --line-strong: rgba(255,255,255,.55); --ink-rgb: 241,241,236; --red-ink: #FF4D58;
+        --cross: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M27 30h6M30 27v6' stroke='%23fff' stroke-opacity='.14' stroke-width='1'/%3E%3C/svg%3E"); color-scheme: dark;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: clamp(16px, 4vw, 48px);
+        background: var(--cross) center top / 60px 60px, var(--base); color: var(--ink); font-family: var(--font); line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    ::selection { background: var(--red); color: #fff; }
+    main { width: min(100%, 980px); display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+    @media (max-width: 820px) { main { grid-template-columns: 1fr; } }
+
+    /* Monitor */
+    .screen { position: relative; aspect-ratio: 4 / 3; border: 2px solid var(--ink); border-radius: 4px; background: #000; overflow: hidden; box-shadow: 10px 10px 0 -1px rgba(var(--ink-rgb), .9); isolation: isolate; }
+    .bars { position: absolute; inset: 0; display: grid; grid-template-rows: 68% 8% 24%; }
+    .bars > div { display: grid; }
+    .b1 { grid-template-columns: repeat(7, 1fr); }
+    .b1 i:nth-child(1) { background: #c0c0c0; } .b1 i:nth-child(2) { background: #c0c000; } .b1 i:nth-child(3) { background: #00c0c0; } .b1 i:nth-child(4) { background: #00c000; }
+    .b1 i:nth-child(5) { background: #c000c0; } .b1 i:nth-child(6) { background: #c00000; } .b1 i:nth-child(7) { background: #0000c0; }
+    .b2 { grid-template-columns: repeat(7, 1fr); }
+    .b2 i:nth-child(1) { background: #0000c0; } .b2 i:nth-child(2) { background: #131313; } .b2 i:nth-child(3) { background: #c000c0; } .b2 i:nth-child(4) { background: #131313; }
+    .b2 i:nth-child(5) { background: #00c0c0; } .b2 i:nth-child(6) { background: #131313; } .b2 i:nth-child(7) { background: #c0c0c0; }
+    .b3 { grid-template-columns: 5fr 5fr 5fr 3fr 1fr 1fr 1fr 1fr; }
+    .b3 i:nth-child(1) { background: #00214c; } .b3 i:nth-child(2) { background: #fff; } .b3 i:nth-child(3) { background: #32006a; } .b3 i:nth-child(4) { background: #131313; }
+    .b3 i:nth-child(5) { background: #090909; } .b3 i:nth-child(6) { background: #131313; } .b3 i:nth-child(7) { background: #1d1d1d; } .b3 i:nth-child(8) { background: #131313; }
+    .bars { animation: flick 6s steps(1) infinite; }
+    @keyframes flick { 0%, 91%, 95%, 100% { transform: none; filter: none; } 92% { transform: translateX(-2%); filter: hue-rotate(40deg); } 93% { transform: translateX(3%) scaleY(1.02); } 94% { transform: translateX(-1%); filter: saturate(2); } }
+    #noise { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .22; mix-blend-mode: overlay; image-rendering: pixelated; z-index: 1; }
+    .scan { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); }
+    .scan::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 28%; background: linear-gradient(180deg, transparent, rgba(255,255,255,.07), transparent); animation: roll 7s linear infinite; }
+    @keyframes roll { from { transform: translateY(-120%); } to { transform: translateY(460%); } }
+    .osd { position: absolute; z-index: 3; font-family: var(--mono); font-weight: 500; color: #fff; text-shadow: 0 0 2px #000, 0 0 8px rgba(0,0,0,.6); font-size: clamp(.7rem, 1.9vw, .95rem); letter-spacing: .06em; }
+    .osd.tl { left: 14px; top: 12px; display: flex; align-items: center; gap: 8px; }
+    .osd.tl i { width: 10px; height: 10px; border-radius: 50%; background: var(--red); animation: rec 1.2s steps(2, jump-none) infinite; }
+    @keyframes rec { 0% { opacity: 1; } 50% { opacity: .2; } }
+    .osd.tr { right: 14px; top: 12px; }
+    .osd.bl { left: 14px; bottom: 12px; }
+    .osd.br { right: 14px; bottom: 12px; }
+    .code { position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: .04em .22em .1em; background: #000; color: #fff;
+        font-weight: 900; font-variation-settings: "wdth" 62; font-size: clamp(4.4rem, 17vw, 9.5rem); line-height: .9; letter-spacing: -.01em; white-space: nowrap; border: 3px solid #fff; }
+    .code b { color: var(--red); font-weight: inherit; }
+    .code::before, .code::after { content: attr(data-t); position: absolute; inset: 0; padding: inherit; background: transparent; mix-blend-mode: screen; pointer-events: none; opacity: 0; }
+    .code::before { color: #ff2b3a; transform: translate(-3px, 0); }
+    .code::after { color: #19e0ff; transform: translate(3px, 0); }
+    .screen:hover .code::before, .screen:hover .code::after, .glitch .code::before, .glitch .code::after { opacity: .8; }
+    .glitch .code { animation: jit .25s steps(2) 2; }
+    @keyframes jit { 50% { transform: translate(-50%, -50%) skewX(-6deg); } }
+
+    /* Text */
+    .txt h1 { font-size: clamp(2.1rem, 5.4vw, 3.6rem); line-height: 1.02; font-weight: 800; font-variation-settings: "wdth" 72; letter-spacing: -.01em; }
+    .kicker { display: inline-block; margin-bottom: 14px; padding: 3px 9px; font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #fff; background: var(--red); }
+    .txt p { margin-top: 14px; max-width: 40ch; font-size: 1.15rem; color: var(--ink-soft); }
+    .detail { display: inline-block; margin-top: 14px; padding: 6px 10px; font-family: var(--mono); font-size: .82rem; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 2px; overflow-wrap: anywhere; max-width: 100%; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .btn { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; font: inherit; font-weight: 600; font-size: 1rem; text-decoration: none; color: var(--ink); background: transparent;
+        border: 1.5px solid var(--ink); border-radius: 2px; overflow: hidden; isolation: isolate; cursor: pointer; transition: color .25s; }
+    .btn::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--ink); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
+    .btn:hover::before, .btn:focus-visible::before { transform: scaleX(1); }
+    .btn:hover, .btn:focus-visible { color: var(--base); }
+    .btn.solid { background: var(--ink); color: var(--base); }
+    .btn.solid::before { background: var(--red); }
+    .btn.solid:hover, .btn.solid:focus-visible { color: #fff; border-color: var(--red); }
+    .btn:focus-visible { outline: 3px solid rgba(227, 6, 19, .5); outline-offset: 3px; }
+    .btn svg { width: 18px; height: 18px; }
+    .live { margin-top: 18px; min-height: 1.4em; font-weight: 700; color: var(--red-ink); }
+    @media (hover: none) { .btn:hover::before { transform: scaleX(0); } .btn:hover { color: var(--ink); } .btn.solid:hover { color: var(--base); border-color: var(--ink); } }
+    @media (prefers-reduced-motion: reduce) { .bars, .scan::after, .osd.tl i, .glitch .code { animation: none; } #noise { display: none; } .btn::before { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+    <div class="screen" id="screen" aria-hidden="true">
+        <div class="bars"><div class="b1"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="b2"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="b3"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <canvas id="noise" width="160" height="120"></canvas>
+        <div class="scan"></div>
+        <div class="osd tl"><i></i><span id="osd-state">KEIN SIGNAL</span></div>
+        <div class="osd tr" id="osd-cam">CH 04</div>
+        <div class="code" id="code" data-t="404">4<b>0</b>4</div>
+        <div class="osd bl" id="osd-tc">00:00:00:00</div>
+        <div class="osd br">1000 Hz</div>
+    </div>
+
+    <div class="txt">
+        <span class="kicker" id="kicker">Fehler 404</span>
+        <h1 id="title">Diese Seite ist nicht im Schnitt.</h1>
+        <p id="text">Die Adresse gibt es nicht (mehr). Vielleicht hat sie sich verschrieben, oder die Seite wurde verschoben.</p>
+        <code class="detail" id="detail" hidden></code>
+        <div class="actions">
+            <a class="btn solid" id="home" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Zur Startseite</a>
+            <button class="btn" id="retry" type="button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5"/></svg>Nochmals laden</button>
+            <button class="btn" id="back" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück</button>
+        </div>
+        <p class="live" id="live" role="status" aria-live="polite"></p>
+        <noscript><p>Zur Startseite geht es mit dem Knopf oben.</p></noscript>
+    </div>
+</main>
+
+<script>
+(function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var q = new URLSearchParams(location.search);
+    var isDirect = /\/404\.html$/.test(location.pathname);          // von fehler.js hergeleitet
+    var base = isDirect ? location.pathname.replace(/404\.html$/, '') : '/';
+    var code = q.get('code') || '404';
+    if (['404', 'load', 'script', 'offline'].indexOf(code) < 0) code = '404';
+    var from = q.get('from') || '';
+    var safeFrom = /^\/(?![\/\\])[^\s]*$/.test(from) && from.indexOf('://') < 0 ? from : '';
+    var detail = (q.get('d') || '').slice(0, 80);
+
+    var T = {
+        '404': { k: 'Fehler 404', big: ['4', '0', '4'], osd: 'KEIN SIGNAL', h: 'Diese Seite ist nicht im Schnitt.', p: 'Die Adresse gibt es nicht (mehr). Vielleicht hat sie sich verschrieben, oder die Seite wurde verschoben.', title: '404 | Julien Bernath', retry: false },
+        'load': { k: 'Ladefehler', big: ['E', '0', '1'], osd: 'DATEI FEHLT', h: 'Da hat sich etwas nicht geladen.', p: 'Eine Datei dieser Seite ist nicht angekommen. Nochmals laden hilft meistens.', title: 'Ladefehler | Julien Bernath', retry: true },
+        'script': { k: 'Fehler', big: ['E', '0', '2'], osd: 'BILDSTÖRUNG', h: 'Hier hat etwas gehakt.', p: 'Die Seite ist wiederholt ins Stolpern gekommen. Ein frischer Anlauf klappt oft.', title: 'Fehler | Julien Bernath', retry: true },
+        'offline': { k: 'Offline', big: ['E', '0', '3'], osd: 'KEIN EMPFANG', h: 'Keine Verbindung.', p: 'Das Gerät scheint offline zu sein. Sobald es wieder Netz hat, geht es hier weiter.', title: 'Offline | Julien Bernath', retry: true }
+    }[code];
+
+    document.title = T.title;
+    $('kicker').textContent = T.k; $('title').textContent = T.h; $('text').textContent = T.p; $('osd-state').textContent = T.osd;
+    var c = $('code'); c.innerHTML = ''; c.setAttribute('data-t', T.big.join(''));
+    T.big.forEach(function (ch, i) { if (i === 1) { var b = document.createElement('b'); b.textContent = ch; c.appendChild(b); } else c.appendChild(document.createTextNode(ch)); });
+    if (detail) { $('detail').textContent = detail; $('detail').hidden = false; }
+    $('home').setAttribute('href', base);
+    $('osd-cam').textContent = 'CH ' + String(((code.charCodeAt(0) + (code.length * 3)) % 9) + 1).padStart(2, '0');
+
+    // Zurück: Verlauf, sonst Startseite
+    $('back').addEventListener('click', function () { if (history.length > 1 && document.referrer && document.referrer.indexOf(location.origin) === 0 && document.referrer.indexOf('404.html') < 0) history.back(); else location.href = base; });
+
+    // Nochmals laden: zur ursprünglichen Adresse (nur gleiche Seite, nur Pfad)
+    function retry() {
+        try { sessionStorage.removeItem('jb-err-t'); } catch (e) {}
+        location.href = safeFrom || base;
+    }
+    $('retry').hidden = !T.retry;
+    $('retry').addEventListener('click', retry);
+    if (code === 'offline') {
+        window.addEventListener('online', function () { $('live').textContent = 'Wieder online. Lädt …'; setTimeout(retry, 700); });
+        if (navigator.onLine) $('live').textContent = '';
+        else $('live').textContent = 'Wartet auf Verbindung …';
+    }
+    addEventListener('keydown', function (e) { if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey && !e.altKey && T.retry) retry(); });
+
+    // Timecode (25 fps)
+    var t0 = performance.now(), tcEl = $('osd-tc'), p2 = function (n) { return String(n).padStart(2, '0'); };
+    // Rauschen
+    var cv = $('noise'), cx = cv.getContext('2d'), img = cx.createImageData(cv.width, cv.height), d = img.data;
+    var RM = matchMedia('(prefers-reduced-motion: reduce)').matches, last = 0;
+    function frame(now) {
+        var s = (now - t0) / 1000, f = Math.floor((s % 1) * 25), ss = Math.floor(s);
+        tcEl.textContent = p2(Math.floor(ss / 3600)) + ':' + p2(Math.floor(ss % 3600 / 60)) + ':' + p2(ss % 60) + ':' + p2(f);
+        if (!RM && now - last > 70) {
+            last = now;
+            for (var i = 0; i < d.length; i += 4) { var v = Math.random() * 255; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+            cx.putImageData(img, 0, 0);
+        }
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    // Klick auf den Monitor: kurzer Glitch
+    $('screen').addEventListener('click', function () { var s = $('screen'); s.classList.remove('glitch'); void s.offsetWidth; s.classList.add('glitch'); setTimeout(function () { s.classList.remove('glitch'); }, 600); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Morse | Übersetzer</title>
+<meta name="description" content="Morse-Übersetzer mit Ton, Licht und Vibration. Auch zum Selbermorsen mit Live-Dekodierung.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../fehler.js?v=1" data-critical></script>
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; max-width: 1180px; margin: 0 auto; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    textarea { min-height: 120px; resize: vertical; font-size: 1.05rem; line-height: 1.45; }
+    #morse { font-family: var(--mono); font-size: 1.55rem; letter-spacing: .08em; min-height: 120px; }
+    .lamp { display: grid; place-items: center; padding: 18px 0 10px; }
+    .bulb { width: 140px; height: 140px; border-radius: 50%; border: 3px solid var(--ink); background: var(--panel); position: relative; transition: background .04s, box-shadow .04s, border-color .04s; }
+    .bulb::after { content: ''; position: absolute; inset: 26%; border-radius: 50%; border: 2px dashed var(--line-strong); opacity: .6; }
+    .bulb.on { background: #ffd24a; border-color: #b78a12; box-shadow: 0 0 0 10px rgba(255,210,74,.25), 0 0 60px 20px rgba(255,210,74,.55); }
+    #tape { display: block; width: 100%; height: 56px; margin-top: 10px; background: var(--base); border: 1px solid var(--line); border-radius: 3px; }
+    .cur { font-size: 2.4rem; font-weight: 800; font-variation-settings: "wdth" 70; text-align: center; min-height: 3rem; line-height: 1.2; letter-spacing: .04em; }
+    .key { width: 100%; padding: 26px 12px; margin-top: 10px; font-size: 1.15rem; font-weight: 700; border: 2px solid var(--ink); border-radius: 4px; background: var(--panel); user-select: none; -webkit-user-select: none; touch-action: none; transition: background .06s, color .06s; }
+    .key.down { background: var(--red); color: #fff; border-color: var(--red); }
+    .sl { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 2px; margin-bottom: 10px; }
+    .sl label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+    .sl output { font-family: var(--mono); font-size: .82rem; color: var(--ink-soft); }
+    .sl input { grid-column: 1 / -1; }
+    .tgl { display: flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--ink-soft); margin: 6px 0; }
+    .table { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+    .ch { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--base); font-size: .82rem; transition: border-color .15s, background .15s; }
+    .ch:hover { border-color: var(--ink); background: var(--panel); }
+    .ch b { font-size: 1rem; }
+    .ch span { font-family: var(--mono); color: var(--muted); letter-spacing: .06em; }
+    .full { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Morse</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn solid" type="button" id="play">Abspielen</button>
+        <button class="btn" type="button" id="stop">Stopp</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap">
+    <div class="grid">
+        <div class="panel">
+            <h2>Übersetzen</h2>
+            <div class="field"><label for="text">Text</label><textarea id="text" spellcheck="false">Hallo Welt</textarea></div>
+            <div class="field"><label for="morse">Morsecode</label><textarea id="morse" spellcheck="false"></textarea></div>
+            <div class="btns">
+                <button class="btn" type="button" id="copyM">Morsecode kopieren</button>
+                <button class="btn" type="button" id="copyT">Text kopieren</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Signal</h2>
+            <div class="lamp"><div class="bulb" id="bulb"></div></div>
+            <div class="cur" id="cur" aria-live="polite"></div>
+            <canvas id="tape" width="600" height="56"></canvas>
+            <div style="height:12px"></div>
+            <div class="sl"><label for="wpm">Tempo</label><output id="o-wpm"></output><input type="range" id="wpm" min="5" max="40" step="1" value="15"></div>
+            <div class="sl"><label for="hz">Tonhöhe</label><output id="o-hz"></output><input type="range" id="hz" min="300" max="1000" step="10" value="620"></div>
+            <label class="tgl"><input type="checkbox" id="snd" checked> Ton</label>
+            <label class="tgl" id="vibRow"><input type="checkbox" id="vib"> Vibration</label>
+        </div>
+
+        <div class="panel full">
+            <h2>Selber morsen</h2>
+            <button class="key" id="key" type="button" aria-label="Morsetaste, gedrückt halten">Taste halten (oder Leertaste)</button>
+        </div>
+
+        <div class="panel full">
+            <h2>Zeichen</h2>
+            <div class="table" id="table"></div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const TABLE = {
+    A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..', J: '.---', K: '-.-', L: '.-..', M: '--', N: '-.', O: '---', P: '.--.', Q: '--.-', R: '.-.', S: '...', T: '-', U: '..-', V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..',
+    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+    '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
+    'Ä': '.-.-', 'Ö': '---.', 'Ü': '..--', 'ß': '...--..'
+};
+const REV = {}; Object.keys(TABLE).forEach((k) => (REV[TABLE[k]] = k));
+
+function normalize(t) { return t.replace(/[ßẞ]/g, '\u0001').toUpperCase().replace(/\u0001/g, 'ß').replace(/[“”„]/g, '"').replace(/[’‘´`]/g, "'").replace(/[–—]/g, '-'); }
+function toMorse(text) {
+    return normalize(text).split(/\s+/).filter(Boolean).map((w) => [...w].map((ch) => TABLE[ch]).filter(Boolean).join(' ')).filter(Boolean).join(' / ');
+}
+function toText(m) {
+    return m.trim().split(/\s*\/\s*|\s{3,}/).map((w) => w.trim().split(/\s+/).map((c) => REV[c.replace(/[^.\-]/g, '')] || (c ? '?' : '')).join('')).join(' ');
+}
+/* Ereignisse: [ein?, Dauer in Einheiten] */
+function events(morse) {
+    const ev = [], words = morse.trim().split(/\s*\/\s*/).filter(Boolean);
+    words.forEach((w, wi) => {
+        if (wi) ev.push([0, 7]);
+        w.trim().split(/\s+/).forEach((l, li) => {
+            if (li) ev.push([0, 3]);
+            [...l].filter((s) => s === '.' || s === '-').forEach((s, si) => { if (si) ev.push([0, 1]); ev.push([1, s === '.' ? 1 : 3, l]); });
+        });
+    });
+    return ev;
+}
+
+/* ---------- Oberfläche ---------- */
+const text = $('#text'), morse = $('#morse');
+let lock = false;
+function fromText() { if (lock) return; lock = true; morse.value = toMorse(text.value); lock = false; }
+function fromMorse() { if (lock) return; lock = true; text.value = toText(morse.value); lock = false; }
+text.addEventListener('input', fromText); morse.addEventListener('input', fromMorse);
+fromText();
+const wpm = $('#wpm'), hz = $('#hz');
+const syncSl = () => { $('#o-wpm').textContent = wpm.value + ' WPM'; $('#o-hz').textContent = hz.value + ' Hz'; };
+wpm.addEventListener('input', syncSl); hz.addEventListener('input', () => { syncSl(); if (osc) osc.frequency.value = +hz.value; }); syncSl();
+if (!navigator.vibrate) $('#vibRow').hidden = true;
+const unit = () => 1200 / +wpm.value;
+
+const tbl = $('#table');
+Object.keys(TABLE).forEach((k) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ch'; b.innerHTML = `<b>${k}</b><span>${TABLE[k]}</span>`;
+    b.addEventListener('click', () => { play(TABLE[k], k); }); tbl.appendChild(b);
+});
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1600); }
+async function copy(v, msg) { try { await navigator.clipboard.writeText(v); toast(msg); } catch (e) { toast('Kopieren nicht möglich'); } }
+$('#copyM').addEventListener('click', () => copy(morse.value, 'Morsecode kopiert'));
+$('#copyT').addEventListener('click', () => copy(text.value, 'Text kopiert'));
+
+/* ---------- Audio ---------- */
+let actx = null, osc = null, gain = null;
+function audio() {
+    if (!actx) {
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+        actx = new AC(); osc = actx.createOscillator(); gain = actx.createGain();
+        osc.type = 'sine'; osc.frequency.value = +hz.value; gain.gain.value = 0;
+        osc.connect(gain).connect(actx.destination); osc.start();
+    }
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+}
+function key(on, at) {            // Ton ein/aus mit weicher Flanke (verhindert Klicken)
+    if (!gain || !$('#snd').checked) return;
+    const t = at === undefined ? actx.currentTime : at;
+    gain.gain.cancelScheduledValues(t); gain.gain.setValueAtTime(gain.gain.value, t);
+    gain.gain.linearRampToValueAtTime(on ? 0.35 : 0, t + 0.005);
+}
+
+/* ---------- Wiedergabe ---------- */
+let run = null;                   // { t0, list:[{a,b,on,label}], total }
+const bulb = $('#bulb'), cur = $('#cur'), tape = $('#tape'), tctx = tape.getContext('2d');
+function play(morseStr, label) {
+    stop();
+    const ac = audio(); if (!ac) { toast('Kein Audio verfügbar'); return; }
+    const u = unit() / 1000, ev = events(morseStr || morse.value);
+    if (!ev.length) return;
+    const t0 = ac.currentTime + 0.12; let t = 0; const list = [];
+    ev.forEach(([on, n, lab]) => { const a = t, b = t + n * u; list.push({ a, b, on, lab }); if (on) { key(true, t0 + a); key(false, t0 + b); } t = b; });
+    run = { t0, list, total: t, text: label || toText(morse.value) };
+    if ($('#vib').checked && navigator.vibrate) {
+        const pat = []; let last = 0; list.forEach((e) => { if (e.on) { pat.push(Math.round((e.a - last) * 1000), Math.round((e.b - e.a) * 1000)); last = e.b; } });
+        navigator.vibrate(pat);
+    }
+}
+function stop() {
+    if (gain && actx) { gain.gain.cancelScheduledValues(actx.currentTime); gain.gain.setValueAtTime(0, actx.currentTime); }
+    if (navigator.vibrate) navigator.vibrate(0);
+    run = null; bulb.classList.remove('on'); cur.textContent = '';
+}
+$('#play').addEventListener('click', () => play()); $('#stop').addEventListener('click', stop);
+
+function loop() {
+    requestAnimationFrame(loop);
+    // Lampe + Band
+    const w = tape.width, h = tape.height, mid = h / 2;
+    tctx.clearRect(0, 0, w, h);
+    const cs = getComputedStyle(document.documentElement);
+    let now = 0, onNow = false;
+    if (run && actx) {
+        now = actx.currentTime - run.t0;
+        const e = run.list.find((x) => now >= x.a && now < x.b);
+        onNow = !!(e && e.on);
+        if (e && e.on && e.lab) cur.textContent = REV[e.lab] || '';
+        if (now > run.total + 0.3) { run = null; cur.textContent = ''; }
+    } else if (keyDown) onNow = true;
+    bulb.classList.toggle('on', onNow);
+    // Band: 6 Sekunden Fenster, Jetzt-Linie bei 70 %
+    const span = 6, px = (t) => w * 0.7 + (t - now) / span * w;
+    tctx.fillStyle = cs.getPropertyValue('--ink').trim() || '#000';
+    if (run) run.list.forEach((e) => { if (e.on && px(e.b) > 0 && px(e.a) < w) tctx.fillRect(px(e.a), mid - 9, Math.max(2, px(e.b) - px(e.a)), 18); });
+    if (live.length) live.forEach((e) => { const a = (e.a - liveNow()) / 1000, b = ((e.b || performance.now()) - liveNow()) / 1000; const x1 = w * 0.7 + a / span * w, x2 = w * 0.7 + b / span * w; if (x2 > 0) tctx.fillRect(x1, mid - 9, Math.max(2, x2 - x1), 18); });
+    tctx.fillStyle = '#E30613'; tctx.fillRect(w * 0.7 - 1, 4, 2, h - 8);
+}
+const liveNow = () => performance.now();
+requestAnimationFrame(loop);
+
+/* ---------- Selber morsen ---------- */
+let keyDown = false, downAt = 0, buf = '', letterT = 0, wordT = 0, live = [];
+function commitLetter() { if (!buf) return; const ch = REV[buf] || '?'; buf = ''; const d = ch; lock = true; text.value += d; morse.value = toMorse(text.value); lock = false; text.scrollTop = text.scrollHeight; }
+function commitWord() { lock = true; if (text.value && !/\s$/.test(text.value)) { text.value += ' '; morse.value = toMorse(text.value); } lock = false; }
+function press() {
+    if (keyDown) return; keyDown = true; downAt = performance.now(); $('#key').classList.add('down');
+    clearTimeout(letterT); clearTimeout(wordT); audio(); key(true);
+    live.push({ a: downAt, b: 0 });
+}
+function release() {
+    if (!keyDown) return; keyDown = false; $('#key').classList.remove('down'); key(false);
+    const t = performance.now(), dur = t - downAt, u = unit();
+    live[live.length - 1].b = t; setTimeout(() => { live = live.filter((e) => performance.now() - e.b < 8000); }, 8100);
+    buf += dur < 2 * u ? '.' : '-';
+    cur.textContent = buf;
+    letterT = setTimeout(() => { commitLetter(); cur.textContent = ''; }, u * 2.6);
+    wordT = setTimeout(commitWord, u * 6);
+}
+const keyBtn = $('#key');
+keyBtn.addEventListener('pointerdown', (e) => { keyBtn.setPointerCapture(e.pointerId); press(); });
+keyBtn.addEventListener('pointerup', release); keyBtn.addEventListener('pointercancel', release);
+addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.repeat && !e.target.closest('textarea, input, select, button')) { e.preventDefault(); press(); } });
+addEventListener('keyup', (e) => { if (e.code === 'Space' && keyDown) release(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { release(); stop(); } });
+
+window.__morse = { toMorse, toText, events };
+})();
+</script>
+</body>
+</html>

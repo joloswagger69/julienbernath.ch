@@ -9,12 +9,21 @@
 <meta property="og:description" content="Stack ASCII, halftone, glitch and animated shader effects on images or video and export instantly." />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="stylesheet" href="style.css" />
+<meta name="theme-color" content="#F5F3ED" />
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="canonical" href="https://julienbernath.ch/jb-engine/" />
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css?v=1.2" />
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
 <div class="jb-app">
   <header class="top-bar">
-    <div class="logo">JB <span class="badge">ENGINE</span></div>
+    <a class="logo" href="../index.html" title="julienbernath.ch">J<b>B</b> <span class="badge">ENGINE</span></a>
 
     <div class="global-controls" id="paletteContainer" role="group" aria-label="Global color palettes"></div>
 
@@ -22,6 +31,7 @@
       <button class="secondary-btn" id="liveCameraBtn" type="button">LIVE FEED</button>
       <button class="secondary-btn" id="exportVidBtn" type="button">EXPORT VIDEO</button>
       <button class="primary-btn" id="exportBtn" type="button">EXPORT PICTURE</button>
+      <a class="back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
     </div>
   </header>
 
@@ -82,6 +92,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=1.1" defer></script>
 </body>
 </html>

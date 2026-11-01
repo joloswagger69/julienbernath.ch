@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JB Rechner | Kleine Helfer</title>
+<meta name="description" content="Rechnung teilen, Prozent, MWST, Pace, Wanderzeit, Einheiten und Datum. Sieben kleine Rechner für den Alltag.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../fehler.js?v=1" data-critical></script>
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .shell { max-width: 880px; margin: 0 auto; }
+    .tabs { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 14px; }
+    .tabs button { padding: 11px 4px; font-weight: 700; font-size: .92rem; border: 1px solid var(--line-strong); background: var(--panel); margin-left: -1px; transition: background .15s, color .15s; }
+    .tabs button:first-child { margin-left: 0; border-radius: 3px 0 0 3px; }
+    .tabs button:last-child { border-radius: 0 3px 3px 0; }
+    .tabs button[aria-selected="true"] { background: var(--ink); color: var(--base); }
+    .tabs button:not([aria-selected="true"]):hover { background: var(--base); }
+    @media (max-width: 720px) { .tabs { grid-template-columns: repeat(4, 1fr); gap: 6px; } .tabs button, .tabs button:first-child, .tabs button:last-child { margin: 0; border-radius: 3px; } }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 640px) { .cols, .cols3 { grid-template-columns: 1fr; } }
+    .big { padding: 18px; background: var(--ink); color: var(--base); border-radius: 4px; margin-bottom: 10px; cursor: copy; }
+    .big small { display: block; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .7; margin-bottom: 4px; }
+    .big strong { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(1.9rem, 7vw, 3rem); line-height: 1.1; overflow-wrap: anywhere; }
+    .big em { display: block; margin-top: 6px; font-style: normal; font-size: .9rem; opacity: .75; }
+    .kvs { display: grid; gap: 0; }
+    .kvs div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+    .kvs b { font-weight: 700; }
+    .kvs span { font-family: var(--mono); text-align: right; cursor: copy; overflow-wrap: anywhere; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .chips button { padding: 6px 11px; border: 1px solid var(--line-strong); border-radius: 99px; background: var(--base); font-weight: 700; font-size: .85rem; }
+    .chips button:hover, .chips button[aria-pressed="true"] { background: var(--ink); color: var(--base); }
+    .err { color: var(--red-ink); font-weight: 700; min-height: 1.4em; font-size: .9rem; }
+    .pane[hidden] { display: none; }
+    .swap { align-self: end; margin-bottom: 12px; }
+    .uconv { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: end; }
+    @media (max-width: 520px) { .uconv { grid-template-columns: 1fr; } .swap { justify-self: start; margin-bottom: 0; } }
+    .all { max-height: 260px; overflow: auto; margin-top: 10px; }
+    .all div { cursor: pointer; }
+    .all div:hover { background: var(--base); }
+    input.bad { border-color: var(--red) !important; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Rechner</h1>
+    <span class="spacer"></span>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap">
+<div class="shell">
+    <div class="tabs" id="tabs" role="tablist">
+        <button role="tab" data-t="split" aria-selected="true">Teilen</button>
+        <button role="tab" data-t="pct" aria-selected="false">Prozent</button>
+        <button role="tab" data-t="vat" aria-selected="false">MWST</button>
+        <button role="tab" data-t="pace" aria-selected="false">Pace</button>
+        <button role="tab" data-t="hike" aria-selected="false">Wandern</button>
+        <button role="tab" data-t="unit" aria-selected="false">Einheiten</button>
+        <button role="tab" data-t="date" aria-selected="false">Datum</button>
+    </div>
+
+    <!-- TEILEN -->
+    <section class="panel pane" id="p-split">
+        <div class="cols">
+            <div>
+                <div class="field"><label for="sAmt">Rechnung (CHF)</label><input type="text" id="sAmt" inputmode="decimal" value="148.60" autocomplete="off"></div>
+                <div class="field"><label for="sN">Personen</label><input type="number" id="sN" min="1" max="99" step="1" value="4"></div>
+                <div class="lbl">Trinkgeld</div>
+                <div class="chips" id="sTip"><button type="button" data-v="0" aria-pressed="false">0 %</button><button type="button" data-v="5" aria-pressed="false">5 %</button><button type="button" data-v="10" aria-pressed="true">10 %</button><button type="button" data-v="15" aria-pressed="false">15 %</button></div>
+                <div class="lbl">Runden pro Person</div>
+                <div class="chips" id="sRnd"><button type="button" data-v="0" aria-pressed="false">Exakt</button><button type="button" data-v="5" aria-pressed="true">5 Rp.</button><button type="button" data-v="100" aria-pressed="false">1 Fr.</button></div>
+            </div>
+            <div id="sOut"></div>
+        </div>
+    </section>
+
+    <!-- PROZENT -->
+    <section class="panel pane" id="p-pct" hidden>
+        <div class="cols">
+            <div>
+                <div class="field"><label for="pMode">Rechnung</label>
+                    <select id="pMode">
+                        <option value="of">A % von B</option>
+                        <option value="is">A ist wie viel % von B</option>
+                        <option value="chg">Änderung von A auf B</option>
+                        <option value="plus">B plus A %</option>
+                        <option value="minus">B minus A %</option>
+                        <option value="base">A ist B % von … (Ausgangswert)</option>
+                    </select></div>
+                <div class="field"><label for="pA" id="pAl">A</label><input type="text" id="pA" inputmode="decimal" value="19" autocomplete="off"></div>
+                <div class="field"><label for="pB" id="pBl">B</label><input type="text" id="pB" inputmode="decimal" value="240" autocomplete="off"></div>
+            </div>
+            <div id="pOut"></div>
+        </div>
+    </section>
+
+    <!-- MWST -->
+    <section class="panel pane" id="p-vat" hidden>
+        <div class="cols">
+            <div>
+                <div class="field"><label for="vAmt">Betrag (CHF)</label><input type="text" id="vAmt" inputmode="decimal" value="100.00" autocomplete="off"></div>
+                <div class="lbl">Satz</div>
+                <div class="chips" id="vRate"><button type="button" data-v="8.1" aria-pressed="true">8.1 %</button><button type="button" data-v="2.6" aria-pressed="false">2.6 %</button><button type="button" data-v="3.8" aria-pressed="false">3.8 %</button></div>
+                <div class="lbl">Betrag ist</div>
+                <div class="seg" id="vDir" role="group" style="margin-bottom:12px"><button type="button" data-v="net" aria-pressed="true">Netto</button><button type="button" data-v="gross" aria-pressed="false">Brutto</button></div>
+            </div>
+            <div id="vOut"></div>
+        </div>
+    </section>
+
+    <!-- PACE -->
+    <section class="panel pane" id="p-pace" hidden>
+        <div class="cols">
+            <div>
+                <div class="chips" id="dChips"><button type="button" data-v="5">5 km</button><button type="button" data-v="10">10 km</button><button type="button" data-v="21.0975">Halbmarathon</button><button type="button" data-v="42.195">Marathon</button></div>
+                <div class="field"><label for="rD">Distanz (km)</label><input type="text" id="rD" inputmode="decimal" value="10" autocomplete="off"></div>
+                <div class="field"><label for="rT">Zeit (h:mm:ss)</label><input type="text" id="rT" inputmode="numeric" value="50:00" autocomplete="off"></div>
+                <div class="field"><label for="rP">Pace (min/km)</label><input type="text" id="rP" inputmode="numeric" value="" autocomplete="off"></div>
+            </div>
+            <div id="rOut"></div>
+        </div>
+    </section>
+
+    <!-- WANDERN -->
+    <section class="panel pane" id="p-hike" hidden>
+        <div class="cols">
+            <div>
+                <div class="cols3">
+                    <div class="field"><label for="hK">Strecke (km)</label><input type="text" id="hK" inputmode="decimal" value="12.5" autocomplete="off"></div>
+                    <div class="field"><label for="hU">Aufstieg (m)</label><input type="text" id="hU" inputmode="numeric" value="850" autocomplete="off"></div>
+                    <div class="field"><label for="hD">Abstieg (m)</label><input type="text" id="hD" inputmode="numeric" value="850" autocomplete="off"></div>
+                </div>
+                <div class="lbl">Methode</div>
+                <div class="seg" id="hM" role="group" style="margin-bottom:12px"><button type="button" data-v="ch" aria-pressed="true">Wegweiser</button><button type="button" data-v="din" aria-pressed="false">DIN 33466</button></div>
+                <div class="lbl">Tempo</div>
+                <div class="seg" id="hT" role="group" style="margin-bottom:12px"><button type="button" data-v="0.8" aria-pressed="false">Gemütlich</button><button type="button" data-v="1" aria-pressed="true">Normal</button><button type="button" data-v="1.2" aria-pressed="false">Zügig</button></div>
+                <div class="cols">
+                    <div class="field"><label for="hS">Start</label><input type="time" id="hS" value="08:00"></div>
+                    <div class="field"><label for="hP">Pausen (min)</label><input type="text" id="hP" inputmode="numeric" value="45" autocomplete="off"></div>
+                </div>
+            </div>
+            <div id="hOut"></div>
+        </div>
+    </section>
+
+    <!-- EINHEITEN -->
+    <section class="panel pane" id="p-unit" hidden>
+        <div class="chips" id="uCat"></div>
+        <div class="uconv">
+            <div class="field"><label for="uV">Wert</label><input type="text" id="uV" inputmode="decimal" value="1" autocomplete="off"><select id="uF" aria-label="von" style="margin-top:6px"></select></div>
+            <button class="btn swap" type="button" id="uSwap" aria-label="Tauschen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></button>
+            <div class="field"><label for="uR">Ergebnis</label><input type="text" id="uR" readonly><select id="uT" aria-label="nach" style="margin-top:6px"></select></div>
+        </div>
+        <div class="kvs all" id="uAll"></div>
+    </section>
+
+    <!-- DATUM -->
+    <section class="panel pane" id="p-date" hidden>
+        <div class="seg" id="dMode" role="group" style="margin-bottom:14px"><button type="button" data-v="diff" aria-pressed="true">Differenz</button><button type="button" data-v="add" aria-pressed="false">Plus / Minus</button><button type="button" data-v="kw" aria-pressed="false">Kalenderwoche</button></div>
+        <div class="cols">
+            <div id="dIn"></div>
+            <div id="dOut"></div>
+        </div>
+    </section>
+</div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const store = {
+    get(k, d) { try { const v = localStorage.getItem('jbrc-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('jbrc-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* =====================================================================
+   REINE RECHENFUNKTIONEN (auch für Tests)
+   ===================================================================== */
+function parseNum(s) {
+    if (typeof s === 'number') return s;
+    s = String(s == null ? '' : s).trim().replace(/[\s'’]/g, '').replace(',', '.');
+    if (s === '' || !/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+    return Number(s);
+}
+const toCents = (x) => Math.round(x * 100 + (x >= 0 ? 1e-9 : -1e-9));
+const chf = (c) => { const neg = c < 0; c = Math.abs(c); const f = Math.floor(c / 100), r = c % 100; return (neg ? '−' : '') + String(f).replace(/\B(?=(\d{3})+(?!\d))/g, '’') + '.' + String(r).padStart(2, '0'); };
+
+/* Rechnung teilen – nur ganze Rappen. step: 0 = exakt (Rest verteilen), 5 / 100 = pro Person aufrunden */
+function splitBill(amountChf, n, tipPct, step) {
+    const bill = toCents(amountChf);
+    if (!(bill >= 0) || !Number.isInteger(n) || n < 1) return null;
+    const tip = Math.round(bill * tipPct / 100);
+    const total = bill + tip;
+    if (!step) {
+        const base = Math.floor(total / n), rest = total % n;
+        return { bill, tip, total, paid: total, per: base, more: rest ? base + 1 : base, nMore: rest, extra: 0, step };
+    }
+    const per = Math.ceil(total / n / step) * step;
+    const paid = per * n;
+    return { bill, tip, total, paid, per, more: per, nMore: 0, extra: paid - total, step };
+}
+function vat(amountChf, rate, dir) {
+    const a = toCents(amountChf); if (!(a >= 0)) return null;
+    let net, gross;
+    if (dir === 'net') { net = a; gross = Math.round(a * (100 + rate) / 100); }
+    else { gross = a; net = Math.round(a * 100 / (100 + rate)); }
+    return { net, vat: gross - net, gross, rate };
+}
+function percent(mode, A, B) {
+    switch (mode) {
+        case 'of': return A / 100 * B;
+        case 'is': return B === 0 ? NaN : A / B * 100;
+        case 'chg': return A === 0 ? NaN : (B - A) / Math.abs(A) * 100;
+        case 'plus': return B * (1 + A / 100);
+        case 'minus': return B * (1 - A / 100);
+        case 'base': return B === 0 ? NaN : A / (B / 100);
+    }
+    return NaN;
+}
+/* Zeit */
+function parseTime(s) {
+    s = String(s || '').trim(); if (!s) return NaN;
+    const p = s.split(':'); if (p.length > 3 || p.some((x) => !/^\d+(\.\d+)?$/.test(x.trim()))) return NaN;
+    const n = p.map(Number);
+    if (n.length === 1) return n[0] * 60;                       // „50“ = 50 min
+    if (n.length === 2) return n[0] * 60 + n[1];                // mm:ss
+    return n[0] * 3600 + n[1] * 60 + n[2];
+}
+function fmtTime(sec, forceH) {
+    if (!isFinite(sec) || sec < 0) return '–';
+    sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+    return (h || forceH) ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+const fmtPace = (secPerKm) => { if (!isFinite(secPerKm) || secPerKm <= 0) return '–'; const t = Math.round(secPerKm); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+/* Wandern */
+function hike(km, up, down, method, tempo) {
+    let hoursH = km / (method === 'din' ? 4 : 4.2), hoursV, total;
+    if (method === 'din') {
+        hoursV = up / 300 + down / 500;
+        total = Math.max(hoursH, hoursV) + Math.min(hoursH, hoursV) / 2;
+        return { total: total / tempo, h: hoursH, v: hoursV, up: up / 300, down: down / 500 };
+    }
+    hoursV = up / 400 + down / 800; total = hoursH + hoursV;
+    return { total: total / tempo, h: hoursH, v: hoursV, up: up / 400, down: down / 800 };
+}
+/* Einheiten (alle Faktoren exakt, Basis = SI) */
+const UNITS = {
+    'Länge': { base: 'm', u: { 'mm': .001, 'cm': .01, 'm': 1, 'km': 1000, 'Zoll (in)': .0254, 'Fuss (ft)': .3048, 'Yard (yd)': .9144, 'Meile (mi)': 1609.344, 'Seemeile (nm)': 1852 } },
+    'Gewicht': { base: 'kg', u: { 'mg': 1e-6, 'g': .001, 'kg': 1, 't': 1000, 'Unze (oz)': .028349523125, 'Pfund (lb)': .45359237, 'Stone (st)': 6.35029318 } },
+    'Temperatur': { temp: true, u: { '°C': 1, '°F': 1, 'K': 1 } },
+    'Tempo': { base: 'm/s', u: { 'km/h': 1 / 3.6, 'm/s': 1, 'mph': .44704, 'Knoten (kn)': 1852 / 3600 } },
+    'Fläche': { base: 'm²', u: { 'cm²': 1e-4, 'm²': 1, 'Are (a)': 100, 'Hektar (ha)': 1e4, 'km²': 1e6, 'Acre': 4046.8564224, 'Fussballfelder (105×68 m)': 7140 } },
+    'Volumen': { base: 'l', u: { 'ml': .001, 'dl': .1, 'l': 1, 'm³': 1000, 'Tasse (US cup)': 0.2365882365, 'fl oz (US)': .0295735295625, 'Gallone (US)': 3.785411784, 'Gallone (UK)': 4.54609 } },
+    'Energie': { base: 'kJ', u: { 'J': .001, 'kJ': 1, 'kcal': 4.184, 'Wh': 3.6, 'kWh': 3600 } },
+    'Daten': { base: 'B', u: { 'Byte (B)': 1, 'kB': 1e3, 'MB': 1e6, 'GB': 1e9, 'TB': 1e12, 'KiB': 1024, 'MiB': 1048576, 'GiB': 1073741824, 'TiB': 1099511627776 } },
+    'Zeit': { base: 's', u: { 's': 1, 'min': 60, 'h': 3600, 'Tag': 86400, 'Woche': 604800, 'Jahr (365 d)': 31536000 } }
+};
+function convert(cat, v, from, to) {
+    const C = UNITS[cat]; if (!C) return NaN;
+    if (C.temp) {
+        const K = from === '°C' ? v + 273.15 : from === '°F' ? (v - 32) * 5 / 9 + 273.15 : v;
+        return to === '°C' ? K - 273.15 : to === '°F' ? (K - 273.15) * 9 / 5 + 32 : K;
+    }
+    return v * C.u[from] / C.u[to];
+}
+function fmtNum(x) {
+    if (!isFinite(x)) return '–';
+    if (x === 0) return '0';
+    const a = Math.abs(x);
+    if (a >= 1e15 || a < 1e-6) return x.toExponential(5).replace('e', ' e');
+    let s = Number(x.toPrecision(8)).toString();
+    if (/e/.test(s)) s = x.toFixed(10);
+    if (a >= 1000 && !s.includes('.')) s = s.replace(/\B(?=(\d{3})+(?!\d))/g, '’');
+    else if (a >= 1000) { const [i, f] = s.split('.'); s = i.replace(/\B(?=(\d{3})+(?!\d))/g, '’') + '.' + f; }
+    return s;
+}
+/* Datum (UTC-Arithmetik, kein Sommerzeit-Fehler) */
+const D = (y, m, d) => Date.UTC(y, m, d);
+const parseDate = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); if (!m) return NaN; const t = D(+m[1], +m[2] - 1, +m[3]); const d = new Date(t); return (d.getUTCMonth() === +m[2] - 1) ? t : NaN; };
+const isoStr = (t) => new Date(t).toISOString().slice(0, 10);
+const WD = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const MON = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const fmtDate = (t) => { const d = new Date(t); return `${WD[d.getUTCDay()]}, ${d.getUTCDate()}. ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+function workdays(a, b) { // Mo–Fr in [a, b) – bei a>b negativ
+    const sign = a <= b ? 1 : -1; if (sign < 0) [a, b] = [b, a];
+    const days = Math.round((b - a) / 864e5); let n = 0; const wd0 = new Date(a).getUTCDay();
+    const full = Math.floor(days / 7); n = full * 5; const rem = days % 7;
+    for (let i = 0; i < rem; i++) { const w = (wd0 + i) % 7; if (w !== 0 && w !== 6) n++; }
+    return sign * n;
+}
+function ymdDiff(a, b) { // a<=b: volle Monate (mit Monatsende-Kappung), Rest in Tagen
+    const A = new Date(a), B = new Date(b);
+    let months = (B.getUTCFullYear() - A.getUTCFullYear()) * 12 + (B.getUTCMonth() - A.getUTCMonth());
+    if (addMonths(a, months) > b) months--;
+    const rest = Math.round((b - addMonths(a, months)) / 864e5);
+    return { y: Math.floor(months / 12), m: months % 12, d: rest };
+}
+function addMonths(t, n) {
+    const d = new Date(t), y = d.getUTCFullYear(), m = d.getUTCMonth() + n, day = d.getUTCDate();
+    const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(); return Date.UTC(y, m, Math.min(day, last));
+}
+function isoWeek(t) {
+    const d = new Date(t); const wd = (d.getUTCDay() + 6) % 7;                // Mo=0
+    const th = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - wd + 3));     // Donnerstag der Woche
+    const jan4 = new Date(Date.UTC(th.getUTCFullYear(), 0, 4));
+    const week = 1 + Math.round(((th - jan4) / 864e5 - 3 + ((jan4.getUTCDay() + 6) % 7)) / 7);
+    return { week, year: th.getUTCFullYear() };
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+let toastT = 0;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1600); }
+function copy(txt) {
+    const done = () => toast('Kopiert: ' + txt);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => fb(txt, done)); else fb(txt, done);
+}
+function fb(txt, done) { try { const t = document.createElement('textarea'); t.value = txt; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); done(); } catch (e) {} }
+document.addEventListener('click', (e) => { const c = e.target.closest('[data-copy]'); if (c) copy(c.dataset.copy); });
+const big = (label, val, sub, copyVal) => `<div class="big" data-copy="${esc(copyVal != null ? copyVal : val)}"><small>${esc(label)}</small><strong>${esc(val)}</strong>${sub ? `<em>${sub}</em>` : ''}</div>`;
+const kv = (rows) => `<div class="kvs">${rows.map(([k, v, c]) => `<div><b>${esc(k)}</b><span data-copy="${esc(c != null ? c : v)}">${esc(v)}</span></div>`).join('')}</div>`;
+function pressed(group, v) { $$(group + ' button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === String(v)))); }
+function chipGroup(group, onSet) { $(group).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; pressed(group, b.dataset.v); onSet(b.dataset.v); }); }
+const val = (g) => $$(group2(g) + ' button').find((b) => b.getAttribute('aria-pressed') === 'true');
+const group2 = (g) => g;
+const cur = (g) => { const b = val(g); return b ? b.dataset.v : null; };
+function bad(el, isBad) { el.classList.toggle('bad', !!isBad); }
+
+/* ---- Teilen ---- */
+function uiSplit() {
+    const a = parseNum($('#sAmt').value), n = parseInt($('#sN').value, 10), tip = +cur('#sTip'), step = +cur('#sRnd');
+    bad($('#sAmt'), !(a >= 0)); bad($('#sN'), !(n >= 1));
+    const r = splitBill(a, n, tip, step);
+    if (!r) { $('#sOut').innerHTML = '<div class="err">Ungültige Eingabe</div>'; return; }
+    let per = chf(r.per), sub = '';
+    if (r.nMore) sub = `${r.nMore} × ${chf(r.more)} und ${n - r.nMore} × ${chf(r.per)}`;
+    else if (n > 1) sub = `${n} × ${chf(r.per)}`;
+    $('#sOut').innerHTML = big('Pro Person', 'CHF ' + (r.nMore ? chf(r.more) : per), sub, chf(r.nMore ? r.more : r.per)) +
+        kv([['Rechnung', chf(r.bill)], ['Trinkgeld ' + tip + ' %', chf(r.tip)], ['Total', chf(r.total)], ...(r.extra ? [['Aufgerundet', '+' + chf(r.extra)], ['Gesamt bezahlt', chf(r.paid)]] : [])]);
+}
+['#sAmt', '#sN'].forEach((s) => $(s).addEventListener('input', uiSplit));
+chipGroup('#sTip', () => { store.set('tip', cur('#sTip')); uiSplit(); }); chipGroup('#sRnd', () => { store.set('rnd', cur('#sRnd')); uiSplit(); });
+
+/* ---- Prozent ---- */
+const PL = {
+    of: ['A (%)', 'B (Wert)'], is: ['A (Teil)', 'B (Ganzes)'], chg: ['A (alt)', 'B (neu)'], plus: ['A (%)', 'B (Wert)'], minus: ['A (%)', 'B (Wert)'], base: ['A (Teil)', 'B (Prozent)']
+};
+function uiPct() {
+    const m = $('#pMode').value; $('#pAl').textContent = PL[m][0]; $('#pBl').textContent = PL[m][1];
+    const A = parseNum($('#pA').value), B = parseNum($('#pB').value); bad($('#pA'), isNaN(A)); bad($('#pB'), isNaN(B));
+    const r = percent(m, A, B);
+    if (!isFinite(r)) { $('#pOut').innerHTML = '<div class="err">–</div>'; return; }
+    const pctRes = m === 'is' || m === 'chg';
+    const s = fmtNum(Math.round(r * 1e6) / 1e6);
+    $('#pOut').innerHTML = big('Ergebnis', s + (pctRes ? ' %' : ''), m === 'chg' ? (r >= 0 ? 'Zunahme' : 'Abnahme') : '', s);
+}
+['#pA', '#pB'].forEach((s) => $(s).addEventListener('input', uiPct)); $('#pMode').addEventListener('change', uiPct);
+
+/* ---- MWST ---- */
+function uiVat() {
+    const a = parseNum($('#vAmt').value), rate = +cur('#vRate'), dir = cur('#vDir'); bad($('#vAmt'), !(a >= 0));
+    const r = vat(a, rate, dir); if (!r) { $('#vOut').innerHTML = '<div class="err">Ungültige Eingabe</div>'; return; }
+    $('#vOut').innerHTML = big(dir === 'net' ? 'Brutto' : 'Netto', 'CHF ' + chf(dir === 'net' ? r.gross : r.net), '', chf(dir === 'net' ? r.gross : r.net)) +
+        kv([['Netto', chf(r.net)], ['MWST ' + rate + ' %', chf(r.vat)], ['Brutto', chf(r.gross)]]);
+}
+$('#vAmt').addEventListener('input', uiVat); chipGroup('#vRate', uiVat); chipGroup('#vDir', uiVat);
+
+/* ---- Pace ---- */
+let lastTwo = ['rD', 'rT'];
+function uiPace(src) {
+    if (src) { lastTwo = [src, ...lastTwo.filter((x) => x !== src)].slice(0, 2); }
+    const third = ['rD', 'rT', 'rP'].find((x) => !lastTwo.includes(x));
+    const d = parseNum($('#rD').value), t = parseTime($('#rT').value), p = parseTime($('#rP').value);
+    ['rD', 'rT', 'rP'].forEach((id) => bad($('#' + id), lastTwo.includes(id) && (id === 'rD' ? !(d > 0) : id === 'rT' ? !(t > 0) : !(p > 0))));
+    let D_ = d, T_ = t, P_ = p, ok = true;
+    if (third === 'rP') { if (d > 0 && t > 0) { P_ = t / d; $('#rP').value = fmtPace(P_); } else ok = false; }
+    else if (third === 'rT') { if (d > 0 && p > 0) { T_ = p * d; $('#rT').value = fmtTime(T_); } else ok = false; }
+    else { if (t > 0 && p > 0) { D_ = t / p; $('#rD').value = String(Math.round(D_ * 1000) / 1000); } else ok = false; }
+    if (!ok) { $('#rOut').innerHTML = '<div class="err">Zwei Felder ausfüllen, das dritte wird berechnet</div>'; return; }
+    const kmh = 3600 / P_;
+    const rows = [[1, '1 km'], [5, '5 km'], [10, '10 km'], [15, '15 km'], [21.0975, 'Halbmarathon'], [30, '30 km'], [42.195, 'Marathon']].map(([k, n]) => [n, fmtTime(P_ * k)]);
+    $('#rOut').innerHTML = big('Pace', fmtPace(P_) + ' /km', `${kmh.toFixed(2)} km/h · ${(D_).toFixed(2)} km in ${fmtTime(T_)}`, fmtPace(P_)) + kv(rows);
+}
+['rD', 'rT', 'rP'].forEach((id) => $('#' + id).addEventListener('input', () => uiPace(id)));
+$('#dChips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; $('#rD').value = b.dataset.v; uiPace('rD'); });
+
+/* ---- Wandern ---- */
+function uiHike() {
+    const k = parseNum($('#hK').value), u = parseNum($('#hU').value), dn = parseNum($('#hD').value), pause = parseNum($('#hP').value || '0');
+    bad($('#hK'), !(k >= 0)); bad($('#hU'), !(u >= 0)); bad($('#hD'), !(dn >= 0));
+    if (!(k >= 0 && u >= 0 && dn >= 0)) { $('#hOut').innerHTML = '<div class="err">Ungültige Eingabe</div>'; return; }
+    const r = hike(k, u, dn, cur('#hM'), +cur('#hT'));
+    const sec = r.total * 3600, hm = (s) => { s = Math.round(s / 60); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} h`; };
+    const pa = isNaN(pause) ? 0 : Math.max(0, pause);
+    let arr = '';
+    const st = /^(\d{2}):(\d{2})$/.exec($('#hS').value);
+    if (st) { const t = (+st[1] * 60 + +st[2] + Math.round(sec / 60) + pa); const days = Math.floor(t / 1440); arr = `Ankunft ca. ${String(Math.floor(t % 1440 / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}${days ? ' (+' + days + ' T)' : ''}`; }
+    const t = +cur('#hT');
+    $('#hOut').innerHTML = big('Gehzeit', hm(sec), arr, hm(sec)) +
+        kv([['Horizontal', hm(r.h * 3600 / t)], ['Aufstieg', hm(r.up * 3600 / t)], ['Abstieg', hm(r.down * 3600 / t)], ['Mit Pausen', hm(sec + pa * 60)]]);
+}
+['#hK', '#hU', '#hD', '#hP', '#hS'].forEach((s) => $(s).addEventListener('input', uiHike)); chipGroup('#hM', uiHike); chipGroup('#hT', uiHike);
+
+/* ---- Einheiten ---- */
+let ucat = 'Länge';
+const UDEF = { 'Länge': ['km', 'Meile (mi)'], 'Gewicht': ['kg', 'Pfund (lb)'], 'Temperatur': ['°C', '°F'], 'Tempo': ['km/h', 'mph'], 'Fläche': ['Hektar (ha)', 'Acre'], 'Volumen': ['l', 'Gallone (US)'], 'Energie': ['kcal', 'kJ'], 'Daten': ['GB', 'GiB'], 'Zeit': ['h', 'min'] };
+function fillUnits(reset) {
+    const names = Object.keys(UNITS[ucat].u), opts = names.map((n) => `<option>${esc(n)}</option>`).join('');
+    $('#uF').innerHTML = opts; $('#uT').innerHTML = opts;
+    if (reset) { $('#uF').value = UDEF[ucat][0]; $('#uT').value = UDEF[ucat][1]; }
+}
+function uiUnit() {
+    const v = parseNum($('#uV').value), f = $('#uF').value, t = $('#uT').value; bad($('#uV'), isNaN(v));
+    if (isNaN(v)) { $('#uR').value = ''; $('#uAll').innerHTML = ''; return; }
+    $('#uR').value = fmtNum(convert(ucat, v, f, t));
+    $('#uAll').innerHTML = Object.keys(UNITS[ucat].u).map((n) => `<div data-to="${esc(n)}"><b>${esc(n)}</b><span>${esc(fmtNum(convert(ucat, v, f, n)))}</span></div>`).join('');
+}
+$('#uCat').innerHTML = Object.keys(UNITS).map((c) => `<button type="button" data-v="${esc(c)}" aria-pressed="${c === ucat}">${esc(c)}</button>`).join('');
+chipGroup('#uCat', (c) => { ucat = c; fillUnits(true); uiUnit(); });
+['#uV'].forEach((s) => $(s).addEventListener('input', uiUnit)); ['#uF', '#uT'].forEach((s) => $(s).addEventListener('change', uiUnit));
+$('#uSwap').addEventListener('click', () => { const a = $('#uF').selectedIndex; $('#uF').selectedIndex = $('#uT').selectedIndex; $('#uT').selectedIndex = a; uiUnit(); });
+$('#uR').addEventListener('click', () => { if ($('#uR').value) copy($('#uR').value); });
+$('#uAll').addEventListener('click', (e) => { const r = e.target.closest('[data-to]'); if (!r) return; $('#uT').value = r.dataset.to; uiUnit(); const s = r.querySelector('span'); copy(s.textContent); });
+fillUnits(true);
+
+/* ---- Datum ---- */
+const today = () => { const n = new Date(); return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()); };
+let dmode = 'diff';
+function uiDateBuild() {
+    const t = isoStr(today());
+    const h = { diff: `<div class="field"><label for="dA">Von</label><input type="date" id="dA" value="${t}"></div><div class="field"><label for="dB">Bis</label><input type="date" id="dB" value="${isoStr(today() + 30 * 864e5)}"></div>`,
+        add: `<div class="field"><label for="dA">Start</label><input type="date" id="dA" value="${t}"></div><div class="cols"><div class="field"><label for="dN">Anzahl (± )</label><input type="text" id="dN" inputmode="numeric" value="90" autocomplete="off"></div><div class="field"><label for="dU">Einheit</label><select id="dU"><option value="d">Tage</option><option value="w">Wochen</option><option value="m">Monate</option><option value="y">Jahre</option></select></div></div>`,
+        kw: `<div class="field"><label for="dA">Datum</label><input type="date" id="dA" value="${t}"></div>` }[dmode];
+    $('#dIn').innerHTML = h; $$('#dIn input, #dIn select').forEach((e) => e.addEventListener('input', uiDate)); uiDate();
+}
+function uiDate() {
+    const a = parseDate($('#dA') && $('#dA').value);
+    if (isNaN(a)) { $('#dOut').innerHTML = '<div class="err">Datum fehlt</div>'; return; }
+    if (dmode === 'diff') {
+        const b = parseDate($('#dB').value); if (isNaN(b)) { $('#dOut').innerHTML = '<div class="err">Datum fehlt</div>'; return; }
+        const days = Math.round((b - a) / 864e5), s = days < 0 ? -1 : 1, ad = Math.abs(days);
+        const [x, y] = a <= b ? [a, b] : [b, a], ymd = ymdDiff(x, y);
+        $('#dOut').innerHTML = big('Kalendertage', (s < 0 ? '−' : '') + ad, `${Math.floor(ad / 7)} Wochen und ${ad % 7} Tage`, String(days)) +
+            kv([['Arbeitstage (Mo–Fr)', String(Math.abs(workdays(a, b)))], ['Jahre / Monate / Tage', `${ymd.y} / ${ymd.m} / ${ymd.d}`], ['Stunden', fmtNum(ad * 24)]]);
+    } else if (dmode === 'add') {
+        const n = parseNum($('#dN').value); bad($('#dN'), isNaN(n) || !Number.isInteger(n)); if (isNaN(n) || !Number.isInteger(n)) { $('#dOut').innerHTML = '<div class="err">Ganze Zahl</div>'; return; }
+        const u = $('#dU').value; let r;
+        if (u === 'd') r = a + n * 864e5; else if (u === 'w') r = a + n * 7 * 864e5; else if (u === 'm') r = addMonths(a, n); else r = addMonths(a, n * 12);
+        if (!isFinite(r) || Math.abs(r) > 8.64e15 || new Date(r).getUTCFullYear() > 9999) { $('#dOut').innerHTML = '<div class="err">Ausserhalb des Bereichs</div>'; return; }
+        const iso = isoWeek(r);
+        $('#dOut').innerHTML = big('Ergebnis', fmtDate(r), `KW ${iso.week} · ${isoStr(r).split('-').reverse().join('.')}`, isoStr(r).split('-').reverse().join('.'));
+    } else {
+        const w = isoWeek(a), y = new Date(a).getUTCFullYear(), doy = Math.round((a - Date.UTC(y, 0, 1)) / 864e5) + 1, left = Math.round((Date.UTC(y + 1, 0, 1) - a) / 864e5) - 1;
+        const dt = new Date(a), wd = (dt.getUTCDay() + 6) % 7, mon = a - wd * 864e5, sun = mon + 6 * 864e5;
+        $('#dOut').innerHTML = big('Kalenderwoche', 'KW ' + w.week, `${w.year}`, String(w.week)) +
+            kv([['Wochentag', WD[dt.getUTCDay()]], ['Tag des Jahres', String(doy)], ['Noch im Jahr', left + ' Tage'], ['Woche von', isoStr(mon).split('-').reverse().join('.')], ['bis', isoStr(sun).split('-').reverse().join('.')]]);
+    }
+}
+chipGroup('#dMode', (m) => { dmode = m; uiDateBuild(); });
+
+/* ---- Tabs ---- */
+function tab(t, persist) {
+    $$('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.t === t)));
+    $$('.pane').forEach((p) => p.hidden = p.id !== 'p-' + t);
+    if (persist) store.set('tab', t);
+    if (location.hash !== '#' + t) history.replaceState(null, '', '#' + t);
+}
+$('#tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) tab(b.dataset.t, true); });
+$('#tabs').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const bs = $$('#tabs button'), i = bs.findIndex((b) => b.getAttribute('aria-selected') === 'true'), n = bs[(i + (e.key === 'ArrowRight' ? 1 : bs.length - 1)) % bs.length]; n.click(); n.focus();
+});
+
+/* Start */
+const tip0 = store.get('tip', '10'), rnd0 = store.get('rnd', '5');
+pressed('#sTip', tip0); pressed('#sRnd', rnd0);
+if (!cur('#sTip')) pressed('#sTip', '10'); if (!cur('#sRnd')) pressed('#sRnd', '5');
+uiSplit(); uiPct(); uiVat(); uiPace('rT'); uiHike(); uiUnit(); uiDateBuild();
+const h0 = location.hash.slice(1), t0 = $$('#tabs button').some((b) => b.dataset.t === h0) ? h0 : store.get('tab', 'split');
+tab($$('#tabs button').some((b) => b.dataset.t === t0) ? t0 : 'split');
+window.__calc = { parseNum, splitBill, vat, percent, parseTime, fmtTime, fmtPace, hike, convert, UNITS, workdays, ymdDiff, addMonths, isoWeek, parseDate, chf, fmtNum, isoStr };
+})();
+</script>
+</body>
+</html>

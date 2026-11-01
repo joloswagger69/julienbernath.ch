@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Timecode | Rechner</title>
+<meta name="description" content="Timecodes addieren, subtrahieren und zwischen Framerates umrechnen.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 1100px; margin: 0 auto; }
+    @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+    .tcin { font-family: var(--mono); font-size: 1.5rem; letter-spacing: .04em; text-align: center; padding: 12px; }
+    .tcin.bad { border-color: var(--red) !important; }
+    .result { margin-top: 12px; padding: 16px; background: #232421; color: #F5C44A; border-radius: 4px; font-family: var(--mono); font-size: 2rem; text-align: center; letter-spacing: .04em; cursor: copy; }
+    .sub { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-family: var(--mono); font-size: .85rem; color: var(--muted); flex-wrap: wrap; }
+    .op { display: flex; gap: 8px; margin: 10px 0; }
+    .op button { flex: 1; font-size: 1.3rem; font-weight: 800; }
+    .op button[aria-pressed="true"] { background: var(--ink); color: var(--base); }
+    .big { grid-column: 1 / -1; }
+    table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .92rem; }
+    @media (max-width: 420px) { table { font-size: .72rem; } th, td { padding-left: 3px !important; padding-right: 3px !important; } }
+    td, th { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { font-family: var(--font); font-size: .82rem; color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Timecode</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <select id="fps" aria-label="Framerate" style="width:auto">
+        <option value="23.976">23.976</option><option value="24">24</option><option value="25" selected>25 (PAL)</option>
+        <option value="29.97df">29.97 DF</option><option value="29.97">29.97 NDF</option><option value="30">30</option>
+        <option value="50">50</option><option value="59.94df">59.94 DF</option><option value="60">60</option>
+        </select>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap">
+    <div class="grid">
+        <div class="panel">
+            <h2>Rechnen</h2>
+            <input class="tcin" id="a" type="text" value="01:00:00:00" inputmode="numeric" aria-label="Timecode A">
+            <div class="op" id="op"><button class="btn" type="button" data-v="+" aria-pressed="true">+</button><button class="btn" type="button" data-v="-" aria-pressed="false">−</button></div>
+            <input class="tcin" id="b" type="text" value="00:00:42:12" inputmode="numeric" aria-label="Timecode B">
+            <div class="result" id="res" title="Klicken zum Kopieren"></div>
+            <div class="sub"><span id="resF"></span><span id="resS"></span></div>
+        </div>
+
+        <div class="panel">
+            <h2>Umrechnen</h2>
+            <div class="field"><label for="conv">Timecode</label><input class="tcin" id="conv" type="text" value="00:01:30:00" inputmode="numeric"></div>
+            <div class="row">
+                <div class="field"><label for="frames">Frames</label><input id="frames" type="number" min="0"></div>
+                <div class="field"><label for="secs">Sekunden</label><input id="secs" type="number" min="0" step="0.001"></div>
+            </div>
+            <div class="field"><label for="to">Gleiche Dauer bei anderer Framerate</label>
+                <select id="to"><option value="23.976">23.976</option><option value="24">24</option><option value="25">25</option><option value="29.97df">29.97 DF</option><option value="30" selected>30</option><option value="50">50</option><option value="60">60</option></select>
+            </div>
+            <div class="result" id="convRes" title="Klicken zum Kopieren"></div>
+        </div>
+
+        <div class="panel big">
+            <h2>Spickzettel</h2>
+            <table>
+                <thead><tr><th>Dauer</th><th>23.976</th><th>25</th><th>29.97 DF</th><th>50</th></tr></thead>
+                <tbody id="cheat"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    const parseRate = (v) => ({ fps: parseFloat(v), df: v.endsWith('df'), nom: Math.round(parseFloat(v)) });
+    let R = parseRate($('#fps').value);
+
+    // Timecode → Frames (inkl. Drop-Frame für 29.97/59.94)
+    function tcToFrames(tc, r = R) {
+        const m = tc.trim().match(/^(\d{1,2})[:;.](\d{1,2})[:;.](\d{1,2})[:;.](\d{1,3})$/);
+        if (!m) {
+            const digits = tc.replace(/\D/g, '');
+            if (!digits) return NaN;
+            const p = digits.padStart(8, '0').slice(-8);
+            return tcToFrames(`${p.slice(0, 2)}:${p.slice(2, 4)}:${p.slice(4, 6)}:${p.slice(6, 8)}`, r);
+        }
+        const [h, mi, s, f] = m.slice(1).map(Number);
+        if (f >= r.nom || s > 59 || mi > 59) return NaN;
+        let total = ((h * 3600 + mi * 60 + s) * r.nom) + f;
+        if (r.df) {
+            const drop = r.nom === 60 ? 4 : 2;
+            const totalMin = h * 60 + mi;
+            total -= drop * (totalMin - Math.floor(totalMin / 10));
+        }
+        return total;
+    }
+    function framesToTc(frames, r = R) {
+        const neg = frames < 0; frames = Math.abs(Math.round(frames));
+        let fr = frames;
+        if (r.df) {
+            const drop = r.nom === 60 ? 4 : 2;
+            const per10 = r.nom * 600 - drop * 9, per1 = r.nom * 60 - drop;
+            const d = Math.floor(fr / per10), m = fr % per10;
+            fr += drop * 9 * d + (m > drop ? drop * Math.floor((m - drop) / per1) : 0);
+        }
+        const f = fr % r.nom, s = Math.floor(fr / r.nom) % 60, mi = Math.floor(fr / (r.nom * 60)) % 60, h = Math.floor(fr / (r.nom * 3600));
+        const p = (n) => String(n).padStart(2, '0');
+        return `${neg ? '−' : ''}${p(h)}:${p(mi)}:${p(s)}${r.df ? ';' : ':'}${p(f)}`;
+    }
+    const secs = (frames, r = R) => frames / r.fps;
+    const nice = (s) => { const m = Math.floor(s / 60), r = s - m * 60; return m ? `${m} min ${r.toFixed(2)} s` : `${r.toFixed(3)} s`; };
+
+    function calc() {
+        const a = tcToFrames($('#a').value), b = tcToFrames($('#b').value);
+        $('#a').classList.toggle('bad', isNaN(a)); $('#b').classList.toggle('bad', isNaN(b));
+        if (isNaN(a) || isNaN(b)) { $('#res').textContent = '--:--:--:--'; return; }
+        const op = $('#op [aria-pressed="true"]').dataset.v;
+        const r = op === '+' ? a + b : a - b;
+        $('#res').textContent = framesToTc(r);
+        $('#resF').textContent = `${r} Frames`;
+        $('#resS').textContent = nice(Math.abs(secs(r)));
+    }
+    function conv(from) {
+        let f;
+        if (from === 'tc') f = tcToFrames($('#conv').value);
+        if (from === 'frames') f = parseInt($('#frames').value, 10);
+        if (from === 'secs') f = Math.round(parseFloat($('#secs').value) * R.fps);
+        $('#conv').classList.toggle('bad', isNaN(f));
+        if (isNaN(f)) return;
+        if (from !== 'tc') $('#conv').value = framesToTc(f);
+        if (from !== 'frames') $('#frames').value = f;
+        if (from !== 'secs') $('#secs').value = secs(f).toFixed(3);
+        const to = parseRate($('#to').value);
+        $('#convRes').textContent = framesToTc(Math.round(secs(f) * to.fps), to);
+    }
+    function cheat() {
+        const rates = ['23.976', '25', '29.97df', '50'].map(parseRate);
+        const rows = [['1 Sekunde', 1], ['15 Sekunden (Reel)', 15], ['30 Sekunden (Spot)', 30], ['1 Minute', 60], ['10 Minuten', 600], ['1 Stunde', 3600]];
+        $('#cheat').innerHTML = rows.map(([n, s]) => `<tr><td style="font-family:var(--font)">${n}</td>${rates.map(r => `<td>${Math.round(s * r.fps)} f</td>`).join('')}</tr>`).join('');
+    }
+
+    $('#fps').addEventListener('change', () => { R = parseRate($('#fps').value); calc(); conv('tc'); });
+    ['#a', '#b'].forEach(id => $(id).addEventListener('input', calc));
+    $('#op').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; [...$('#op').children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); calc(); });
+    $('#conv').addEventListener('input', () => conv('tc'));
+    $('#frames').addEventListener('input', () => conv('frames'));
+    $('#secs').addEventListener('input', () => conv('secs'));
+    $('#to').addEventListener('change', () => conv('tc'));
+    // Feld verlassen = Timecode schön formatieren
+    ['#a', '#b', '#conv'].forEach(id => $(id).addEventListener('blur', () => { const f = tcToFrames($(id).value); if (!isNaN(f)) $(id).value = framesToTc(f); }));
+    document.querySelectorAll('.result').forEach(r => r.addEventListener('click', () => {
+        navigator.clipboard?.writeText(r.textContent);
+        const t = $('#toast'); t.textContent = 'Kopiert'; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1500);
+    }));
+    calc(); conv('tc'); cheat();
+})();
+</script>
+</body>
+</html>

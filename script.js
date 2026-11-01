@@ -1,22 +1,57 @@
 /* ==========================================================================
-   JULIEN BERNATH
+   JULIEN BERNATH // V2.1 "SCHNITT" – Kern
+   Projekte, Viewer, Timeline, Mischpult, Shotlist, Licht.
+   Die ganzen Spielereien wohnen in fx.js.
    ========================================================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
+(() => {
+    'use strict';
 
-    /* --- 1. GLOBALS & STATE --- */
-    const state = {
-        isDark: false,
-        mouse: { x: 0, y: 0, targetX: 0, targetY: 0 },
-        scrollPercent: 0,
-        isCustomCursorActive: true,
-        currentMediaIndex: 0,
-        gridStyle: parseInt(localStorage.getItem('jb-grid-style') || '0', 10),
-        topoPhase: 0,
-        gridOffset: 0
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const store = {
+        get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* privat */ } }
+    };
+    let FPS = 25;
+
+    const toTimecode = (frames, fps = FPS) => {
+        frames = Math.max(0, Math.floor(frames));
+        const r = Math.round(fps);
+        const f = frames % r;
+        const t = Math.floor(frames / r);
+        const p = (n) => String(n).padStart(2, '0');
+        return `${p(Math.floor(t / 3600))}:${p(Math.floor(t / 60) % 60)}:${p(t % 60)}:${p(f)}`;
     };
 
-    // Project Data Cache
+    const toastEl = $('#toast');
+    let toastT;
+    function toast(msg, isFx = false) {
+        toastEl.textContent = msg;
+        toastEl.classList.toggle('is-fx', isFx);
+        toastEl.classList.add('is-on');
+        clearTimeout(toastT);
+        toastT = setTimeout(() => toastEl.classList.remove('is-on'), 2600);
+    }
+    // Meldet einen entdeckten Effekt an fx.js
+    const found = (id) => document.dispatchEvent(new CustomEvent('jb:fx', { detail: id }));
+
+    /* =====================================================================
+       1. PROJEKTDATEN
+       ===================================================================== */
+    function gallery(basePath, exts, count, labelPrefix) {
+        const list = count ? Array(count).fill(exts) : exts.split(/\s+/);
+        const fileBase = basePath.split('/').pop();
+        return list.map((ext, i) => ({
+            type: 'image',
+            url: `${basePath}${i + 1}.${ext}`,
+            label: `${(labelPrefix || fileBase).toUpperCase()}${i + 1}.${ext.toUpperCase()}`
+        }));
+    }
+
+
+
     const projectsData = {
         kloten_photo: {
             id: 'JB-PRJ-01',
@@ -28,41 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Sportfotograf / Mediamatiker',
             deliverables: 'Action-Fotografie, Spieltags-Reportage, Bildbearbeitung',
             description: 'Dynamische Actionshots eines Heimspiels des EHC Kloten gegen den HC Lugano in der Swiss Arena. Die Aufnahmen fangen die extreme Intensität auf dem Eis, die Emotionen in der Fankurve und die packende Matchday-Atmosphäre ein. Fotografiert und gefilmt wurde mit zwei Kameras und einem Gimbal.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="20" y="20" width="360" height="160" rx="8" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="200" y1="20" x2="200" y2="180" stroke="#000" stroke-width="1.5" stroke-dasharray="2 4"/>
-                <circle cx="200" cy="100" r="30" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 180 80 L 180 70 L 190 70" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 220 80 L 220 70 L 210 70" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 180 120 L 180 130 L 190 130" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 220 120 L 220 130 L 210 130" fill="none" stroke="#E30613" stroke-width="2"/>
-                <circle cx="200" cy="100" r="3" fill="#E30613"/>
-                <text x="35" y="42" font-family="monospace" font-size="10" fill="#000">EHC KLOTEN // ICE_GRID</text>
-            </svg>`,
-            media: Array.from({ length: 16 }, (_, i) => ({
-                type: 'image',
-                url: `assets/images/ehc-kloten/ehck-${i + 1}.webp`,
-                label: `EHCK-${i + 1}.WEBP`
-            }))
+            media: gallery('assets/images/ehc-kloten/ehck-', 'webp', 16)
         },
         kloten_tiktok: {
             id: 'JB-PRJ-02',
             category: 'VIDEO / SOCIAL MEDIA',
             title: 'TikTok-Video EHC Kloten',
+            previewImage: 'assets/images/ehc-kloten/ehck-6.webp',
             client: 'EHC Kloten',
             year: '2025',
             role: 'Video Editor & Content Creator',
             deliverables: 'Kurzvideo-Konzeption, Schnitt, Sound Design, Grading',
             description: 'Energetisches Kurzvideo für den offiziellen TikTok-Kanal des EHC Kloten. Das Video kombiniert rasante Schnitte mit passenden Sound-Effekten, um die Interaktionsrate unter den Eishockey-Fans zu maximieren. Speziell optimiert für mobile Displays und virale Relevanz.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="150" y="15" width="100" height="170" rx="10" fill="none" stroke="#000" stroke-width="1.5"/>
-                <polygon points="190,85 220,100 190,115" fill="#E30613"/>
-                <line x1="80" y1="100" x2="130" y2="100" stroke="#000" stroke-width="1.5" stroke-dasharray="2"/>
-                <line x1="270" y1="100" x2="320" y2="100" stroke="#000" stroke-width="1.5" stroke-dasharray="2"/>
-                <path d="M 40 100 Q 60 40, 80 100 T 120 100" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <path d="M 280 100 Q 300 160, 320 100 T 360 100" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <text x="160" y="35" font-family="monospace" font-size="8" fill="#000">SYS.TIKTOK</text>
-            </svg>`,
             media: [
                 { type: 'tiktok', id: '7332142480294464801', label: 'TIKTOK_VIDEO.URL' }
             ]
@@ -77,22 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Sportfotograf',
             deliverables: 'Action-Shooting, Bildredaktion, Postproduction',
             description: 'Actionreiche Aufnahmen über die Damenmannschaft des EV Zug. Im Fokus stehen Athletik, Leidenschaft und die Dynamik des Frauen-Eishockeys. Die kontrastreichen Schwarz-Weiss- und Farbaufnahmen heben die Physis und den emotionalen Siegeswillen des Teams hervor, den sie mit dem Sieg der Meisterschaft auch bewiesen haben.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="30" y="20" width="340" height="160" fill="none" stroke="#000" stroke-width="1"/>
-                <line x1="143" y1="20" x2="143" y2="180" stroke="#000" stroke-opacity="0.2" stroke-width="1"/>
-                <line x1="256" y1="20" x2="256" y2="180" stroke="#000" stroke-opacity="0.2" stroke-width="1"/>
-                <line x1="30" y1="73" x2="370" y2="73" stroke="#000" stroke-opacity="0.2" stroke-width="1"/>
-                <line x1="30" y1="126" x2="370" y2="126" stroke="#000" stroke-opacity="0.2" stroke-width="1"/>
-                <rect x="180" y="80" width="40" height="40" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <line x1="170" y1="100" x2="230" y2="100" stroke="#E30613" stroke-width="1"/>
-                <line x1="200" y1="70" x2="200" y2="130" stroke="#E30613" stroke-width="1"/>
-                <text x="40" y="40" font-family="monospace" font-size="10" fill="#000">EVZ_GIRLS // F8.0 // 1/1000s</text>
-            </svg>`,
-            media: Array.from({ length: 22 }, (_, i) => ({
-                type: 'image',
-                url: `assets/images/ev-zug/evz-${i + 1}.jpg`,
-                label: `EVZ-${i + 1}.JPG`
-            }))
+            media: gallery('assets/images/ev-zug/evz-', 'jpg', 22)
         },
         limmattal_photo: {
             id: 'JB-PRJ-04',
@@ -104,26 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Sportfotograf',
             deliverables: 'Spielszenen-Fotografie, Social Media Assets',
             description: 'Actionreiche Hallenfotografie für den Schweizer Unihockeyclub Limmattal. Die Serie dokumentiert schnelle Angriffsmanöver, präzise Schüsse und die emotionale Atmosphäre in der Sporthalle. Perfekt farbkorrigierte Aufnahmen für die Vereins-Website und Matchflyer.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="100" r="50" fill="none" stroke="#000" stroke-width="2"/>
-                <circle cx="175" cy="80" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="200" cy="75" r="6" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <circle cx="225" cy="80" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="170" cy="105" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="200" cy="110" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="230" cy="105" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="185" cy="130" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="215" cy="130" r="6" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="120" y1="100" x2="280" y2="100" stroke="#E30613" stroke-width="1" stroke-dasharray="4"/>
-                <text x="35" y="32" font-family="monospace" font-size="10" fill="#000">UHC_LIMMATTAL // SYS_SPHERE</text>
-            </svg>`,
             media: [
                 { type: 'youtube', id: '3kHn7e8IcUo', label: 'YOUTUBE_VIDEO.URL' },
-                ...Array.from({ length: 28 }, (_, i) => ({
-                    type: 'image',
-                    url: `assets/images/uhc-limmattal/limmattal-${i + 1}.webp`,
-                    label: `LIMMATTAL-${i + 1}.WEBP`
-                }))
+                ...gallery('assets/images/uhc-limmattal/limmattal-', 'webp', 28)
             ]
         },
         dorffestflyer: {
@@ -135,35 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2025',
             role: 'Grafikdesigner / Mediamatiker',
             deliverables: 'Visual Identity, Flyer-Design, Plakate, Druckdaten',
-            description: 'Umfassendes Print-Design für den Stand der UHC Bulldogs Ehrendingen am Ehrendinger Dorffest. Die Gestaltung vereint traditionelle Festlichkeit mit modernen typografischen Rastern. Einzelne Designs wurde als Flyer im A5-Format, A4-Format sowie als Plakat gedruckt, verteilt und aufgehängt.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="80" y="20" width="240" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
-                <circle cx="50" cy="100" r="10" fill="none" stroke="#000" stroke-width="1"/>
-                <line x1="35" y1="100" x2="65" y2="100" stroke="#000" stroke-width="1"/>
-                <line x1="50" y1="85" x2="50" y2="115" stroke="#000" stroke-width="1"/>
-                <circle cx="350" cy="100" r="10" fill="none" stroke="#000" stroke-width="1"/>
-                <line x1="335" y1="100" x2="365" y2="100" stroke="#000" stroke-width="1"/>
-                <line x1="350" y1="85" x2="350" y2="115" stroke="#000" stroke-width="1"/>
-                <rect x="100" y="40" width="200" height="40" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <text x="110" y="66" font-family="sans-serif" font-weight="900" font-size="20" fill="#E30613">DORFFEST</text>
-                <line x1="100" y1="110" x2="300" y2="110" stroke="#000" stroke-width="2"/>
-                <line x1="100" y1="125" x2="260" y2="125" stroke="#000" stroke-width="1.5"/>
-                <line x1="100" y1="140" x2="280" y2="140" stroke="#000" stroke-width="1"/>
-                <text x="100" y="160" font-family="monospace" font-size="8" fill="#000">EHRENDINGEN // 2025 // PRINT_READY</text>
-            </svg>`,
-            media: [
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-1.jpg', label: 'DORFFEST-1.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-2.jpg', label: 'DORFFEST-2.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-3.webp', label: 'DORFFEST-3.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-4.webp', label: 'DORFFEST-4.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-5.jpg', label: 'DORFFEST-5.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-6.webp', label: 'DORFFEST-6.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-7.jpg', label: 'DORFFEST-7.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-8.jpg', label: 'DORFFEST-8.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-9.jpg', label: 'DORFFEST-9.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-10.jpg', label: 'DORFFEST-10.JPG' },
-                { type: 'image', url: 'assets/images/uhc-dorffest/dorffest-11.jpg', label: 'DORFFEST-11.JPG' }
-            ]
+            description: 'Umfassendes Print-Design für den Stand der UHC Bulldogs Ehrendingen am Ehrendinger Dorffest. Die Gestaltung vereint traditionelle Festlichkeit mit modernen typografischen Rastern. Einzelne Designs wurden als Flyer im A5-Format, A4-Format sowie als Plakat gedruckt, verteilt und aufgehängt.',
+            media: gallery('assets/images/uhc-dorffest/dorffest-', 'jpg jpg webp webp jpg webp jpg jpg jpg jpg jpg')
         },
         fcwil_photo: {
             id: 'JB-PRJ-07',
@@ -174,31 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
             year: '2023',
             role: 'Sportfotograf',
             deliverables: 'Spieltags-Fotografie, Fankultur-Dokumentation, RAW',
-            description: 'Sportfotografie eines Pre-Game-Trainings des FC Wil in der Challenge League. Die Bilder beleuchtet die ansteigende Intensität auf dem Platz, emotionale Reaktionen der Spieler sowie die Arbeit des Team-Staff.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <line x1="150" y1="180" x2="200" y2="60" stroke="#000" stroke-width="2"/>
-                <line x1="250" y1="180" x2="200" y2="60" stroke="#000" stroke-width="2"/>
-                <line x1="175" y1="120" x2="225" y2="120" stroke="#000" stroke-width="1.5"/>
-                <line x1="162" y1="150" x2="238" y2="150" stroke="#000" stroke-width="1"/>
-                <rect x="150" y="30" width="100" height="30" fill="none" stroke="#E30613" stroke-width="2"/>
-                <circle cx="170" cy="45" r="6" fill="#E30613"/>
-                <circle cx="190" cy="45" r="6" fill="#E30613"/>
-                <circle cx="210" cy="45" r="6" fill="#E30613"/>
-                <circle cx="230" cy="45" r="6" fill="#E30613"/>
-                <text x="35" y="25" font-family="monospace" font-size="10" fill="#000">FC_WIL_1900 // SPORT_FLOODLIGHT</text>
-            </svg>`,
-            media: [
-                { type: 'image', url: 'assets/images/fc-wil/fcw-1.jpg', label: 'FCW-1.JPG' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-2.jpg', label: 'FCW-2.JPG' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-3.webp', label: 'FCW-3.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-4.webp', label: 'FCW-4.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-5.webp', label: 'FCW-5.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-6.webp', label: 'FCW-6.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-7.jpg', label: 'FCW-7.JPG' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-8.webp', label: 'FCW-8.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-9.webp', label: 'FCW-9.WEBP' },
-                { type: 'image', url: 'assets/images/fc-wil/fcw-10.webp', label: 'FCW-10.WEBP' }
-            ]
+            description: 'Sportfotografie eines Pre-Game-Trainings des FC Wil in der Challenge League. Die Bilder beleuchten die ansteigende Intensität auf dem Platz, emotionale Reaktionen der Spieler sowie die Arbeit des Team-Staffs.',
+            media: gallery('assets/images/fc-wil/fcw-', 'jpg jpg webp webp webp webp jpg webp webp webp')
         },
         lenzburg_sw: {
             id: 'JB-PRJ-08',
@@ -209,43 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Fotograf / Editor',
             deliverables: 'Fine Art Prints, Schwarz-Weiss-Farbkorrektur',
             description: 'Künstlerische Schwarz-Weiss-Fotoserie, welche die historische Altstadt und das imposante Schloss Lenzburg in kontrastreichen Geometrien zeigt. Durch das gezielte Spiel von Licht und tiefen Schatten entsteht ein beinahe architektonischer Rhythmus.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="160" y="40" width="80" height="140" fill="none" stroke="#000" stroke-width="2"/>
-                <polygon points="150,40 200,10 250,40" fill="none" stroke="#E30613" stroke-width="2"/>
-                <line x1="200" y1="40" x2="200" y2="180" stroke="#000" stroke-width="1" stroke-dasharray="4"/>
-                <line x1="160" y1="90" x2="240" y2="90" stroke="#000" stroke-width="1.5"/>
-                <line x1="160" y1="130" x2="240" y2="130" stroke="#000" stroke-width="1.5"/>
-                <circle cx="200" cy="110" r="15" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <text x="35" y="32" font-family="monospace" font-size="10" fill="#000">CASTLE_LENZBURG // MONO_GRID</text>
-            </svg>`,
-            media: [
-                { type: 'image', url: 'assets/images/lenzburg/lb-1.jpg', label: 'LB-1.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-2.jpg', label: 'LB-2.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-3.webp', label: 'LB-3.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-4.jpg', label: 'LB-4.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-5.jpg', label: 'LB-5.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-6.jpg', label: 'LB-6.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-7.jpg', label: 'LB-7.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-8.jpg', label: 'LB-8.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-9.webp', label: 'LB-9.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-10.jpg', label: 'LB-10.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-11.webp', label: 'LB-11.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-12.webp', label: 'LB-12.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-13.webp', label: 'LB-13.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-14.jpg', label: 'LB-14.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-15.jpg', label: 'LB-15.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-16.jpg', label: 'LB-16.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-17.jpg', label: 'LB-17.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-18.jpg', label: 'LB-18.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-19.webp', label: 'LB-19.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-20.jpg', label: 'LB-20.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-21.jpg', label: 'LB-21.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-22.webp', label: 'LB-22.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-23.jpg', label: 'LB-23.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-24.webp', label: 'LB-24.WEBP' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-25.jpg', label: 'LB-25.JPG' },
-                { type: 'image', url: 'assets/images/lenzburg/lb-26.jpg', label: 'LB-26.JPG' }
-            ]
+            media: gallery('assets/images/lenzburg/lb-', 'jpg jpg webp jpg jpg jpg jpg jpg webp jpg webp webp webp jpg jpg jpg jpg jpg webp jpg jpg webp jpg webp jpg jpg')
         },
         itson: {
             id: 'JB-PRJ-09',
@@ -257,31 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Organisator & Videograf',
             deliverables: 'Multimediales Konzept, Droneshots, Video-Visualisierung',
             description: 'Vertiefungsarbeit (VA) in Form eines Kurzfilms. Das Projekt "ITSON", In The Silence Of Nature, umfasst eine umfassende Vorbereitung und eine noch längere Bearbeitungs-Phase. Gefilmt wurde abseits von Bevölkerung und moderner Infrastruktur.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="40" y="20" width="320" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="40" y1="50" x2="360" y2="50" stroke="#000" stroke-width="1.5"/>
-                <circle cx="55" cy="35" r="4" fill="#E30613"/>
-                <circle cx="70" cy="35" r="4" fill="#000"/>
-                <circle cx="85" cy="35" r="4" fill="#000"/>
-                <rect x="60" y="70" width="120" height="90" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <line x1="200" y1="80" x2="330" y2="80" stroke="#000" stroke-width="2"/>
-                <line x1="200" y1="100" x2="330" y2="100" stroke="#000" stroke-width="1.5"/>
-                <line x1="200" y1="120" x2="300" y2="120" stroke="#000" stroke-width="1"/>
-                <text x="200" y="150" font-family="monospace" font-size="9" fill="#E30613">ITSON // VER.1.02</text>
-            </svg>`,
             media: [
                 { type: 'youtube', id: 'i5LtMUy2Ngk', label: 'YOUTUBE_VIDEO.URL' },
-                { type: 'image', url: 'assets/images/itson/itson-1.jpg', label: 'ITSON-1.JPG' },
-                { type: 'image', url: 'assets/images/itson/itson-2.jpeg', label: 'ITSON-2.JPEG' },
-                { type: 'image', url: 'assets/images/itson/itson-3.jpeg', label: 'ITSON-3.JPEG' },
-                { type: 'image', url: 'assets/images/itson/itson-4.jpeg', label: 'ITSON-4.JPEG' },
-                { type: 'image', url: 'assets/images/itson/itson-5.jpeg', label: 'ITSON-5.JPEG' },
-                { type: 'image', url: 'assets/images/itson/itson-6.webp', label: 'ITSON-6.WEBP' },
-                { type: 'image', url: 'assets/images/itson/itson-7.webp', label: 'ITSON-7.WEBP' },
-                { type: 'image', url: 'assets/images/itson/itson-8.webp', label: 'ITSON-8.WEBP' },
-                { type: 'image', url: 'assets/images/itson/itson-9.webp', label: 'ITSON-9.WEBP' },
-                { type: 'image', url: 'assets/images/itson/itson-10.jpeg', label: 'ITSON-10.JPEG' },
-                { type: 'image', url: 'assets/images/itson/itson-11.png', label: 'ITSON-11.PNG' }
+                ...gallery('assets/images/itson/itson-', 'jpg jpeg jpeg jpeg jpeg webp webp webp webp jpeg png')
             ]
         },
         tikamate: {
@@ -293,33 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             role: 'Brand & Packaging Designer',
             deliverables: 'Logo, Cans Packaging, Social Media Grid, Mockups',
             description: 'Ganzheitliche Entwicklung einer Getränkemarke namens "Tika Mate". Das Konzept basiert auf einem umweltfreundlichen, minimalistischen Design. Es wurden sowohl die Aludosen als auch die digitale Social-Media-Kampagne zur Produkteinführung visuell gestaltet.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="160" y="25" width="80" height="150" rx="12" fill="none" stroke="#000" stroke-width="2"/>
-                <line x1="160" y1="45" x2="240" y2="45" stroke="#000" stroke-width="1.5"/>
-                <line x1="160" y1="155" x2="240" y2="155" stroke="#000" stroke-width="1.5"/>
-                <circle cx="200" cy="100" r="22" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 190 110 Q 200 90, 210 90" fill="none" stroke="#E30613" stroke-width="2"/>
-                <path d="M 210 90 Q 200 110, 190 110" fill="none" stroke="#E30613" stroke-width="2"/>
-                <line x1="185" y1="115" x2="215" y2="85" stroke="#E30613" stroke-width="1"/>
-                <text x="35" y="42" font-family="monospace" font-size="10" fill="#000">TIKA_MATE // BRAND_CAN</text>
-            </svg>`,
-media: [
-                { type: 'image', url: 'assets/images/tika-mate/tika-1.jpg', label: 'TIKA-1.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-2.jpg', label: 'TIKA-2.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-3.jpg', label: 'TIKA-3.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-4.jpg', label: 'TIKA-4.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-5.jpg', label: 'TIKA-5.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-6.jpg', label: 'TIKA-6.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-7.jpg', label: 'TIKA-7.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-8.jpg', label: 'TIKA-8.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-9.jpg', label: 'TIKA-9.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-10.jpg', label: 'TIKA-10.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-11.jpg', label: 'TIKA-11.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-12.jpg', label: 'TIKA-12.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-13.jpg', label: 'TIKA-13.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-14.jpg', label: 'TIKA-14.JPG' },
-                { type: 'image', url: 'assets/images/tika-mate/tika-15.jpg', label: 'TIKA-15.JPG' }
-            ]
+            media: gallery('assets/images/tika-mate/tika-', 'jpg', 15)
         },
         nature_photo: {
             id: 'JB-PRJ-11',
@@ -330,43 +176,7 @@ media: [
             role: 'Naturfotograf',
             deliverables: 'Outdoor-Fotografie, Makro-Aufnahmen, Color-Grading',
             description: 'Fotografische Einblicke in die Tierwelt und verschiedene Naturlandschaften. Im Mittelpunkt stehen natürliche Lichtverhältnisse, ruhige Kompositionen und echte Begegnungen. Die Bilder dokumentieren besondere Momente draussen und zeigen die Vielfalt und Atmosphäre der Natur aus einer persönlichen Perspektive.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="120" y="20" width="160" height="160" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
-                <line x1="200" y1="20" x2="200" y2="180" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
-                <line x1="120" y1="100" x2="280" y2="100" stroke="#000" stroke-width="1" stroke-dasharray="2"/>
-                <path d="M 200 40 Q 250 100, 200 160 Q 150 100, 200 40 Z" fill="none" stroke="#E30613" stroke-width="2"/>
-                <line x1="200" y1="40" x2="200" y2="160" stroke="#E30613" stroke-width="1.5"/>
-                <path d="M 200 80 Q 220 70, 230 65" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <path d="M 200 100 Q 180 90, 170 85" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <path d="M 200 120 Q 220 110, 230 105" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <text x="35" y="32" font-family="monospace" font-size="10" fill="#000">NATURE_SCAN // LEAF_GEOMETRY</text>
-            </svg>`,
-            media: [
-                { type: 'image', url: 'assets/images/natur-tiere/nt-1.webp', label: 'NT-1.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-2.jpg', label: 'NT-2.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-3.webp', label: 'NT-3.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-4.jpg', label: 'NT-4.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-5.jpg', label: 'NT-5.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-6.webp', label: 'NT-6.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-7.jpg', label: 'NT-7.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-8.webp', label: 'NT-8.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-9.jpg', label: 'NT-9.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-10.jpg', label: 'NT-10.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-11.jpg', label: 'NT-11.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-12.jpg', label: 'NT-12.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-13.jpg', label: 'NT-13.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-14.jpg', label: 'NT-14.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-15.jpg', label: 'NT-15.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-16.webp', label: 'NT-16.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-17.jpg', label: 'NT-17.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-18.webp', label: 'NT-18.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-19.jpg', label: 'NT-19.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-20.jpg', label: 'NT-20.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-21.webp', label: 'NT-21.WEBP' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-22.jpg', label: 'NT-22.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-23.jpg', label: 'NT-23.JPG' },
-                { type: 'image', url: 'assets/images/natur-tiere/nt-24.jpg', label: 'NT-24.JPG' }
-            ]
+            media: gallery('assets/images/natur-tiere/nt-', 'webp jpg webp jpg jpg webp jpg webp jpg jpg jpg jpg jpg jpg jpg webp jpg webp jpg jpg webp jpg jpg jpg webp webp webp webp webp')
         },
         bulldogs_graphics: {
             id: 'JB-PRJ-12',
@@ -378,29 +188,11 @@ media: [
             role: 'Social Media Designer',
             deliverables: 'Photoshop Templates, Spieltagsankündigungen, Resultatgrafiken',
             description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Live-Ergebnis-Posts der UHC Bulldogs Ehrendingen auf Instagram. Entwickelt in Figma für einfache, mobile Pflege durch den Verein.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <line x1="20" y1="40" x2="380" y2="40" stroke="#000" stroke-width="1.5"/>
-                <line x1="20" y1="160" x2="380" y2="160" stroke="#000" stroke-width="1.5"/>
-                <rect x="40" y="60" width="320" height="80" fill="none" stroke="#E30613" stroke-width="2"/>
-                <text x="60" y="110" font-family="sans-serif" font-weight="900" font-size="28" fill="#E30613">MATCHDAY</text>
-                <text x="250" y="105" font-family="monospace" font-size="10" fill="#000">[ VS_OPP ]</text>
-                <text x="250" y="120" font-family="monospace" font-size="8" fill="#000">KICKOFF: 19:30</text>
-                <text x="35" y="32" font-family="monospace" font-size="8" fill="#000">SOCIAL_MEDIA_GRID // INSTAGRAM_1080x1080</text>
-            </svg>`,
             media: [
                 { type: 'youtube', id: 'KXqK217Yzi4', label: 'REEL_01.URL' },
                 { type: 'youtube', id: 'ByaoJRIcHjs', label: 'REEL_02.URL' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-1.webp', label: 'GRAFIK-1.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-2.webp', label: 'GRAFIK-2.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-3.png', label: 'GRAFIK-3.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-4.png', label: 'GRAFIK-4.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-5.png', label: 'GRAFIK-5.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-6.png', label: 'GRAFIK-6.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-7.png', label: 'GRAFIK-7.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-8.png', label: 'GRAFIK-8.PNG' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-9.webp', label: 'GRAFIK-9.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-10.webp', label: 'GRAFIK-10.WEBP' },
-                { type: 'image', url: 'assets/images/uhc-grafiken/uhc-grafiken-11.png', label: 'GRAFIK-11.PNG' }
+                { type: 'youtube', id: 'TEzgrs_WVZw', label: 'REEL_03.URL', portrait: true },
+                ...gallery('assets/images/uhc-grafiken/uhc-grafiken-', 'webp webp png png png png png png webp webp png webp', 0, 'GRAFIK-')
             ]
         },
         sonstiges: {
@@ -413,32 +205,7 @@ media: [
             role: 'Designer / Editor',
             deliverables: 'Grafikdesign, Foto-Pools, Layout-Experimente',
             description: 'Kreative Vielfalt: Diverse Grafikdesigns, Fotografie-Pools und gestalterische Layout-Experimente aus verschiedenen Projekten und Übungen.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="30" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                <rect x="150" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                <rect x="270" y="30" width="100" height="140" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="30" y1="60" x2="370" y2="60" stroke="#000" stroke-width="1"/>
-                <circle cx="80" cy="100" r="15" fill="none" stroke="#E30613" stroke-width="2"/>
-                <polygon points="190,90 210,100 190,110" fill="#E30613"/>
-                <rect x="290" y="85" width="60" height="30" fill="none" stroke="#E30613" stroke-width="1.5"/>
-                <text x="35" y="45" font-family="monospace" font-size="8" fill="#000">IMG_POOL</text>
-                <text x="155" y="45" font-family="monospace" font-size="8" fill="#000">YT_STREAM</text>
-                <text x="275" y="45" font-family="monospace" font-size="8" fill="#000">LAYOUT.EXE</text>
-            </svg>`,
-            media: [
-                { type: 'image', url: 'assets/images/sonstiges/sonst-1.webp', label: 'SONST-1.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-2.webp', label: 'SONST-2.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-3.webp', label: 'SONST-3.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-4.jpg', label: 'SONST-4.JPG' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-5.webp', label: 'SONST-5.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-6.webp', label: 'SONST-6.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-7.webp', label: 'SONST-7.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-8.webp', label: 'SONST-8.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-9.jpg', label: 'SONST-9.JPG' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-10.webp', label: 'SONST-10.WEBP' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-11.png', label: 'SONST-11.PNG' },
-                { type: 'image', url: 'assets/images/sonstiges/sonst-12.png', label: 'SONST-12.PNG' }
-            ]
+            media: gallery('assets/images/sonstiges/sonst-', 'webp webp webp jpg webp webp webp webp jpg webp png png webp webp')
         },
         portfolio_website: {
             id: 'JB-PRJ-14',
@@ -446,1434 +213,609 @@ media: [
             title: 'julienbernath.ch',
             client: 'Eigenprojekt',
             year: '2026',
-            role: 'Frontend Developer & UI Designer',
-            deliverables: 'Grid System, Personal Portfolio, Interactive Command Center',
-            description: 'Konzeption, Design und Entwicklung der eigenen Portfolio-Plattform julienbernath.ch. Die Website nutzt ein massgeschneidertes, futuristisches Theme mit einem interaktiven Grid-Hintergrund, der auf Mausbewegungen reagiert, einer voll funktionsfähigen Befehlspalette zur Schnellnavigation und einem reaktiven E-Mail-Terminal.',
-            graphic: `<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-                <rect x="20" y="20" width="360" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
-                <line x1="20" y1="50" x2="380" y2="50" stroke="#000" stroke-width="1.5"/>
-                <circle cx="40" cy="35" r="4" fill="#E30613"/>
-                <text x="55" y="40" font-family="sans-serif" font-weight="bold" font-size="12" fill="#000">julienbernath.ch</text>
-                <line x1="120" y1="50" x2="120" y2="180" stroke="#000" stroke-dasharray="2 3" stroke-width="0.5"/>
-                <line x1="220" y1="50" x2="220" y2="180" stroke="#000" stroke-dasharray="2 3" stroke-width="0.5"/>
-                <circle cx="200" cy="115" r="25" fill="none" stroke="#E30613" stroke-width="1"/>
-                <line x1="160" y1="115" x2="240" y2="115" stroke="#E30613" stroke-width="0.5"/>
-                <line x1="200" y1="75" x2="200" y2="155" stroke="#E30613" stroke-width="0.5"/>
-                <text x="260" y="160" font-family="monospace" font-size="8" fill="#000">SYS_OS_V2.6</text>
-            </svg>`
+            role: 'Art Director & Chef-Prompter',
+            deliverables: 'Ideen, Geschmack und ungefähr 400-mal „nein, nochmal“',
+            description: 'Diese Website. Ehrlich gesagt hat die KI den Code geschrieben, und ich habe danebengesessen und gesagt, was mir nicht gefällt. Ziemlich oft. Die Ideen, die Fotos und der Geschmack sind von mir, die Tipparbeit eher nicht. Beim Film nennt man das Regie.',
+            media: []
         }
     };
 
-
-    /* --- 2. TELEMETRY & SYSTEM MONITORS --- */
-    
-    // Live System Clock
-    const timeEl = document.getElementById('sys-time');
-    function updateClock() {
-        if (!timeEl) return;
-        const now = new Date();
-        const hrs = String(now.getHours()).padStart(2, '0');
-        const mins = String(now.getMinutes()).padStart(2, '0');
-        const secs = String(now.getSeconds()).padStart(2, '0');
-        timeEl.textContent = `${hrs}:${mins}:${secs}`;
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // Live Screen Resolution
-    const resEl = document.getElementById('screen-res');
-    function updateRes() {
-        if (!resEl) return;
-        resEl.textContent = `${window.innerWidth}x${window.innerHeight}`;
-    }
-    updateRes();
-    window.addEventListener('resize', updateRes);
-
-    // Scroll Telemetry Tracker
-    const telemetryBar = document.getElementById('telemetry-bar-inner');
-    const telemetryText = document.getElementById('telemetry-text');
-    const contentScroll = document.getElementById('content-scroll');
-    
-    if (contentScroll) {
-        contentScroll.addEventListener('scroll', () => {
-            const scrollTop = contentScroll.scrollTop;
-            const docHeight = contentScroll.scrollHeight - contentScroll.clientHeight;
-            if (docHeight <= 0) return;
-            
-            state.scrollPercent = Math.min(Math.round((scrollTop / docHeight) * 100), 100);
-            
-            if (telemetryBar) telemetryBar.style.width = `${state.scrollPercent}%`;
-            if (telemetryText) telemetryText.textContent = `SCROLL: ${String(state.scrollPercent).padStart(3, '0')}%`;
-        });
-    }
-
-
-    /* --- 3. CUSTOM CURSOR PHYSICS (Crosshair only) --- */
-    const cursor = document.getElementById('custom-cursor');
-    const rippleContainer = document.getElementById('click-ripple-container');
-    
-    if (cursor) {
-        function evaluateCursorState() {
-            if (window.innerWidth <= 768) {
-                state.isCustomCursorActive = false;
-                cursor.style.opacity = '0';
-                document.body.style.cursor = 'default';
-            } else {
-                state.isCustomCursorActive = true;
-                cursor.style.opacity = '1';
-                document.body.style.cursor = 'none';
-            }
-        }
-        
-        evaluateCursorState();
-        window.addEventListener('resize', evaluateCursorState);
-
-        let currentX = 0;
-        let currentY = 0;
-
-        const coordsEl = document.getElementById('cursor-coords');
-
-        // Smooth cursor tracking — always runs, even during modal
-        window.addEventListener('mousemove', (e) => {
-            state.mouse.targetX = e.clientX;
-            state.mouse.targetY = e.clientY;
-            if (coordsEl && state.isCustomCursorActive) {
-                coordsEl.textContent = `X: ${String(Math.round(e.clientX)).padStart(3, '0')} Y: ${String(Math.round(e.clientY)).padStart(3, '0')}`;
-            }
-        });
-
-        function animateCursor() {
-            // Always update position regardless of modal state
-            currentX += (state.mouse.targetX - currentX) * 0.25;
-            currentY += (state.mouse.targetY - currentY) * 0.25;
-            cursor.style.left = `${currentX}px`;
-            cursor.style.top  = `${currentY}px`;
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-
-        // Hover state for interactive elements
-        const interactiveElements = document.querySelectorAll('a, button, [tabindex="0"], .project-card, .console-widget, input, textarea');
-        interactiveElements.forEach(el => {
-            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
-            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
-        });
-
-        // --- CLICK TELEMETRY EFFECT ---
-        // Spawns a technical focus bracket with coordinates that fades out
-        if (rippleContainer) {
-            window.addEventListener('mousedown', (e) => {
-                const marker = document.createElement('div');
-                marker.className = 'click-coords-marker';
-                marker.style.left = e.clientX + 'px';
-                marker.style.top  = e.clientY + 'px';
-
-                const brackets = document.createElement('div');
-                brackets.className = 'marker-brackets';
-
-                const label = document.createElement('div');
-                label.className = 'marker-label monospace';
-                const posX = String(Math.round(e.clientX)).padStart(3, '0');
-                const posY = String(Math.round(e.clientY)).padStart(3, '0');
-                label.textContent = `LOC: [X_${posX} : Y_${posY}]`;
-
-                marker.appendChild(brackets);
-                marker.appendChild(label);
-                rippleContainer.appendChild(marker);
-
-                // Clean up when fade animation ends
-                marker.addEventListener('animationend', (evt) => {
-                    if (evt.animationName === 'marker-fade-out') {
-                        marker.remove();
-                    }
-                });
-            });
-        }
-    }
-
-
-    /* --- 4. INTERACTIVE CANVAS GRID MATRIX ENGINE --- */
-    const canvas = document.getElementById('grid-canvas');
-    let ctx = null;
-    let gridNodes = [];
-    let radarAngle = 0;
-
-    if (canvas) {
-        ctx = canvas.getContext('2d');
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            initializeGridNodes();
-        }
-
-        function initializeGridNodes() {
-            gridNodes = [];
-            const spacing = 60;
-            const offset = 30;
-            for (let x = offset; x < canvas.width; x += spacing) {
-                for (let y = offset; y < canvas.height; y += spacing) {
-                    gridNodes.push({
-                        origX: x, origY: y, x: x, y: y,
-                        floatSeed: Math.random() * Math.PI * 2
-                    });
-                }
-            }
-        }
-
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        function drawGridMatrix() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const bodyStyle = getComputedStyle(document.body);
-            const sigRGB = bodyStyle.getPropertyValue('--color-signal-rgb').trim() || (state.isDark ? '255, 34, 53' : '227, 6, 19');
-            const strokeColor = `rgba(${sigRGB}, 0.035)`;
-            const accentStroke = state.isDark ? 'rgba(224, 154, 95, 0.05)' : 'rgba(200, 117, 51, 0.05)';
-            const textColor = state.isDark ? 'rgba(239, 239, 239, 0.12)' : 'rgba(0, 0, 0, 0.12)';
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-
-            if (state.gridStyle === 0) {
-                // ==========================================
-                // DESIGN 0: RADAR GRID (ORIGINAL)
-                // ==========================================
-                radarAngle = (radarAngle + 0.003) % (Math.PI * 2);
-
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = 1;
-                
-                // Draw axis crosshairs
-                ctx.beginPath();
-                ctx.moveTo(cx - 380, cy);
-                ctx.lineTo(cx + 380, cy);
-                ctx.moveTo(cx, cy - 380);
-                ctx.lineTo(cx, cy + 380);
-                ctx.stroke();
-                
-                // Draw ticks on crosshairs
-                ctx.beginPath();
-                for (let i = -350; i <= 350; i += 50) {
-                    if (i === 0) continue;
-                    ctx.moveTo(cx + i, cy - 3);
-                    ctx.lineTo(cx + i, cy + 3);
-                    ctx.moveTo(cx - 3, cy + i);
-                    ctx.lineTo(cx + 3, cy + i);
-                }
-                ctx.stroke();
-                
-                // Inner circle
-                ctx.beginPath();
-                ctx.arc(cx, cy, 100, 0, Math.PI * 2);
-                ctx.stroke();
-                
-                // Middle dashed circle (copper accent)
-                ctx.save();
-                ctx.strokeStyle = accentStroke;
-                ctx.setLineDash([3, 5]);
-                ctx.beginPath();
-                ctx.arc(cx, cy, 220, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-                
-                // Outer measured circle
-                ctx.beginPath();
-                ctx.arc(cx, cy, 340, 0, Math.PI * 2);
-                ctx.stroke();
-                
-                // Sweep radar beam
-                ctx.save();
-                ctx.strokeStyle = `rgba(${sigRGB}, ${state.isDark ? '0.08' : '0.07'})`;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(radarAngle) * 340, cy + Math.sin(radarAngle) * 340);
-                ctx.stroke();
-                ctx.restore();
-                
-                // Degrees & text info
-                ctx.fillStyle = textColor;
-                ctx.font = '8px Space Mono, monospace';
-                ctx.fillText("N // 000°", cx - 22, cy - 352);
-                ctx.fillText("S // 180°", cx - 22, cy + 360);
-                ctx.fillText("E // 090°", cx + 352, cy + 3);
-                ctx.fillText("W // 270°", cx - 402, cy + 3);
-                ctx.fillText("SYS_RADAR: SCANNING_BEAM", cx - 60, cy - 115);
-                ctx.fillText("SYS_REF: BERNATH.SYS_GRID", cx - 62, cy + 122);
-
-                // DRAW MESH CONNECTIONS FOR INTERACTIVE NODES
-                const connectionDistance = 75;
-                const mouseRange = 110;
-                const linkColor = `rgba(${sigRGB}, 0.08)`;
-                
-                const activeNodes = gridNodes.filter(node => {
-                    const dx = state.mouse.targetX - node.x;
-                    const dy = state.mouse.targetY - node.y;
-                    return Math.hypot(dx, dy) < mouseRange;
-                });
-                
-                ctx.strokeStyle = linkColor;
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i < activeNodes.length; i++) {
-                    for (let j = i + 1; j < activeNodes.length; j++) {
-                        const dist = Math.hypot(activeNodes[i].x - activeNodes[j].x, activeNodes[i].y - activeNodes[j].y);
-                        if (dist < connectionDistance) {
-                            ctx.beginPath();
-                            ctx.moveTo(activeNodes[i].x, activeNodes[i].y);
-                            ctx.lineTo(activeNodes[j].x, activeNodes[j].y);
-                            ctx.stroke();
-                        }
-                    }
-                }
-
-                // DRAW NODES AS SWISS CROSSES
-                const crossColor = state.isDark ? 'rgba(239, 239, 239, 0.22)' : 'rgba(0, 0, 0, 0.18)';
-                ctx.lineWidth = 0.9;
-                
-                const mouseInteractionRadius = 120;
-                const glowRadius = 140;
-                
-                gridNodes.forEach(node => {
-                    node.floatSeed += 0.008;
-                    const floatOffsetVal = Math.sin(node.floatSeed) * 1.5;
-                    let targetX = node.origX + floatOffsetVal;
-                    let targetY = node.origY + floatOffsetVal;
-                    
-                    const dx = state.mouse.targetX - node.x;
-                    const dy = state.mouse.targetY - node.y;
-                    const dist = Math.hypot(dx, dy);
-                    
-                    if (dist < mouseInteractionRadius && state.isCustomCursorActive) {
-                        const force = (mouseInteractionRadius - dist) / mouseInteractionRadius;
-                        const angle = Math.atan2(dy, dx);
-                        targetX -= Math.cos(angle) * force * 15;
-                        targetY -= Math.sin(angle) * force * 15;
-                    }
-                    
-                    node.x += (targetX - node.x) * 0.12;
-                    node.y += (targetY - node.y) * 0.12;
-                    
-                    if (dist < glowRadius && state.isCustomCursorActive) {
-                        const t = 1 - (dist / glowRadius);
-                        const alpha = 0.25 + t * 0.7;
-                        ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
-                        ctx.shadowColor  = `rgba(${sigRGB}, ${t * 0.85})`;
-                        ctx.shadowBlur   = t * 14;
-                    } else {
-                        ctx.strokeStyle = crossColor;
-                        ctx.shadowColor = 'transparent';
-                        ctx.shadowBlur  = 0;
-                    }
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(node.x - 2.5, node.y);
-                    ctx.lineTo(node.x + 2.5, node.y);
-                    ctx.moveTo(node.x, node.y - 2.5);
-                    ctx.lineTo(node.x, node.y + 2.5);
-                    ctx.stroke();
-                });
-                ctx.shadowBlur = 0;
-                ctx.shadowColor = 'transparent';
-
-            } else if (state.gridStyle === 1) {
-                // ==========================================
-                // DESIGN 1: SPINNENNETZ (SPIDERWEB / CONSTELLATION)
-                // ==========================================
-                const webRange = 85;
-                const mouseWebRange = 160;
-                
-                // Let nodes float with larger seeds for organic movement
-                gridNodes.forEach(node => {
-                    node.floatSeed += 0.003;
-                    const floatX = Math.sin(node.floatSeed * 1.5) * 12;
-                    const floatY = Math.cos(node.floatSeed * 1.2) * 12;
-                    let targetX = node.origX + floatX;
-                    let targetY = node.origY + floatY;
-
-                    // Repelled by mouse
-                    const dx = state.mouse.targetX - node.x;
-                    const dy = state.mouse.targetY - node.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist < 130 && state.isCustomCursorActive) {
-                        const force = (130 - dist) / 130;
-                        const angle = Math.atan2(dy, dx);
-                        targetX -= Math.cos(angle) * force * 22;
-                        targetY -= Math.sin(angle) * force * 22;
-                    }
-
-                    node.x += (targetX - node.x) * 0.08;
-                    node.y += (targetY - node.y) * 0.08;
-                });
-
-                // Draw web connections
-                ctx.lineWidth = 0.4;
-                for (let i = 0; i < gridNodes.length; i += 2) { // step by 2 to keep performance high
-                    const nodeA = gridNodes[i];
-                    
-                    // Connect to nearby nodes
-                    for (let j = i + 1; j < gridNodes.length; j += 3) {
-                        const nodeB = gridNodes[j];
-                        const dist = Math.hypot(nodeA.x - nodeB.x, nodeA.y - nodeB.y);
-                        if (dist < webRange) {
-                            const alpha = (1 - (dist / webRange)) * 0.085;
-                            ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
-                            ctx.beginPath();
-                            ctx.moveTo(nodeA.x, nodeA.y);
-                            ctx.lineTo(nodeB.x, nodeB.y);
-                            ctx.stroke();
-                        }
-                    }
-
-                    // Connect directly to cursor if close (Spiderweb center effect)
-                    if (state.isCustomCursorActive) {
-                        const distToMouse = Math.hypot(state.mouse.targetX - nodeA.x, state.mouse.targetY - nodeA.y);
-                        if (distToMouse < mouseWebRange) {
-                            const alpha = (1 - (distToMouse / mouseWebRange)) * 0.16;
-                            ctx.strokeStyle = `rgba(${sigRGB}, ${alpha})`;
-                            ctx.lineWidth = 0.55;
-                            ctx.beginPath();
-                            ctx.moveTo(nodeA.x, nodeA.y);
-                            ctx.lineTo(state.mouse.targetX, state.mouse.targetY);
-                            ctx.stroke();
-                            ctx.lineWidth = 0.4;
-                        }
-                    }
-                }
-
-                // Draw dots/particles
-                ctx.fillStyle = state.isDark ? `rgba(${sigRGB}, 0.28)` : `rgba(${sigRGB}, 0.22)`;
-                gridNodes.forEach(node => {
-                    const distToMouse = Math.hypot(state.mouse.targetX - node.x, state.mouse.targetY - node.y);
-                    ctx.beginPath();
-                    if (distToMouse < 80 && state.isCustomCursorActive) {
-                        // Highlight nodes near mouse
-                        ctx.fillStyle = `rgba(${sigRGB}, 0.7)`;
-                        ctx.arc(node.x, node.y, 2.5, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.fillStyle = state.isDark ? `rgba(${sigRGB}, 0.28)` : `rgba(${sigRGB}, 0.22)`;
-                    } else {
-                        ctx.arc(node.x, node.y, 1.2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                });
-
-            } else if (state.gridStyle === 2) {
-                // ==========================================
-                // DESIGN 2: HEXAGONAL GRID (CYBER BEEHIVE)
-                // ==========================================
-                const hexRadius = 42;
-                const hexWidth = hexRadius * Math.sqrt(3);
-                const hexHeight = hexRadius * 1.5;
-                const mouseHexRange = 150;
-                
-                // Increased line width for cleaner visibility
-                ctx.lineWidth = 0.8;
-                
-                let timeSeed = Date.now() * 0.0008;
-
-                for (let row = 0; row * hexHeight < canvas.height + hexRadius; row++) {
-                    const y = row * hexHeight;
-                    const xOffset = (row % 2) * (hexWidth / 2);
-                    for (let col = 0; col * hexWidth + xOffset < canvas.width + hexRadius; col++) {
-                        const x = col * hexWidth + xOffset;
-                        
-                        // Calculate mouse interaction
-                        const dx = state.mouse.targetX - x;
-                        const dy = state.mouse.targetY - y;
-                        const dist = Math.hypot(dx, dy);
-                        
-                        // Dynamic organic pulse
-                        const pulse = Math.sin(timeSeed + row * 0.15 + col * 0.25) * 0.5 + 0.5;
-                        
-                        // Substantially increased base opacity (from ~0.03 to ~0.08)
-                        let opacity = 0.06 + pulse * 0.05;
-                        let drawAccent = false;
-
-                        if (dist < mouseHexRange && state.isCustomCursorActive) {
-                            const force = (mouseHexRange - dist) / mouseHexRange;
-                            // Highly enhanced interactive hover brightness
-                            opacity += force * 0.22;
-                            if (force > 0.6) {
-                                drawAccent = true;
-                            }
-                        }
-
-                        ctx.strokeStyle = drawAccent ? `rgba(${state.isDark ? '224, 154, 95' : '200, 117, 51'}, ${opacity})` : `rgba(${sigRGB}, ${opacity})`;
-                        
-                        // Draw hexagon
-                        ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (Math.PI / 3) * i;
-                            const hx = x + hexRadius * Math.cos(angle);
-                            const hy = y + hexRadius * Math.sin(angle);
-                            if (i === 0) ctx.moveTo(hx, hy);
-                            else ctx.lineTo(hx, hy);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-
-                        // Occasional tiny center dots in hexagons (also increased visibility)
-                        if (pulse > 0.88 && dist > mouseHexRange) {
-                            ctx.fillStyle = `rgba(${sigRGB}, 0.25)`;
-                            ctx.beginPath();
-                            ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                    }
-                }
-            }
-
-            requestAnimationFrame(drawGridMatrix);
-        }
-        drawGridMatrix();
-    }
-
-
-    /* --- 5. DARK MODE TOGGLE & ACCENT COLOR PICKER --- */
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const iconMoon = document.getElementById('icon-moon');
-    const iconSun = document.getElementById('icon-sun');
-    const toggleLabel = darkModeToggle?.querySelector('.toggle-label');
-
-    // Accent Color Picker Elements
-    const accentColorContainer = document.querySelector('.accent-color-container');
-    const accentColorBtn = document.getElementById('accent-color-btn');
-    const accentColorDropdown = document.getElementById('accent-color-dropdown');
-    const accentColorInput = document.getElementById('accent-color-input');
-    const accentColorReset = document.getElementById('accent-color-reset');
-
-    function applyDarkMode(isDark) {
-        state.isDark = isDark;
-        document.body.classList.toggle('mode-dark', isDark);
-        document.body.classList.toggle('mode-light', !isDark);
-        if (iconMoon) iconMoon.style.display = isDark ? 'none' : 'block';
-        if (iconSun) iconSun.style.display = isDark ? 'block' : 'none';
-        if (toggleLabel) toggleLabel.textContent = isDark ? 'LIGHT' : 'DARK';
-        // Persist preference
-        localStorage.setItem('jb-dark-mode', isDark ? '1' : '0');
-
-        // Update color input swatch if no custom color is active
-        const savedColor = localStorage.getItem('jb-accent-color');
-        if (!savedColor && accentColorInput) {
-            accentColorInput.value = isDark ? '#FF2235' : '#E30613';
-        }
-    }
-
-    if (darkModeToggle) {
-        darkModeToggle.addEventListener('click', () => applyDarkMode(!state.isDark));
-    }
-
-    // Load saved preference or system preference
-    const savedDark = localStorage.getItem('jb-dark-mode');
-    if (savedDark !== null) {
-        applyDarkMode(savedDark === '1');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        applyDarkMode(true);
-    } else {
-        applyDarkMode(false);
-    }
-
-    // Hex to RGB string converter
-    function hexToRgbString(hex) {
-        const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
-        hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
-    }
-
-    // Apply custom accent color
-    function applyAccentColor(color) {
-        if (color) {
-            document.body.style.setProperty('--color-signal', color);
-            const rgb = hexToRgbString(color);
-            if (rgb) {
-                document.body.style.setProperty('--color-signal-rgb', rgb);
-            }
-            localStorage.setItem('jb-accent-color', color);
-            if (accentColorInput) {
-                accentColorInput.value = color;
-            }
-        } else {
-            // Reset to stylesheet defaults
-            document.body.style.removeProperty('--color-signal');
-            document.body.style.removeProperty('--color-signal-rgb');
-            localStorage.removeItem('jb-accent-color');
-            if (accentColorInput) {
-                accentColorInput.value = state.isDark ? '#FF2235' : '#E30613';
-            }
-        }
-    }
-
-    // Toggle Dropdown Visibility
-    if (accentColorBtn && accentColorDropdown) {
-        accentColorBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isOpen = accentColorDropdown.style.display === 'flex';
-            accentColorDropdown.style.display = isOpen ? 'none' : 'flex';
-        });
-        
-        // Prevent closing dropdown when clicking inside it
-        accentColorDropdown.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-    }
-
-    // Color Input Event Handler
-    if (accentColorInput) {
-        accentColorInput.addEventListener('input', (e) => {
-            applyAccentColor(e.target.value);
-        });
-        accentColorInput.addEventListener('change', (e) => {
-            applyAccentColor(e.target.value);
-        });
-    }
-
-    // Reset Button Event Handler
-    if (accentColorReset) {
-        accentColorReset.addEventListener('click', () => {
-            applyAccentColor(null);
-        });
-    }
-
-    // Close Dropdown on Outside Click
-    document.addEventListener('click', () => {
-        if (accentColorDropdown && accentColorDropdown.style.display === 'flex') {
-            accentColorDropdown.style.display = 'none';
-        }
-    });
-
-    // Load saved accent color on page load
-    const savedAccentColor = localStorage.getItem('jb-accent-color');
-    if (savedAccentColor) {
-        applyAccentColor(savedAccentColor);
-    } else {
-        applyAccentColor(null);
-    }
-
-
-    /* --- 5b. BACKGROUND GRID STYLE SELECTOR --- */
-    const gridStyleBtn = document.getElementById('grid-style-btn');
-    const gridStyleLabel = document.getElementById('grid-style-label');
-    const gridStyleNames = ['RADAR', 'WEB', 'HEX'];
-
-    function applyGridStyle(styleIdx) {
-        // Sanitize style index for newly simplified list
-        if (styleIdx < 0 || styleIdx >= gridStyleNames.length || isNaN(styleIdx)) {
-            styleIdx = 0;
-        }
-        state.gridStyle = styleIdx;
-        localStorage.setItem('jb-grid-style', styleIdx);
-        if (gridStyleLabel) {
-            gridStyleLabel.textContent = gridStyleNames[styleIdx];
-        }
-    }
-
-    if (gridStyleBtn) {
-        gridStyleBtn.addEventListener('click', () => {
-            const nextStyle = (state.gridStyle + 1) % gridStyleNames.length;
-            applyGridStyle(nextStyle);
-        });
-    }
-
-    // Load saved grid style on page load
-    applyGridStyle(state.gridStyle);
-
-
-    /* --- 6. SEARCH BAR + QUICK NAVIGATION (opens command palette dialog) --- */
-    const siteSearch = document.getElementById('site-search');
-    const cmdTrigger = null; // legacy reference kept for palette logic
-    const cmdDialog = document.getElementById('command-palette-modal');
-    const cmdInput = document.getElementById('palette-input');
-    const cmdSuggestions = document.getElementById('palette-suggestions');
-    const cmdDiagnostic = document.getElementById('palette-diagnostic');
-
-    function openCommandPalette(prefill) {
-        if (!cmdDialog) return;
-        cmdDiagnostic.style.display = 'none';
-        cmdSuggestions.style.display = 'block';
-        cmdInput.value = prefill || '';
-        cmdDialog.showModal();
-        filterPaletteItems(cmdInput.value.toLowerCase());
-        setTimeout(() => cmdInput.focus(), 50);
-    }
-
-    let isPaletteJustClosed = false;
-
-    function closeCommandPalette() {
-        if (!cmdDialog) return;
-        isPaletteJustClosed = true;
-        cmdDialog.close();
-        if (siteSearch) {
-            siteSearch.value = '';
-            siteSearch.blur();
-        }
-        setTimeout(() => {
-            isPaletteJustClosed = false;
-        }, 150);
-    }
-
-    // Wire search bar: open dialog on focus or input
-    if (siteSearch && cmdDialog) {
-        siteSearch.addEventListener('focus', () => {
-            if (isPaletteJustClosed) return;
-            openCommandPalette(siteSearch.value);
-        });
-        siteSearch.addEventListener('input', () => {
-            if (isPaletteJustClosed) return;
-            openCommandPalette(siteSearch.value);
-        });
-        // Ctrl+K still works
-        window.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                if (cmdDialog.open) {
-                    closeCommandPalette();
-                } else {
-                    openCommandPalette('');
-                }
-            }
-        });
-        // Close when clicking outside (on the backdrop)
-        cmdDialog.addEventListener('click', (e) => {
-            if (e.target === cmdDialog) {
-                closeCommandPalette();
-            }
-        });
-    }
-
-    // Suggestions List Interaction
-    let selectedSuggestionIndex = 0;
-
-    if (cmdInput && cmdSuggestions) {
-        cmdInput.addEventListener('input', (e) => {
-            filterPaletteItems(e.target.value.toLowerCase());
-        });
-
-        cmdInput.addEventListener('keydown', (e) => {
-            const visibleItems = Array.from(cmdSuggestions.querySelectorAll('li')).filter(item => item.style.display !== 'none');
-            
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                selectedSuggestionIndex = (selectedSuggestionIndex + 1) % visibleItems.length;
-                updateSelectedSuggestion(visibleItems);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                selectedSuggestionIndex = (selectedSuggestionIndex - 1 + visibleItems.length) % visibleItems.length;
-                updateSelectedSuggestion(visibleItems);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (visibleItems[selectedSuggestionIndex]) {
-                    triggerPaletteAction(visibleItems[selectedSuggestionIndex].getAttribute('data-action'));
-                }
-            }
-        });
-    }
-
-    function filterPaletteItems(query) {
-        const items = cmdSuggestions.querySelectorAll('li');
-        let visibleCount = 0;
-        
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(query)) {
-                item.style.display = 'block';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-
-        selectedSuggestionIndex = 0;
-        const visibleItems = Array.from(items).filter(item => item.style.display !== 'none');
-        updateSelectedSuggestion(visibleItems);
-    }
-
-    function updateSelectedSuggestion(visibleItems) {
-        const items = cmdSuggestions.querySelectorAll('li');
-        items.forEach(item => item.classList.remove('selected'));
-        
-        if (visibleItems.length > 0 && visibleItems[selectedSuggestionIndex]) {
-            visibleItems[selectedSuggestionIndex].classList.add('selected');
-            visibleItems[selectedSuggestionIndex].scrollIntoView({ block: 'nearest' });
-        }
-    }
-
-    function triggerPaletteAction(action) {
-        if (!action) return;
-
-        if (action.startsWith('go-')) {
-            const targetId = action.replace('go-', '');
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                closeCommandPalette();
-                targetSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        } else if (action === 'diagnostic') {
-            runDiagnosticsCommand();
-        }
-    }
-
-    // Attach click listeners to suggestions directly
-    cmdSuggestions?.querySelectorAll('li').forEach(item => {
-        item.addEventListener('click', () => {
-            triggerPaletteAction(item.getAttribute('data-action'));
-        });
-    });
-
-    function runDiagnosticsCommand() {
-        if (!cmdDiagnostic || !cmdSuggestions) return;
-        
-        cmdSuggestions.style.display = 'none';
-        cmdDiagnostic.style.display = 'block';
-        cmdDiagnostic.innerHTML = '';
-        
-        const lines = [
-            `> INITIALISIERE SYSTEM-DIAGNOSE (v2.6.0)`,
-            `> PRÜFE DESIGN ASSETS & CANVAS ENGINE...`,
-            `> SWISS GRID KOORDINATENSYSTEM: OK`,
-            `> AKZENTFARBE (GOLD/KUPFER): AKTIV`,
-            `> DARK MODE SYSTEM: AKTIV`,
-            `> SKILL MODULE PRÜFEN:`,
-            `  - PHOTOSHOP: OK (85% OUTPUT)`,
-            `  - ILLUSTRATOR: OK (80% OUTPUT)`,
-            `  - INDESIGN: OK (80% OUTPUT)`,
-            `  - AFTER EFFECTS: OK (75% OUTPUT)`,
-            `  - PREMIERE PRO: OK (100% OUTPUT)`,
-            `  - LIGHTROOM: OK (90% OUTPUT)`,
-            `  - AUDITION: OK (50% OUTPUT)`,
-            `  - BLENDER: OK (5% OUTPUT)`,
-            `  - CANVA: OK (70% OUTPUT)`,
-            `  - FILMEN: OK (90% OUTPUT)`,
-            `  - FOTOGRAFIEREN: OK (80% OUTPUT)`,
-            `  - SOCIAL MEDIA VERSTÄNDNIS: OK (99% OUTPUT)`,
-            `> RED SIGNAL LED PULSE... OK`,
-            `> SYSTEM-DIAGNOSE: ALLE MODULE ONLINE.`,
-            `> Julien Bernath Portfolio bereit für Bewerbungen.`,
-            `> Drücke ESC zum Schließen.`
-        ];
-
-        let i = 0;
-        function printNextLine() {
-            if (i < lines.length) {
-                cmdDiagnostic.innerHTML += lines[i] + '\n';
-                cmdDiagnostic.scrollTop = cmdDiagnostic.scrollHeight;
-                i++;
-                setTimeout(printNextLine, 120);
-            }
-        }
-        printNextLine();
-    }
-
-
-    /* --- 7. PROJECT FILTERING CORE --- */
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const projectCards = document.querySelectorAll('.project-card');
-
-    /* --- Project card photo previews ---
-       Uses the first real image from projectsData.media as the preview image.
-       This keeps the card previews photographic, while videos can still exist inside the detail modal. */
-    const projectPreviewFallbacks = {
-        kloten_tiktok: 'assets/images/ehc-kloten/ehck-6.webp',
-
+    const BIN = [
+        { id: 'kloten_photo',      kind: 'photo',  layout: 'feature-l' },
+        { id: 'kloten_tiktok',     kind: 'video' },
+        { id: 'evzug_photo',       kind: 'photo' },
+        { id: 'limmattal_photo',   kind: 'photo' },
+        { id: 'fcwil_photo',       kind: 'photo' },
+        { id: 'lenzburg_sw',       kind: 'photo' },
+        { id: 'itson',             kind: 'video',  layout: 'feature-r' },
+        { id: 'nature_photo',      kind: 'photo' },
+        { id: 'bulldogs_graphics', kind: 'design' },
+        { id: 'tikamate',          kind: 'design' },
+        { id: 'dorffestflyer',     kind: 'design' },
+        { id: 'sonstiges',         kind: 'design' },
+        { id: 'portfolio_website', kind: 'design', layout: 'wide', graphic: 'site' }
+    ];
+
+    const KIND = {
+        photo:  { label: 'Foto',   color: 'var(--clip-teal)' },
+        video:  { label: 'Video',  color: 'var(--clip-iris)' },
+        design: { label: 'Design', color: 'var(--clip-mango)' }
     };
 
-    function getProjectPreviewUrl(projectId) {
-        const data = projectsData[projectId];
-        if (!data) return '';
+    const GRAPHICS = {
+        site: `<svg viewBox="0 0 400 225" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="20" y="20" width="360" height="130" rx="3"/>
+            <text x="200" y="98" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="38" fill="currentColor" stroke="none">JULIEN BERNATH</text>
+            <line x1="20" y1="168" x2="380" y2="168" opacity=".6"/>
+            <rect x="20" y="178" width="70" height="26" rx="3" fill="#E07F9B" stroke="none"/>
+            <rect x="93" y="178" width="120" height="26" rx="3" fill="#4FAE9C" stroke="none"/>
+            <rect x="216" y="178" width="60" height="26" rx="3" fill="#9C93E6" stroke="none"/>
+            <rect x="279" y="178" width="101" height="26" rx="3" fill="#E3A93F" stroke="none"/>
+            <line x1="150" y1="160" x2="150" y2="212" stroke="#E30613" stroke-width="2.5"/>
+            <path d="M144 160h12l-6 7z" fill="#E30613" stroke="none"/>
+        </svg>`
+    };
 
-        if (data.previewImage) return data.previewImage;
-
-        const firstImage = Array.isArray(data.media)
-            ? data.media.find(item => item && item.type === 'image' && item.url)
-            : null;
-
-        return firstImage ? firstImage.url : (projectPreviewFallbacks[projectId] || '');
+    const imagesOf = (d) => (d.media || []).filter(m => m.type === 'image');
+    const videosOf = (d) => (d.media || []).filter(m => m.type !== 'image');
+    function lengthLabel(d) {
+        const v = videosOf(d).length, i = imagesOf(d).length, out = [];
+        if (v) out.push(`${v} ${v === 1 ? 'Video' : 'Videos'}`);
+        if (i) out.push(`${i} Bilder`);
+        return out.join(', ') || 'Live';
     }
+    const previewOf = (d) => d.previewImage || (imagesOf(d)[0] || {}).url || null;
 
-    function injectProjectPhotoPreviews() {
-        projectCards.forEach(card => {
-            const projectId = card.getAttribute('data-id');
-            const data = projectsData[projectId];
-            const visual = card.querySelector('.project-visual');
-            if (!visual || !data) return;
 
-            const previewUrl = getProjectPreviewUrl(projectId);
-            if (!previewUrl || visual.querySelector('.project-preview-img')) return;
-
-            const img = document.createElement('img');
-            img.className = 'project-preview-img';
-            img.src = previewUrl;
-            img.alt = `Vorschaubild zum Projekt ${data.title}`;
-            img.loading = 'lazy';
-            img.decoding = 'async';
-
-            img.addEventListener('load', () => {
-                visual.classList.add('has-preview');
-            });
-
-            img.addEventListener('error', () => {
-                visual.classList.remove('has-preview');
-                img.remove();
-                console.warn(`Projekt-Vorschaubild nicht gefunden: ${previewUrl}`);
-            });
-
-            visual.prepend(img);
+    /* =====================================================================
+       2. PROJEKT-BIN
+       ===================================================================== */
+    const bin = $('#bin');
+    const binItems = [];
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            const img = e.target.querySelector('img[data-src]');
+            if (img) {
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                if (!reducedMotion) img.classList.add('reveal');
+            }
+            io.unobserve(e.target);
         });
-    }
+    }, { rootMargin: '200px' });
 
-    injectProjectPhotoPreviews();
+    BIN.forEach((entry) => {
+        const data = projectsData[entry.id];
+        if (!data) return;
+        const kind = KIND[entry.kind];
+        const li = document.createElement('li');
+        li.className = 'bin-item';
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'clip';
+        el.setAttribute('aria-haspopup', 'dialog');
+        el.dataset.label = 'Ansehen';
 
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Update button states
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            const filterValue = btn.getAttribute('data-filter');
-
-            projectCards.forEach(card => {
-                const cardCategory = card.getAttribute('data-category');
-                
-                if (filterValue === 'all' || cardCategory === filterValue) {
-                    card.classList.remove('fade-out');
-                    // Delay reset slightly to sync smooth scaling
-                    setTimeout(() => {
-                        card.style.position = 'relative';
-                        card.style.width = 'auto';
-                        card.style.height = 'auto';
-                    }, 100);
-                } else {
-                    card.classList.add('fade-out');
-                    // Hide completely after transition completes
-                    setTimeout(() => {
-                        card.style.position = 'absolute';
-                        card.style.width = '0';
-                        card.style.height = '0';
-                    }, 250);
-                }
-            });
-        });
+        const preview = previewOf(data);
+        el.innerHTML = `
+            <div class="clip-frame">
+                ${preview ? `<img data-src="${preview}" alt="" decoding="async">` : `<div class="clip-graphic">${GRAPHICS[entry.graphic] || ''}</div>`}
+                <span class="clip-badge" style="--c:${kind.color}">${kind.label}</span>
+                ${videosOf(data).length ? '<span class="clip-play" aria-hidden="true"><svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg></span>' : ''}
+            </div>
+            <div class="clip-caption">
+                <div>
+                    <h3 class="clip-title">${data.title}</h3>
+                    <p class="clip-meta">${data.client}, ${data.year}</p>
+                </div>
+                <span class="clip-len">${lengthLabel(data)}</span>
+            </div>`;
+        el.addEventListener('click', () => openViewer(entry.id, 0));
+        const img = el.querySelector('.clip-frame img');
+        if (img) img.addEventListener('error', () => img.replaceWith(Object.assign(document.createElement('div'), { className: 'clip-graphic', innerHTML: GRAPHICS.site })), { once: true });
+        li.appendChild(el);
+        bin.appendChild(li);
+        io.observe(li);
+        binItems.push({ li, entry });
     });
 
+    const tabs = $$('.bin-tab');
+    function applyLayout(filter) {
+        binItems.forEach(({ li, entry }) => {
+            li.hidden = !(filter === 'all' || entry.kind === filter);
+            li.classList.remove('is-feature-l', 'is-feature-r', 'is-half', 'is-wide');
+            if (filter === 'all' && entry.layout) li.classList.add(`is-${entry.layout}`);
+        });
+    }
+    tabs.forEach(tab => {
+        const f = tab.dataset.filter;
+        tab.querySelector('.count').textContent = f === 'all' ? binItems.length : binItems.filter(b => b.entry.kind === f).length;
+        tab.addEventListener('click', () => {
+            const before = new Map(binItems.map(b => [b.li, b.li.getBoundingClientRect()]));
+            tabs.forEach(t => { t.classList.toggle('is-active', t === tab); t.setAttribute('aria-pressed', String(t === tab)); });
+            applyLayout(f);
+            // FLIP: Clips gleiten an ihren neuen Platz
+            if (!reducedMotion) {
+                binItems.forEach(({ li }) => {
+                    if (li.hidden) return;
+                    const a = before.get(li), b = li.getBoundingClientRect();
+                    if (!a || !a.width) { li.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], { duration: 350, easing: 'ease-out' }); return; }
+                    li.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: 'none' }], { duration: 450, easing: 'cubic-bezier(.2,.7,.1,1)' });
+                });
+            }
+            if (f !== 'all') found('filter');
+            requestAnimationFrame(layoutTimeline);
+        });
+    });
+    applyLayout('all');
 
-    /* --- 8. PROJECT DETAIL MODAL (DIALOG) --- */
-    const detailModal = document.getElementById('project-detail-modal');
-    const closeModalBtn = document.getElementById('modal-close-btn');
-    const prevModalBtn = document.getElementById('modal-prev-btn');
-    const nextModalBtn = document.getElementById('modal-next-btn');
 
-    // Modal elements
-    const mId = document.getElementById('modal-project-id');
-    const mCat = document.getElementById('modal-project-cat');
-    const mTitle = document.getElementById('modal-project-title');
-    const mDesc = document.getElementById('modal-project-long-desc');
-    const mVisual = document.getElementById('modal-project-visual');
-    const mClient = document.getElementById('modal-project-client');
-    const mYear = document.getElementById('modal-project-year');
-    const mRole = document.getElementById('modal-project-role');
-    const mDeliverables = document.getElementById('modal-project-deliverables');
+    /* =====================================================================
+       3. VIEWER
+       ===================================================================== */
+    const viewer = $('#viewer');
+    const vMedia = $('#viewer-media');
+    const vStrip = $('#viewer-strip');
+    const vCount = $('#viewer-count');
+    const stagePrev = $('#stage-prev');
+    const stageNext = $('#stage-next');
+    const viewerOrder = BIN.map(b => b.id);
+    let vProject = null, vIndex = 0;
 
-    const projectKeys = ['kloten_photo', 'kloten_tiktok', 'evzug_photo', 'limmattal_photo', 'dorffestflyer', 'fcwil_photo', 'lenzburg_sw', 'itson', 'tikamate', 'nature_photo', 'bulldogs_graphics', 'sonstiges', 'portfolio_website'];
-    let currentProjectId = null;
+    const CAT_DE = {
+        'PHOTOGRAPHY': 'Fotografie', 'VIDEO': 'Video', 'SOCIAL MEDIA': 'Social Media', 'PRINT DESIGN': 'Printdesign',
+        'BRANDING': 'Branding', 'DESIGN': 'Design', 'GRAPHICS': 'Grafik', 'WEB DEVELOPMENT': 'Webentwicklung',
+        'UI-UX': 'UI/UX', 'CONCEPT': 'Konzept', 'SPORT': 'Sport', 'ART': 'Freie Arbeit', 'NATURE': 'Natur'
+    };
+    const categoryDE = (c) => c.split('/').map(x => CAT_DE[x.trim()] || x.trim()).join(', ');
 
-    function openProjectModal(projectId) {
-        if (!detailModal || !projectsData[projectId]) return;
+    function openViewer(id, index) {
+        const data = projectsData[id];
+        if (!data) return;
+        vProject = id;
+        $('#viewer-cat').textContent = categoryDE(data.category);
+        $('#viewer-title').textContent = data.title;
+        $('#viewer-desc').textContent = data.description;
+        $('#viewer-client').textContent = data.client;
+        $('#viewer-year').textContent = data.year;
+        $('#viewer-role').textContent = data.role;
+        $('#viewer-deliv').textContent = data.deliverables;
 
-        const data = projectsData[projectId];
-        currentProjectId = projectId;
-
-        // Populate details
-        mId.textContent = `ID: ${data.id}`;
-        mCat.textContent = data.category;
-        mTitle.textContent = data.title;
-        mDesc.textContent = data.description;
-        mClient.textContent = data.client;
-        mYear.textContent = data.year;
-        mRole.textContent = data.role;
-        mDeliverables.textContent = data.deliverables;
-
-        // Make title interactive if it is the portfolio website project
-        if (projectId === 'portfolio_website') {
-            mTitle.classList.add('clickable-title');
-            mTitle.setAttribute('title', 'Zur Startseite springen');
-        } else {
-            mTitle.classList.remove('clickable-title');
-            mTitle.removeAttribute('title');
-        }
-
-        // Render Media Deck
-        renderProjectMedia(projectId);
-
-        // Open Dialog
-        detailModal.showModal();
+        const media = data.media || [];
+        vStrip.innerHTML = '';
+        vStrip.hidden = media.length < 2;
+        const frag = document.createDocumentFragment();
+        media.forEach((m, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'strip-item' + (m.type === 'image' ? '' : ' strip-video');
+            b.setAttribute('role', 'tab');
+            b.setAttribute('aria-label', `${m.type === 'image' ? 'Bild' : 'Video'} ${i + 1}`);
+            b.dataset.index = i;
+            b.innerHTML = m.type === 'image' ? `<img src="${m.url}" alt="" loading="lazy" decoding="async">` : '▶';
+            frag.appendChild(b);
+        });
+        vStrip.appendChild(frag);
+        if (!viewer.open) viewer.showModal();
+        showMedia(index || 0);
+        if (id === 'portfolio_website') found('meta');
     }
 
-    function closeProjectModal() {
-        // Clear media viewport to stop video playback and release iframe resources
-        const mViewport = document.getElementById('modal-media-viewport');
-        const mTabs = document.getElementById('modal-media-tabs');
-        if (mViewport) mViewport.innerHTML = '';
-        if (mTabs) mTabs.innerHTML = '';
-
-        detailModal.close();
-        currentProjectId = null;
-    }
-
-    function renderProjectMedia(projectId) {
-        const data = projectsData[projectId];
-        const mViewport = document.getElementById('modal-media-viewport');
-        const mTabs = document.getElementById('modal-media-tabs');
-        const mediaPrevBtn = document.getElementById('modal-media-prev-btn');
-        const mediaNextBtn = document.getElementById('modal-media-next-btn');
-        if (!mViewport || !mTabs) return;
-
-        mViewport.innerHTML = '';
-        mTabs.innerHTML = '';
-
-        // Fallback: If no media items exist, render default SVG blueprint graphic
-        if (!data.media || data.media.length === 0) {
-            mViewport.innerHTML = data.graphic;
-            mTabs.style.display = 'none';
-            if (mediaPrevBtn) mediaPrevBtn.style.display = 'none';
-            if (mediaNextBtn) mediaNextBtn.style.display = 'none';
+    function showMedia(i) {
+        const data = projectsData[vProject];
+        const media = data.media || [];
+        vMedia.innerHTML = '';
+        stagePrev.hidden = stageNext.hidden = media.length < 2;
+        if (!media.length) {
+            vMedia.innerHTML = `<div class="clip-graphic">${GRAPHICS.site}</div>`;
+            vCount.textContent = '';
             return;
         }
-
-        // Hide/Show media nav buttons depending on number of files
-        if (data.media.length <= 1) {
-            if (mediaPrevBtn) mediaPrevBtn.style.display = 'none';
-            if (mediaNextBtn) mediaNextBtn.style.display = 'none';
+        vIndex = (i + media.length) % media.length;
+        const m = media[vIndex];
+        let el;
+        if (m.type === 'image') {
+            el = new Image();
+            el.src = m.url;
+            el.alt = `${data.title}, Bild ${vIndex + 1} von ${media.length}`;
+            el.decoding = 'async';
+            el.className = 'loupe';
+            // Lupe: Klick zoomt an die Stelle
+            el.addEventListener('click', (e) => {
+                const r = el.getBoundingClientRect();
+                el.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+                el.classList.toggle('is-zoom');
+                found('loupe');
+            });
+            el.addEventListener('mousemove', (e) => {
+                if (!el.classList.contains('is-zoom')) return;
+                const r = el.getBoundingClientRect();
+                el.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+            });
         } else {
-            if (mediaPrevBtn) mediaPrevBtn.style.display = 'flex';
-            if (mediaNextBtn) mediaNextBtn.style.display = 'flex';
+            el = document.createElement('iframe');
+            el.src = m.type === 'youtube'
+                ? `https://www.youtube-nocookie.com/embed/${m.id}?autoplay=1&mute=1&rel=0`
+                : `https://www.tiktok.com/embed/v2/${m.id}`;
+            if (m.type === 'tiktok' || m.portrait) el.classList.add('is-portrait');
+            el.title = `${data.title}, Video`;
+            el.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+            el.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
         }
+        vMedia.appendChild(el);
+        vCount.textContent = `${String(vIndex + 1).padStart(2, '0')} / ${String(media.length).padStart(2, '0')}`;
+        $$('.strip-item', vStrip).forEach((b, idx) => {
+            const sel = idx === vIndex;
+            b.setAttribute('aria-selected', String(sel));
+            if (sel) b.scrollIntoView({ block: 'nearest', inline: 'center', behavior: reducedMotion ? 'auto' : 'smooth' });
+        });
+        [media[(vIndex + 1) % media.length], media[(vIndex - 1 + media.length) % media.length]]
+            .forEach(n => { if (n && n.type === 'image') { const p = new Image(); p.src = n.url; } });
+    }
 
-        // Render tabs
-        mTabs.style.display = 'flex';
-        data.media.forEach((item, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'media-tab';
-            if (idx === 0) btn.classList.add('active');
-            btn.textContent = `> ${item.label}`;
-            btn.setAttribute('data-index', idx);
-            btn.addEventListener('click', () => {
-                loadActiveMedia(projectId, idx);
+    function stepProject(d) {
+        const i = viewerOrder.indexOf(vProject);
+        openViewer(viewerOrder[(i + d + viewerOrder.length) % viewerOrder.length], 0);
+    }
+    vStrip.addEventListener('click', (e) => { const b = e.target.closest('.strip-item'); if (b) showMedia(Number(b.dataset.index)); });
+    stagePrev.addEventListener('click', () => showMedia(vIndex - 1));
+    stageNext.addEventListener('click', () => showMedia(vIndex + 1));
+    $('#viewer-prev-project').addEventListener('click', () => stepProject(-1));
+    $('#viewer-next-project').addEventListener('click', () => stepProject(1));
+    $('#viewer-close').addEventListener('click', () => viewer.close());
+    viewer.addEventListener('close', () => { vMedia.innerHTML = ''; vStrip.innerHTML = ''; vProject = null; });
+    viewer.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); showMedia(vIndex + 1); found('arrows'); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); showMedia(vIndex - 1); found('arrows'); }
+        else if (e.key === 'PageDown') { e.preventDefault(); stepProject(1); }
+        else if (e.key === 'PageUp') { e.preventDefault(); stepProject(-1); }
+        else if (e.key.toLowerCase() === 'f' && document.fullscreenEnabled) { $('#viewer-stage').requestFullscreen?.(); found('fullscreen'); }
+    });
+    let touchX = null;
+    vMedia.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+    vMedia.addEventListener('touchend', (e) => {
+        if (touchX === null) return;
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 50) { showMedia(vIndex + (dx < 0 ? 1 : -1)); found('swipe'); }
+        touchX = null;
+    });
+
+
+    /* =====================================================================
+       4. INTRO: Timecode
+       ===================================================================== */
+    const hudTc = $('#hud-tc');
+    const hudRec = $('#hud-rec');
+    let recPaused = false, recFrames = 0, lastNow = performance.now();
+    const fpsModes = [25, 30, 50, 24];
+    let fpsIdx = 0;
+    (function tick(now) {
+        if (!recPaused) recFrames += ((now - lastNow) / 1000) * FPS;
+        lastNow = now;
+        hudTc.textContent = toTimecode(recFrames);
+        requestAnimationFrame(tick);
+    })(lastNow);
+    hudRec.addEventListener('click', () => {
+        recPaused = !recPaused;
+        hudRec.classList.toggle('is-paused', recPaused);
+        toast(recPaused ? 'Aufnahme pausiert' : 'Aufnahme läuft');
+        found('rec');
+    });
+    hudTc.addEventListener('click', () => {
+        fpsIdx = (fpsIdx + 1) % fpsModes.length;
+        recFrames = (recFrames / FPS) * fpsModes[fpsIdx];
+        FPS = fpsModes[fpsIdx];
+        $('#hud-fps').textContent = `${FPS}p`;
+        updatePlayhead();
+        found('fps');
+    });
+
+
+    /* =====================================================================
+       5. TIMELINE
+       ===================================================================== */
+    const tlBody = $('#tl-body');
+    const tlTrack = $('#tl-track');
+    const tlRuler = $('#tl-ruler');
+    const tlHead = $('#tl-playhead');
+    const tlTc = $('#tl-tc');
+    const tlSpeed = $('#tl-speed');
+    const tlHover = $('#tl-hover');
+    const sections = $$('main > section[data-clip]');
+    const navLinks = $$('.nav a[href^="#"]');
+    const CLIP_COLORS = ['#E07F9B', '#4FAE9C', '#9C93E6', '#E3A93F', '#7FB2E5', '#E3A93F', '#E07F9B'];
+    const TOTAL_SEC = 120;
+    let clipRanges = [];
+    const maxScroll = () => Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    const totalFrames = () => TOTAL_SEC * FPS;
+
+    function layoutTimeline() {
+        const max = maxScroll();
+        const at = (el) => Math.min(1, Math.max(0, (el.offsetTop - innerHeight * 0.4) / max));
+        tlTrack.innerHTML = '';
+        clipRanges = sections.map((sec, i) => ({
+            sec,
+            start: i === 0 ? 0 : at(sec),
+            end: sections[i + 1] ? at(sections[i + 1]) : 1
+        })).filter(r => r.end - r.start > 0.002);
+
+        clipRanges.forEach((r, i) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'tl-clip';
+            b.textContent = r.sec.dataset.clip;
+            b.dataset.label = 'Springen';
+            b.style.left = `calc(${r.start * 100}% + 1px)`;
+            b.style.width = `calc(${(r.end - r.start) * 100}% - 2px)`;
+            b.style.setProperty('--c', CLIP_COLORS[i % CLIP_COLORS.length]);
+            b.setAttribute('aria-label', `Zu ${r.sec.dataset.clip} springen`);
+            b.addEventListener('click', (e) => {
+                if (dragMoved) return;
+                e.stopPropagation();
+                r.sec.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+                found('clipjump');
             });
-            mTabs.appendChild(btn);
+            r.button = b;
+            tlTrack.appendChild(b);
         });
-
-        // Load first media item by default
-        loadActiveMedia(projectId, 0);
+        tlRuler.innerHTML = '';
+        for (let s = 0; s < TOTAL_SEC; s += 15) {
+            const span = document.createElement('span');
+            span.style.left = `${(s / TOTAL_SEC) * 100}%`;
+            span.textContent = toTimecode(s * FPS).slice(3, 8);
+            tlRuler.appendChild(span);
+        }
+        currentClip = null;
+        updatePlayhead();
+        document.dispatchEvent(new Event('jb:layout'));
     }
 
-    function loadActiveMedia(projectId, index) {
-        const data = projectsData[projectId];
-        const mViewport = document.getElementById('modal-media-viewport');
-        if (!mViewport || !data.media || !data.media[index]) return;
-
-        state.currentMediaIndex = index;
-
-        // Update active tab class and scroll it into viewport
-        const mTabs = document.getElementById('modal-media-tabs');
-        if (mTabs) {
-            mTabs.querySelectorAll('.media-tab').forEach((t, idx) => {
-                if (idx === index) {
-                    t.classList.add('active');
-                    t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                } else {
-                    t.classList.remove('active');
-                }
-            });
-        }
-
-        const mediaItem = data.media[index];
-        mViewport.innerHTML = '';
-
-        if (mediaItem.type === 'image') {
-            const img = document.createElement('img');
-            img.src = mediaItem.url;
-            img.alt = data.title;
-            img.loading = 'lazy';
-            mViewport.appendChild(img);
-        } else if (mediaItem.type === 'video') {
-            const video = document.createElement('video');
-            video.src = mediaItem.url;
-            video.autoplay = true;
-            video.loop = true;
-            video.muted = true;
-            video.playsInline = true;
-            mViewport.appendChild(video);
-        } else if (mediaItem.type === 'youtube') {
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube-nocookie.com/embed/${mediaItem.id}?autoplay=1&mute=1&loop=1&playlist=${mediaItem.id}`;
-            iframe.setAttribute('allow', 'autoplay; encrypted-media');
-            iframe.setAttribute('allowfullscreen', 'true');
-            iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-            mViewport.appendChild(iframe);
-        } else if (mediaItem.type === 'tiktok') {
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://www.tiktok.com/embed/v2/${mediaItem.id}`;
-            iframe.setAttribute('allowfullscreen', 'true');
-            iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
-            mViewport.appendChild(iframe);
+    let currentClip = null;
+    const playheadFrac = () => Math.min(1, Math.max(0, scrollY / maxScroll()));
+    function updatePlayhead() {
+        const frac = playheadFrac();
+        tlHead.style.transform = `translateX(${frac * tlBody.clientWidth}px)`;
+        tlTc.textContent = toTimecode(frac * totalFrames());
+        const active = clipRanges.find(r => frac >= r.start && frac < r.end) || clipRanges[clipRanges.length - 1];
+        if (active && active !== currentClip) {
+            currentClip = active;
+            clipRanges.forEach(r => r.button.classList.toggle('is-current', r === active));
+            navLinks.forEach(a => a.setAttribute('aria-current', String(a.getAttribute('href') === `#${active.sec.id}`)));
         }
     }
 
-    function navigateProject(direction) {
-        if (!currentProjectId) return;
-        const currentIndex = projectKeys.indexOf(currentProjectId);
-        if (currentIndex === -1) return;
+    let scrollQueued = false;
+    addEventListener('scroll', () => {
+        if (scrollQueued) return;
+        scrollQueued = true;
+        requestAnimationFrame(() => { scrollQueued = false; updatePlayhead(); });
+    }, { passive: true });
 
-        let newIndex = currentIndex + direction;
-        if (newIndex < 0) {
-            newIndex = projectKeys.length - 1;
-        } else if (newIndex >= projectKeys.length) {
-            newIndex = 0;
-        }
+    let resizeT;
+    const relayout = () => { clearTimeout(resizeT); resizeT = setTimeout(layoutTimeline, 150); };
+    addEventListener('resize', relayout);
+    addEventListener('load', layoutTimeline);
+    if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(document.body);
+    layoutTimeline();
 
-        openProjectModal(projectKeys[newIndex]);
-    }
-
-    function navigateProjectMedia(direction) {
-        if (!currentProjectId) return;
-        const data = projectsData[currentProjectId];
-        if (!data || !data.media || data.media.length <= 1) return;
-
-        let newIndex = state.currentMediaIndex + direction;
-        if (newIndex < 0) {
-            newIndex = data.media.length - 1;
-        } else if (newIndex >= data.media.length) {
-            newIndex = 0;
-        }
-
-        loadActiveMedia(currentProjectId, newIndex);
-    }
-
-    // Attach click events on project cards
-    projectCards.forEach(card => {
-        card.addEventListener('click', () => {
-            const prjId = card.getAttribute('data-id');
-            openProjectModal(prjId);
-        });
-
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const prjId = card.getAttribute('data-id');
-                openProjectModal(prjId);
-            }
-        });
+    // Hover-Timecode
+    tlBody.addEventListener('pointermove', (e) => {
+        const r = tlBody.getBoundingClientRect();
+        const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+        tlHover.style.left = `${f * 100}%`;
+        tlHover.textContent = toTimecode(f * totalFrames());
     });
 
-    if (closeModalBtn && detailModal) {
-        closeModalBtn.addEventListener('click', closeProjectModal);
-        
-        // Backdrop Click closure (closes dialog only when clicking the backdrop itself)
-        detailModal.addEventListener('click', (e) => {
-            if (e.target === detailModal) {
-                closeProjectModal();
-            }
-        });
+    // Scrubben
+    let dragging = false, dragMoved = false, dragStartX = 0;
+    function scrubTo(clientX) {
+        const r = tlBody.getBoundingClientRect();
+        window.scrollTo({ top: Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * maxScroll(), behavior: 'instant' });
     }
-
-    const prevFloatingBtn = document.getElementById('modal-prev-floating-btn');
-    const nextFloatingBtn = document.getElementById('modal-next-floating-btn');
-    const mediaPrevBtn = document.getElementById('modal-media-prev-btn');
-    const mediaNextBtn = document.getElementById('modal-media-next-btn');
-
-    if (prevModalBtn) prevModalBtn.addEventListener('click', () => navigateProject(-1));
-    if (nextModalBtn) nextModalBtn.addEventListener('click', () => navigateProject(1));
-    if (prevFloatingBtn) prevFloatingBtn.addEventListener('click', () => navigateProject(-1));
-    if (nextFloatingBtn) nextFloatingBtn.addEventListener('click', () => navigateProject(1));
-    if (mediaPrevBtn) mediaPrevBtn.addEventListener('click', () => navigateProjectMedia(-1));
-    if (mediaNextBtn) mediaNextBtn.addEventListener('click', () => navigateProjectMedia(1));
-
-    // Click on title to go back to top for portfolio_website
-    if (mTitle) {
-        mTitle.addEventListener('click', () => {
-            if (currentProjectId === 'portfolio_website') {
-                closeProjectModal();
-                const cs = document.getElementById('content-scroll');
-                if (cs) cs.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        });
-    }
-
-    // Keyboard navigation (Left / Right Arrow)
-    document.addEventListener('keydown', (e) => {
-        if (detailModal && detailModal.open) {
-            if (e.key === 'ArrowLeft') {
-                navigateProject(-1);
-            } else if (e.key === 'ArrowRight') {
-                navigateProject(1);
-            }
-        }
+    tlBody.addEventListener('pointerdown', (e) => {
+        stopShuttle();
+        dragging = true; dragMoved = false; dragStartX = e.clientX;
+        tlBody.setPointerCapture(e.pointerId);
     });
+    tlBody.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        if (Math.abs(e.clientX - dragStartX) > 4) dragMoved = true;
+        if (dragMoved) { scrubTo(e.clientX); found('scrubtl'); }
+    });
+    tlBody.addEventListener('pointerup', (e) => {
+        if (dragging && !dragMoved && !e.target.closest('.tl-clip')) scrubTo(e.clientX);
+        dragging = false;
+        setTimeout(() => { dragMoved = false; }, 0);
+    });
+    tlBody.addEventListener('pointercancel', () => { dragging = false; });
 
-
-    /* --- 9. TERMINAL CONTACT FORM HANDLING --- */
-    const contactForm = document.getElementById('contact-form');
-    const formStatus = document.getElementById('form-status');
-
-    if (contactForm && formStatus) {
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const submitBtn = contactForm.querySelector('#submit-btn');
-            const originalBtnText = submitBtn.textContent;
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = '> ÜBERMITTLE SIGNAL...';
-            formStatus.textContent = '> VERBINDE MIT UPLINK_CH KNOTEN...';
-
-            setTimeout(() => {
-                formStatus.textContent = '> NACHRICHT IN SMTP-ÜBERTRAGUNG EINGEGEBEN.';
-                
-                setTimeout(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalBtnText;
-                    formStatus.innerHTML = '> STATUS: ERFOLG.<br>> SIGNAL ERFOLGREICH GESENDET.<br>> DANKE. SYS_TRENNEND.';
-                    contactForm.reset();
-                }, 1000);
-
-            }, 1200);
-        });
+    // J/K/L-Shuttle + Leertaste
+    const SPEEDS = [0, 3, 7, 14, 28];
+    let shuttle = 0, shuttleRaf = null;
+    function setShuttle(v) {
+        shuttle = Math.max(-4, Math.min(4, v));
+        tlSpeed.textContent = shuttle === 0 ? '' : `${shuttle > 0 ? '▶' : '◀'} ${2 ** (Math.abs(shuttle) - 1)}×`;
+        if (shuttle !== 0 && !shuttleRaf) shuttleRaf = requestAnimationFrame(runShuttle);
     }
-
-    /* --- 9. TERMINAL EMAIL UPLINK HANDLING --- */
-    const emailBtn = document.getElementById('email-trigger-btn');
-    const terminalStatus = document.getElementById('terminal-uplink-status');
-
-    if (emailBtn && terminalStatus) {
-        emailBtn.addEventListener('click', () => {
-            emailBtn.disabled = true;
-            terminalStatus.classList.remove('text-accent');
-            terminalStatus.classList.add('text-signal');
-            
-            terminalStatus.textContent = '> PROTOKOLL: INITIERE HANDSHAKE...';
-            
-            setTimeout(() => {
-                terminalStatus.textContent = '> PROTOKOLL: TLS 1.3 GESICHERT. VERBINDE KNOTEN...';
-                
-                setTimeout(() => {
-                    terminalStatus.textContent = '> STATUS: ERFOLG. ÖFFNE STANDARD-E-MAIL-CLIENT...';
-                    window.location.href = 'mailto:julien.bernath@gmx.ch';
-                    
-                    setTimeout(() => {
-                        emailBtn.disabled = false;
-                        terminalStatus.classList.remove('text-signal');
-                        terminalStatus.classList.add('text-accent');
-                        terminalStatus.textContent = '> STANDBY. BEREIT FÜR SEND_COMMAND.';
-                    }, 1200);
-                    
-                }, 800);
-                
-            }, 600);
-        });
+    function stopShuttle() { if (shuttle !== 0) setShuttle(0); }
+    function runShuttle() {
+        if (shuttle === 0) { shuttleRaf = null; return; }
+        const dy = Math.sign(shuttle) * SPEEDS[Math.abs(shuttle)];
+        window.scrollTo({ top: scrollY + dy, behavior: 'instant' });
+        if ((dy > 0 && scrollY >= maxScroll() - 1) || (dy < 0 && scrollY <= 0)) { setShuttle(0); shuttleRaf = null; return; }
+        shuttleRaf = requestAnimationFrame(runShuttle);
     }
+    addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        if (e.target.closest('input, textarea, select, [contenteditable]') || $('dialog[open]')) return;
+        const k = e.key.toLowerCase();
+        if (k === 'l') { setShuttle(shuttle <= 0 ? 1 : shuttle + 1); found('jkl'); }
+        else if (k === 'j') { setShuttle(shuttle >= 0 ? -1 : shuttle - 1); found('jkl'); }
+        else if (k === 'k') setShuttle(0);
+        else if (k === ' ' && !e.target.closest('button, a, summary')) { e.preventDefault(); setShuttle(shuttle ? 0 : 1); found('space'); }
+    });
+    addEventListener('wheel', stopShuttle, { passive: true });
+    addEventListener('touchstart', stopShuttle, { passive: true });
 
 
-    /* --- 10. TYPEWRITER EFFECT FOR HERO TITLE --- */
-    const twLine1 = document.getElementById('typewriter-line1');
-    const twLine2 = document.getElementById('typewriter-line2');
+    /* =====================================================================
+       6. MISCHPULT
+       ===================================================================== */
+    const MIXER = [
+        { bus: 'Software', channels: [
+            ['Premiere Pro', 100, 'Schnitt, Grading, Storytelling'],
+            ['Lightroom', 90, 'RAW, Presets'],
+            ['Photoshop', 85, 'Retusche, Compositing'],
+            ['Illustrator', 80, 'Vektor, Logos, Icons'],
+            ['InDesign', 80, 'Editorial, Print'],
+            ['After Effects', 75, 'VFX, Motion'],
+            ['Canva', 70, 'Content, Templates'],
+            ['Audition', 50, 'Audio-Cleanup'],
+            ['Blender', 5, '3D, im Aufbau']
+        ] },
+        { bus: 'Handwerk', channels: [
+            ['Filmen & Regie', 90, 'Kamera, Drohne, Interviews'],
+            ['Fotografieren', 80, 'Sport, Natur, Tiere']
+        ] },
+        { bus: 'Strategie', channels: [
+            ['Social Media', 99, 'Instagram, TikTok, YouTube, LinkedIn']
+        ] }
+    ];
+    $('#mixer').innerHTML = MIXER.map(bus => `
+        <div class="bus" style="--n:${bus.channels.length}">
+            <div class="bus-channels">
+                ${bus.channels.map(([name, level, tags]) => `
+                    <div class="channel" data-level="${level}" role="img" aria-label="${name}: ${level} von 100. ${tags}">
+                        <span class="ch-led${level >= 95 ? ' is-hot' : ''}"></span>
+                        <span class="ch-value">${level}</span>
+                        <div class="ch-fader" style="--level:${level}%">
+                            <span class="ch-meter"></span>
+                            <span class="ch-slot"><span class="ch-knob"></span></span>
+                        </div>
+                        <span class="ch-name">${name}</span>
+                        <span class="ch-tags">${tags}</span>
+                    </div>`).join('')}
+            </div>
+            <span class="bus-name">${bus.bus}</span>
+        </div>`).join('');
 
-    function typewriterEffect(el, text, speed, onDone) {
-        if (!el) return;
-        el.textContent = '';
-        el.classList.add('typewriter-cursor');
-        let i = 0;
-        const interval = setInterval(() => {
-            el.textContent += text[i];
-            i++;
-            if (i >= text.length) {
-                clearInterval(interval);
-                if (onDone) {
-                    el.classList.remove('typewriter-cursor');
-                    onDone();
-                }
-                // If no onDone, we leave the typewriter-cursor class so it blinks forever
+
+    /* =====================================================================
+       7. ÜBER MICH: Portrait-Takes & Shotlist
+       ===================================================================== */
+    const PORTRAITS = ['me-1.jpg', 'me-2.jpg', 'me-3.webp', 'me-4.jpg', 'me-5.webp', 'me-6.jpeg'].map(f => `assets/images/about-me/${f}`);
+    let take = 0;
+    const portrait = $('#portrait');
+    const slate = $('.slate');
+    portrait.dataset.label = 'Nächster Take';
+    portrait.addEventListener('click', () => {
+        take = (take + 1) % PORTRAITS.length;
+        portrait.classList.add('is-glitch');
+        setTimeout(() => {
+            $('#portrait-img').src = PORTRAITS[take];
+            $('#portrait-take').textContent = `Take ${take + 1}`;
+            portrait.classList.remove('is-glitch');
+        }, 140);
+        slate.classList.add('is-clapped');
+        setTimeout(() => slate.classList.remove('is-clapped'), 220);
+        found('take');
+    });
+    portrait.addEventListener('pointerenter', () => PORTRAITS.forEach(s => { const i = new Image(); i.src = s; }), { once: true });
+
+    // Shotlist: abhaken, wird im Browser gemerkt
+    // Gespeichert wird nur, was der Besucher selbst ändert. Ohne Eintrag gilt data-done aus dem HTML.
+    const overrides = store.get('jb2-shotlist2', {});
+    const doneSet = new Set($$('#shotlist li').filter(li => {
+        const k = li.textContent.trim();
+        return k in overrides ? overrides[k] : li.hasAttribute('data-done');
+    }).map(li => li.textContent.trim()));
+    $$('#shotlist li').forEach(li => {
+        const key = li.textContent.trim();
+        li.tabIndex = 0;
+        li.setAttribute('role', 'checkbox');
+        const sync = () => { li.classList.toggle('done', doneSet.has(key)); li.setAttribute('aria-checked', String(doneSet.has(key))); };
+        sync();
+        const toggle = () => {
+            doneSet.has(key) ? doneSet.delete(key) : doneSet.add(key);
+            overrides[key] = doneSet.has(key);
+            store.set('jb2-shotlist2', overrides);
+            sync();
+            found('check');
+            const group = li.closest('[data-group]');
+            if (doneSet.has(key) && $$('li', group).every(x => x.classList.contains('done'))) {
+                document.dispatchEvent(new CustomEvent('jb:confetti', { detail: { x: innerWidth / 2, y: innerHeight / 2 } }));
+                toast(`${group.dataset.group}: alles erledigt!`);
+                found('allchecked');
             }
-        }, speed);
-    }
-
-    // Chain: first line → second line
-    const twDelay = 600; // ms before starting
-    setTimeout(() => {
-        typewriterEffect(twLine1, 'JULIEN', 90, () => {
-            // Brief pause between lines
-            setTimeout(() => {
-                typewriterEffect(twLine2, 'BERNATH', 90, () => {});
-            }, 200);
-        });
-    }, twDelay);
-
-
-    /* --- 11. LOGO SCROLL TO TOP --- */
-    const logoHomeBtn = document.getElementById('logo-home-btn');
-    if (logoHomeBtn) {
-        logoHomeBtn.addEventListener('click', () => {
-            const cs = document.getElementById('content-scroll');
-            if (cs) cs.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
-
-
-    /* --- 11b. ANCHOR LINK INTERCEPTION --- */
-    // Since #content-scroll is a position:fixed scroll container,
-    // native hash navigation won't scroll it. We intercept anchor clicks instead.
-    document.querySelectorAll('a[href^="#"]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const hash = link.getAttribute('href');
-            if (hash === '#' || hash === '') return;
-            const target = document.querySelector(hash);
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
+        };
+        li.addEventListener('click', toggle);
+        li.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
     });
 
 
-
-    /* --- 11c. DATENSCHUTZ MODAL --- */
-    const privacyOpenBtn = document.getElementById('privacy-open-btn');
-    const privacyModal = document.getElementById('privacy-modal');
-    const privacyCloseBtn = document.getElementById('privacy-close-btn');
-
-    function openPrivacyModal() {
-        if (!privacyModal) return;
-        privacyModal.showModal();
-    }
-
-    function closePrivacyModal() {
-        if (!privacyModal) return;
-        privacyModal.close();
-    }
-
-    if (privacyOpenBtn && privacyModal) {
-        privacyOpenBtn.addEventListener('click', openPrivacyModal);
-
-        privacyModal.addEventListener('click', (e) => {
-            if (e.target === privacyModal) {
-                closePrivacyModal();
-            }
-        });
-    }
-
-    if (privacyCloseBtn) {
-        privacyCloseBtn.addEventListener('click', closePrivacyModal);
-    }
-
-    /* --- 12. MOBILE NAVIGATION OVERLAY --- */
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
-    const mobileNavClose = document.getElementById('mobile-nav-close');
-    const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
-
-    function openMobileNav() {
-        if (!mobileNavOverlay) return;
-        mobileNavOverlay.classList.add('is-open');
-        mobileNavOverlay.setAttribute('aria-hidden', 'false');
-        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'true');
-        // Don't lock body scroll — content-scroll is the scroll container
-    }
-
-    function closeMobileNav() {
-        if (!mobileNavOverlay) return;
-        mobileNavOverlay.classList.remove('is-open');
-        mobileNavOverlay.setAttribute('aria-hidden', 'true');
-        if (mobileMenuBtn) mobileMenuBtn.setAttribute('aria-expanded', 'false');
-    }
-
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', openMobileNav);
-    }
-
-    if (mobileNavClose) {
-        mobileNavClose.addEventListener('click', closeMobileNav);
-    }
-
-    // Close overlay when any nav link is tapped
-    mobileNavLinks.forEach(link => {
-        link.addEventListener('click', closeMobileNav);
+    /* =====================================================================
+       8. LICHT, KONTAKT, MENÜ, DIALOGE
+       ===================================================================== */
+    const root = document.documentElement;
+    const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    $('#light-btn').addEventListener('click', (e) => {
+        const next = isDark() ? 'light' : 'dark';
+        const apply = () => { root.dataset.theme = next; try { localStorage.setItem('jb2-theme', next); } catch (err) {} };
+        // Kreisförmiger Lichtwechsel, wo der Browser es kann
+        if (document.startViewTransition && !reducedMotion) {
+            root.style.setProperty('--vt-x', `${e.clientX}px`);
+            root.style.setProperty('--vt-y', `${e.clientY}px`);
+            document.startViewTransition(apply);
+        } else apply();
+        found('light');
+        document.dispatchEvent(new Event('jb:theme'));
     });
 
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (cmdDialog && cmdDialog.open) {
-                closeCommandPalette();
-            }
-            if (privacyModal && privacyModal.open) {
-                closePrivacyModal();
-            }
-            if (mobileNavOverlay && mobileNavOverlay.classList.contains('is-open')) {
-                closeMobileNav();
-            }
-        }
+    $('#copy-mail').addEventListener('click', async (e) => {
+        try { await navigator.clipboard.writeText('julien.bernath@gmx.ch'); toast('E-Mail-Adresse kopiert'); }
+        catch (err) { toast('julien.bernath@gmx.ch'); }
+        document.dispatchEvent(new CustomEvent('jb:plane', { detail: { x: e.clientX, y: e.clientY } }));
     });
 
-    /* --- 13. WIDGET SIGNAL LINES WIDTH MATCHING --- */
-    document.querySelectorAll('.console-widget').forEach(widget => {
-        const fill = widget.querySelector('.bar-fill-indicator');
-        const signalLines = widget.querySelector('.widget-signal-lines');
-        if (fill && signalLines) {
-            const percent = fill.style.getPropertyValue('--percent');
-            if (percent) {
-                signalLines.style.width = percent;
-            }
-        }
-    });
+    const menuBtn = $('.menu-btn');
+    const menu = $('#mobile-menu');
+    const setMenu = (open) => {
+        menu.hidden = !open;
+        menuBtn.setAttribute('aria-expanded', String(open));
+        menuBtn.textContent = open ? 'Schliessen' : 'Menü';
+        document.body.style.overflow = open ? 'hidden' : '';
+    };
+    menuBtn.addEventListener('click', () => setMenu(menu.hidden));
+    menu.addEventListener('click', (e) => { if (e.target.closest('a')) setMenu(false); });
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { setMenu(false); menuBtn.focus(); } });
 
-    /* --- 14. WEBCAM INTERACTIVE SWITCHER --- */
-    const webcamViewport = document.querySelector('.webcam-viewport');
-    const webcamImage = document.getElementById('webcam-image');
-    const camLabel = document.querySelector('.cam-label');
-    
-    if (webcamViewport && webcamImage) {
-        const webcamImages = [
-            'assets/images/about-me/me-1.jpg',
-            'assets/images/about-me/me-2.jpg',
-            'assets/images/about-me/me-3.webp',
-            'assets/images/about-me/me-4.jpg',
-            'assets/images/about-me/me-5.webp',
-            'assets/images/about-me/me-6.jpeg'
-        ];
-        let webcamIndex = 0;
+    [viewer, $('#privacy')].forEach(d => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
+    $('#privacy-open').addEventListener('click', () => $('#privacy').showModal());
+    $('#privacy-close').addEventListener('click', () => $('#privacy').close());
 
-        webcamViewport.style.cursor = 'pointer';
-        webcamViewport.addEventListener('click', () => {
-            // Initiate glitch transition
-            webcamViewport.classList.add('glitch-active');
-            
-            setTimeout(() => {
-                // Cycle index
-                webcamIndex = (webcamIndex + 1) % webcamImages.length;
-                // Swap image src
-                webcamImage.src = webcamImages[webcamIndex];
-                // Update camera label metadata
-                if (camLabel) {
-                    camLabel.textContent = `CAM_0${webcamIndex + 1}`;
-                }
-            }, 180);
+    $$('details.drawer').forEach(d => d.addEventListener('toggle', () => {
+        const f = d.querySelector('iframe[data-src]');
+        if (d.open && f) { f.src = f.dataset.src; f.removeAttribute('data-src'); }
+        relayout();
+    }));
 
-            setTimeout(() => {
-                // End glitch transition
-                webcamViewport.classList.remove('glitch-active');
-            }, 400);
-        });
+    // Ortszeit Baden
+    const clock = $('#clock');
+    const tickClock = () => { clock.textContent = new Date().toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour12: false }); };
+    tickClock(); setInterval(tickClock, 1000);
+    $('#year').textContent = new Date().getFullYear();
+
+    // Extras-Vorschau: Timecode läuft beim Hover
+    const tcArt = $('.art-timecode');
+    if (tcArt) {
+        let raf = null, t0 = 0;
+        const tool = tcArt.closest('.tool');
+        const run = (now) => { tcArt.textContent = toTimecode(90000 + ((now - t0) / 1000) * 25 * 8); raf = requestAnimationFrame(run); };
+        tool.addEventListener('mouseenter', () => { if (reducedMotion) return; t0 = performance.now(); raf = requestAnimationFrame(run); });
+        tool.addEventListener('mouseleave', () => { cancelAnimationFrame(raf); tcArt.textContent = '01:00:00:00'; });
     }
 
-    /* --- 15. ABOUT DETAILS TOGGLE HANDLER --- */
-    document.querySelectorAll('.about-details').forEach(details => {
-        details.addEventListener('toggle', () => {
-            const toggleText = details.querySelector('.summary-toggle');
-            if (toggleText) {
-                toggleText.textContent = details.open ? '[ CLOSE ]' : '[ OPEN ]';
-            }
-        });
-    });
-
-});
-
+    // Für fx.js
+    window.JB = { toast, found, store, toTimecode, layoutTimeline, setShuttle, maxScroll, clipRanges: () => clipRanges, playheadFrac, reducedMotion, projectsData };
+})();
