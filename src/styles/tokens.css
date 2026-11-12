@@ -1,0 +1,52 @@
+/* ==========================================================================
+   Design-Tokens – die Grundbausteine der Marke
+   Übernommen aus der bestehenden Website (style.css), damit Farben und
+   Schrift identisch bleiben. Gestaltung der Seiten folgt erst in Phase 3/4.
+   ========================================================================== */
+
+:root {
+    /* Hell («Tageslicht», Graukarte) */
+    --base: #DCDDD8;
+    --panel: #F4F4F1;
+    --ink: #000000;
+    --ink-soft: #3E3F3B;
+    --muted: #6B6C66;
+    --line: rgba(0, 0, 0, 0.16);
+    --line-strong: rgba(0, 0, 0, 0.6);
+    --ink-rgb: 0, 0, 0;
+
+    /* Signalrot – nur für Name, Playhead, aktive Zustände, grosse Titel */
+    --red: #E30613;
+    --red-ink: #B8000C;          /* Rot für kleine Schrift auf hellem Grund */
+
+    /* Kategorie-Marker */
+    --clip-teal: #4FAE9C;        /* Foto */
+    --clip-iris: #9C93E6;        /* Video */
+    --clip-mango: #E3A93F;       /* Design */
+    --clip-rose: #E07F9B;
+
+    /* Schrift: Archivo (variable Breite 62–125 %) und IBM Plex Mono, selbst gehostet */
+    --font: 'Archivo Variable', 'Arial Narrow', Arial, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+
+    --gutter: clamp(16px, 3vw, 40px);
+    --top-h: 56px;
+    --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+    color-scheme: light;
+}
+
+/* Dunkel («Schnittraum») – folgt dem System, ausser der Besucher hat Hell gewählt */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --base: #1E1F1C; --panel: #2A2B27; --ink: #F1F1EC; --ink-soft: #CFCFC8; --muted: #9A9B93;
+        --line: rgba(255, 255, 255, 0.14); --line-strong: rgba(255, 255, 255, 0.55); --ink-rgb: 241, 241, 236;
+        --red-ink: #FF4D58;
+        color-scheme: dark;
+    }
+}
+:root[data-theme="dark"] {
+    --base: #1E1F1C; --panel: #2A2B27; --ink: #F1F1EC; --ink-soft: #CFCFC8; --muted: #9A9B93;
+    --line: rgba(255, 255, 255, 0.14); --line-strong: rgba(255, 255, 255, 0.55); --ink-rgb: 241, 241, 236;
+    --red-ink: #FF4D58;
+    color-scheme: dark;
+}

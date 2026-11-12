@@ -1,0 +1,16 @@
+# Astro: erzeugte Dateien (werden bei jedem Build neu gebaut)
+dist/
+.astro/
+
+# Abhängigkeiten (werden mit "npm install" neu geladen)
+node_modules/
+
+# Logs und lokale Umgebung
+npm-debug.log*
+.env
+.env.*
+!.env.example
+
+# Betriebssystem
+.DS_Store
+Thumbs.db

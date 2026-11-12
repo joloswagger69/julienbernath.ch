@@ -1,0 +1,31 @@
+---
+/* Sprachumschalter: führt auf dieselbe Seite in der anderen Sprache. */
+import { languages, type Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Props {
+    lang: Lang;
+    /** Adresse der aktuellen Seite in jeder Sprache */
+    alternates: Record<Lang, string>;
+}
+const { lang, alternates } = Astro.props;
+const t = useTranslations(lang);
+---
+<nav class="lang-switch" aria-label={t('lang.label')}>
+    {(Object.keys(languages) as Lang[]).map((code) => (
+        <a
+            href={alternates[code]}
+            hreflang={code}
+            lang={code}
+            aria-current={code === lang ? 'true' : undefined}
+            title={languages[code]}
+        >{code.toUpperCase()}</a>
+    ))}
+</nav>
+
+<style>
+    .lang-switch { display: inline-flex; gap: 2px; font-family: var(--mono); font-size: 0.8125rem; }
+    .lang-switch a { padding: 6px 8px; text-decoration: none; color: var(--muted); border-radius: 3px; }
+    .lang-switch a:hover { color: var(--ink); }
+    .lang-switch a[aria-current='true'] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--red); }
+</style>

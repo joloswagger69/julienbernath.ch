@@ -1,0 +1,9 @@
+---
+/* Startseite Englisch – Phase 1: nur Platzhalter (noindex). Inhalte folgen ab Phase 5. */
+import Base from '../../layouts/Base.astro';
+import BuildNotice from '../../components/BuildNotice.astro';
+import { alternates } from '../../i18n/utils';
+---
+<Base lang="en" alternates={alternates('home')} noindex>
+    <BuildNotice lang="en" />
+</Base>

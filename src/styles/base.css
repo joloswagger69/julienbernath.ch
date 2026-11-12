@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Grundstil: Reset, Typografie-Basis, Barrierefreiheit
+   ========================================================================== */
+
+/* Nur die benötigten Schriftschnitte; der Browser lädt dank unicode-range nur Latin */
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--base);
+    scroll-padding-top: calc(var(--top-h) + 12px);
+}
+@media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--base);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+::selection { background: var(--red); color: #fff; }
+
+img, video, svg { display: block; max-width: 100%; }
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+ul, ol { list-style: none; }
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+
+.tc { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+
+.skip-link { position: absolute; left: 12px; top: -60px; z-index: 200; background: var(--ink); color: var(--base); padding: 10px 14px; }
+.skip-link:focus { top: 12px; }
+
+.visually-hidden {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

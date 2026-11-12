@@ -1,0 +1,59 @@
+# ==========================================================================
+# Astro-Website bauen und auf GitHub Pages veröffentlichen
+#
+# STATUS: VORBEREITET, ABER INAKTIV (Phase 1)
+#
+# Doppelte Sicherung, damit die bisherige Live-Website unverändert bleibt:
+#  1. Kein automatischer Start: Der Workflow läuft nur, wenn man ihn auf
+#     GitHub unter "Actions" von Hand startet (workflow_dispatch).
+#     Ein Push auf main oder astro-redesign löst NICHTS aus.
+#  2. Auch bei einem Handstart wird nur GEBAUT und geprüft. Der Schritt
+#     "deploy" läuft erst, wenn im Repository die Variable
+#     ASTRO_DEPLOY_ENABLED = true gesetzt ist (Settings → Variables).
+#
+# Aktivierung erst beim Go-live (Phase 7), zusammen mit Julien:
+#  - GitHub Pages: Settings → Pages → Source auf "GitHub Actions" stellen
+#  - Variable ASTRO_DEPLOY_ENABLED = true setzen
+#  - unten den Block "push" einkommentieren
+# ==========================================================================
+name: Astro – Build & Deploy
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Nie zwei Veröffentlichungen gleichzeitig
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v6
+
+      - name: Installieren, bauen und Ergebnis bereitstellen
+        uses: withastro/action@v6
+        with:
+          node-version: 24
+          package-manager: npm
+
+  deploy:
+    needs: build
+    if: ${{ vars.ASTRO_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Auf GitHub Pages veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v5

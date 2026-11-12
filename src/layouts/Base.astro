@@ -1,0 +1,98 @@
+---
+/* ==========================================================================
+   Grundlayout für alle Seiten
+   Kümmert sich um: Sprache, Titel, Beschreibung, Canonical, hreflang,
+   Open Graph, Theme (Hell/Dunkel ohne Aufblitzen), Skip-Link.
+   Header, Footer und Gestaltung folgen in Phase 3/4.
+   ========================================================================== */
+import '../styles/base.css';
+import LangSwitch from '../components/LangSwitch.astro';
+import { defaultLang, locales, type Lang } from '../i18n/ui';
+import { path, useTranslations } from '../i18n/utils';
+
+interface Props {
+    lang: Lang;
+    /** Adresse dieser Seite in jeder Sprache, z.B. { de: '/arbeiten/', en: '/en/work/' } */
+    alternates: Record<Lang, string>;
+    title?: string;
+    description?: string;
+    /** Vorschaubild für Social Media (absolute oder relative URL) */
+    ogImage?: string;
+    /** Seite nicht in Suchmaschinen aufnehmen (z.B. Baustellen- oder Fehlerseite) */
+    noindex?: boolean;
+}
+
+const { lang, alternates, title, description, ogImage, noindex = false } = Astro.props;
+const t = useTranslations(lang);
+
+const site = Astro.site ?? new URL('https://julienbernath.ch');
+const pageTitle = title ?? t('site.title');
+const pageDescription = description ?? t('site.description');
+const canonical = new URL(alternates[lang], site).href;
+const ogImageUrl = ogImage ? new URL(ogImage, site).href : undefined;
+const langs = Object.keys(alternates) as Lang[];
+---
+<!doctype html>
+<html lang={locales[lang].html}>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <meta name="author" content="Julien Bernath" />
+    <meta name="theme-color" content="#DCDDD8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1E1F1C" media="(prefers-color-scheme: dark)" />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="canonical" href={canonical} />
+    {langs.map((code) => (
+        <link rel="alternate" hreflang={locales[code].html} href={new URL(alternates[code], site).href} />
+    ))}
+    <link rel="alternate" hreflang="x-default" href={new URL(alternates[defaultLang], site).href} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Julien Bernath" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:locale" content={locales[lang].og} />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Hell/Dunkel vor dem ersten Rendern setzen (gleicher Speicher-Schlüssel wie bisher) -->
+    <script is:inline>
+        try { var t = localStorage.getItem('jb2-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+    </script>
+    <slot name="head" />
+</head>
+<body>
+    <a class="skip-link" href="#main">{t('skip')}</a>
+    <header class="topbar-temp">
+        <a class="brand" href={path('home', lang)} aria-label="Julien Bernath">
+            <span class="brand-j">J</span><span class="brand-b">B</span>
+        </a>
+        <LangSwitch lang={lang} alternates={alternates} />
+    </header>
+    <main id="main">
+        <slot />
+    </main>
+</body>
+</html>
+
+<style>
+    /* Provisorischer Kopf nur für Phase 1 – wird in Phase 3 durch den echten Header ersetzt */
+    .topbar-temp {
+        height: var(--top-h);
+        padding: 0 var(--gutter);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+    }
+    .brand { font-weight: 900; font-stretch: 75%; font-size: 1.5rem; letter-spacing: -0.02em; text-decoration: none; line-height: 1; }
+    .brand-b { color: var(--red); }
+</style>
