@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Pixelsort | Pixel Sorting</title>
+<meta name="description" content="Pixel Sorting im Browser: Bilder zerfliessen lassen, nach Helligkeit, Farbton oder Sättigung sortiert. Alles läuft lokal.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../fehler.js?v=1" data-critical></script>
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .view { position: relative; background: repeating-conic-gradient(var(--line) 0% 25%, transparent 0% 50%) 50% / 20px 20px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; display: grid; place-items: center; min-height: 260px; }
+    #out { display: block; max-width: 100%; max-height: calc(100vh - var(--top-h) - 56px); width: auto; height: auto; cursor: pointer; touch-action: manipulation; }
+    .view.busy::after { content: ''; position: absolute; left: 0; top: 0; height: 3px; width: 100%; background: var(--red); animation: busy 0.9s linear infinite; transform-origin: left; }
+    @keyframes busy { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .badge { position: absolute; right: 10px; top: 10px; padding: 4px 8px; font-size: .78rem; font-weight: 700; background: var(--ink); color: var(--base); border-radius: 2px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+    .view.orig .badge { opacity: 1; }
+    .meta { font-family: var(--mono); font-size: .8rem; color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .sl { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 2px; margin-bottom: 10px; }
+    .sl label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+    .sl output { font-family: var(--mono); font-size: .82rem; color: var(--ink-soft); }
+    .sl input { grid-column: 1 / -1; }
+    .sl[hidden] { display: none; }
+    .layout > aside { position: sticky; top: calc(var(--top-h) + 12px); max-height: calc(100vh - var(--top-h) - 24px); overflow: auto; }
+    @media (max-width: 900px) { .layout > aside { position: static; max-height: none; } #out { max-height: 70vh; } }
+    select { width: 100%; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Pixelsort</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn" type="button" id="load">Bild laden</button>
+        <button class="btn" type="button" id="rnd">Zufall</button>
+        <button class="btn solid" type="button" id="save">PNG</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+<input type="file" id="file" accept="image/*" hidden>
+
+<div class="wrap">
+    <div class="layout">
+        <aside>
+            <div class="panel">
+                <h2>Sortieren</h2>
+                <div class="field"><label for="dir">Richtung</label>
+                    <div class="seg" id="dir" role="group"><button type="button" data-v="0" aria-pressed="true">Horizontal</button><button type="button" data-v="90" aria-pressed="false">Vertikal</button></div></div>
+                <div class="sl"><label for="angle">Winkel</label><output id="o-angle"></output><input type="range" id="angle" min="0" max="179" step="1" value="0"></div>
+                <div class="field"><label for="key">Sortieren nach</label>
+                    <select id="key"><option value="bri">Helligkeit</option><option value="hue">Farbton</option><option value="sat">Sättigung</option><option value="r">Rot</option><option value="g">Grün</option><option value="b">Blau</option></select></div>
+                <div class="field"><label>Reihenfolge</label>
+                    <div class="seg" id="order" role="group"><button type="button" data-v="asc" aria-pressed="true">Aufsteigend</button><button type="button" data-v="desc" aria-pressed="false">Absteigend</button></div></div>
+            </div>
+            <div class="panel">
+                <h2>Abschnitte</h2>
+                <div class="field"><label for="mode">Wo wird sortiert?</label>
+                    <select id="mode"><option value="thr">Nach Helligkeit (Schwelle)</option><option value="edge">Zwischen Kanten</option><option value="rand">Zufällige Längen</option><option value="wave">Wellen</option><option value="all">Ganze Zeile</option></select></div>
+                <div class="sl" data-m="thr"><label for="lo">Untergrenze</label><output id="o-lo"></output><input type="range" id="lo" min="0" max="255" step="1" value="90"></div>
+                <div class="sl" data-m="thr"><label for="hi">Obergrenze</label><output id="o-hi"></output><input type="range" id="hi" min="0" max="255" step="1" value="255"></div>
+                <div class="sl" data-m="edge"><label for="sens">Kanten-Empfindlichkeit</label><output id="o-sens"></output><input type="range" id="sens" min="0" max="100" step="1" value="55"></div>
+                <div class="sl" data-m="rand"><label for="len">Maximale Länge</label><output id="o-len"></output><input type="range" id="len" min="8" max="800" step="1" value="220"></div>
+                <div class="sl" data-m="wave"><label for="wl">Wellenlänge</label><output id="o-wl"></output><input type="range" id="wl" min="8" max="600" step="1" value="160"></div>
+                <div class="sl" data-m="wave"><label for="wv">Schwankung</label><output id="o-wv"></output><input type="range" id="wv" min="0" max="95" step="1" value="60"></div>
+                <div class="sl" data-m="rand wave"><label for="seed">Zufall</label><output id="o-seed"></output><input type="range" id="seed" min="1" max="99" step="1" value="7"></div>
+            </div>
+            <div class="panel">
+                <h2>Mischung</h2>
+                <div class="sl"><label for="mix">Stärke</label><output id="o-mix"></output><input type="range" id="mix" min="0" max="100" step="1" value="100"></div>
+                <div class="btns"><button class="btn" type="button" id="demo">Demobild</button></div>
+            </div>
+        </aside>
+        <section class="preview">
+            <div class="view" id="view">
+                <canvas id="out" aria-label="Ergebnis. Gedrückt halten zeigt das Original."></canvas>
+                <span class="badge">Original</span>
+            </div>
+            <div class="meta"><span id="dim"></span><span id="ms"></span></div>
+        </section>
+    </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const out = $('#out'), octx = out.getContext('2d'), view = $('#view');
+const MAXFULL = 3200, MAXPREV = 1400;
+
+const P = { dir: 0, angle: 0, key: 'bri', order: 'asc', mode: 'thr', lo: 90, hi: 255, sens: 55, len: 220, wl: 160, wv: 60, seed: 7, mix: 100 };
+
+/* ------------------------------------------------------------------ *
+ *  Kern: Pixel Sorting (Asendorf-Prinzip: Abschnitte finden, Abschnitt sortieren)
+ * ------------------------------------------------------------------ */
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+function keyOf(kind, r, g, b) {
+    switch (kind) {
+        case 'r': return r * 257;
+        case 'g': return g * 257;
+        case 'b': return b * 257;
+        case 'bri': return Math.round((0.299 * r + 0.587 * g + 0.114 * b) * 257);
+        default: {
+            const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+            if (kind === 'sat') return mx === 0 ? 0 : Math.round(d / mx * 65535);
+            if (d === 0) return 0;
+            let h;
+            if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+            h *= 60; if (h < 0) h += 360;
+            return Math.round(h / 360 * 65535);
+        }
+    }
+}
+
+function edgeMap(px, w, h) {          // Sobel auf Helligkeit, 0..255
+    const g = new Uint8Array(w * h), e = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) g[i] = (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) | 0;
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x;
+        const gx = -g[i - w - 1] - 2 * g[i - 1] - g[i + w - 1] + g[i - w + 1] + 2 * g[i + 1] + g[i + w + 1];
+        const gy = -g[i - w - 1] - 2 * g[i - w] - g[i - w + 1] + g[i + w - 1] + 2 * g[i + w] + g[i + w + 1];
+        e[i] = Math.min(255, (Math.abs(gx) + Math.abs(gy)) >> 2);
+    }
+    return e;
+}
+
+/* sortiert alle Zeilen eines RGBA-Puffers (w × h) */
+function sortRows(src, w, h, o) {
+    const dst = new Uint8ClampedArray(src);
+    const s32 = new Uint32Array(src.buffer, src.byteOffset, w * h);
+    const d32 = new Uint32Array(dst.buffer);
+    const edge = o.mode === 'edge' ? edgeMap(src, w, h) : null;
+    const et = 130 * (1 - o.sens / 100) + 6;
+    const bri = new Uint8Array(w), okp = new Uint8Array(w);
+    const tmp = new Float64Array(w);
+    const desc = o.order === 'desc';
+    const P32 = 4294967296;
+
+    for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+            const p = (row + x) * 4;
+            bri[x] = (0.299 * src[p] + 0.587 * src[p + 1] + 0.114 * src[p + 2]) | 0;
+            okp[x] = src[p + 3] >= 128 ? 1 : 0;
+        }
+        // Abschnitte bestimmen -> Liste (start, ende)
+        const runs = [];
+        if (o.mode === 'thr' || o.mode === 'edge') {
+            let x = 0;
+            while (x < w) {
+                const inside = (xx) => okp[xx] && (o.mode === 'thr' ? (bri[xx] >= o.lo && bri[xx] <= o.hi) : edge[row + xx] < et);
+                while (x < w && !inside(x)) x++;
+                const a = x;
+                while (x < w && inside(x)) x++;
+                if (x - a > 1) runs.push(a, x);
+            }
+        } else if (o.mode === 'all') {
+            let x = 0;
+            while (x < w) { while (x < w && !okp[x]) x++; const a = x; while (x < w && okp[x]) x++; if (x - a > 1) runs.push(a, x); }
+        } else {
+            const rnd = rng(o.seed * 7919 + (o.mode === 'rand' ? y * 31 : 0));
+            let x = 0;
+            const wl = o.mode === 'wave' ? Math.max(4, Math.round(o.wl * (1 + (o.wv / 100) * Math.sin(y * 0.045 + o.seed)))) : 0;
+            if (o.mode === 'wave') x = -Math.round(((y * 3 + o.seed * 17) % wl));
+            while (x < w) {
+                const L = o.mode === 'rand' ? 2 + Math.floor(rnd() * (o.len - 1)) : wl;
+                const a = Math.max(0, x), b = Math.min(w, x + L);
+                // innerhalb gültiger Pixel zerlegen
+                let s = a;
+                for (let xx = a; xx <= b; xx++) {
+                    if (xx === b || !okp[xx]) { if (xx - s > 1) runs.push(s, xx); s = xx + 1; }
+                }
+                x += L;
+            }
+        }
+        // sortieren
+        for (let r = 0; r < runs.length; r += 2) {
+            const a = runs[r], b = runs[r + 1], n = b - a;
+            for (let i = 0; i < n; i++) {
+                const c = s32[row + a + i], p = (row + a + i) * 4;
+                tmp[i] = keyOf(o.key, src[p], src[p + 1], src[p + 2]) * P32 + c;
+            }
+            const sub = tmp.subarray(0, n); sub.sort();
+            if (desc) for (let i = 0; i < n; i++) { const v = sub[n - 1 - i]; d32[row + a + i] = v - Math.floor(v / P32) * P32; }
+            else for (let i = 0; i < n; i++) { const v = sub[i]; d32[row + a + i] = v - Math.floor(v / P32) * P32; }
+        }
+    }
+    return dst;
+}
+function transpose(src, w, h) {
+    const dst = new Uint8ClampedArray(src.length), s = new Uint32Array(src.buffer, src.byteOffset, w * h), d = new Uint32Array(dst.buffer);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) d[x * h + y] = s[y * w + x];
+    return dst;
+}
+function blend(a, b, t) {            // a Original, b sortiert, t 0..1
+    if (t >= 0.999) return b;
+    const o = new Uint8ClampedArray(a.length);
+    for (let i = 0; i < a.length; i++) o[i] = a[i] + (b[i] - a[i]) * t;
+    return o;
+}
+/* Gesamtpipeline auf ein Canvas (Quelle) -> neues Canvas */
+function render(srcCanvas, o) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const total = ((o.dir + o.angle) % 180 + 180) % 180;
+    const res = document.createElement('canvas'); res.width = w; res.height = h;
+    const rctx = res.getContext('2d', { willReadFrequently: true });
+    const orig = srcCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h);
+    let result;
+    if (total === 0) result = sortRows(orig.data, w, h, o);
+    else if (total === 90) { const t = transpose(orig.data, w, h); const s = sortRows(t, h, w, o); result = transpose(s, h, w); }
+    else {
+        const th = total * Math.PI / 180, cs = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th));
+        const W = Math.ceil(w * cs + h * sn), H = Math.ceil(w * sn + h * cs);
+        const big = document.createElement('canvas'); big.width = W; big.height = H;
+        const bctx = big.getContext('2d', { willReadFrequently: true });
+        bctx.translate(W / 2, H / 2); bctx.rotate(-th); bctx.drawImage(srcCanvas, -w / 2, -h / 2);
+        const id = bctx.getImageData(0, 0, W, H);
+        const sorted = sortRows(id.data, W, H, o);
+        bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, W, H); bctx.putImageData(new ImageData(sorted, W, H), 0, 0);
+        rctx.translate(w / 2, h / 2); rctx.rotate(th); rctx.drawImage(big, -W / 2, -H / 2);
+        rctx.setTransform(1, 0, 0, 1, 0, 0);
+        result = rctx.getImageData(0, 0, w, h).data;
+    }
+    const mixed = blend(orig.data, result, o.mix / 100);
+    // Alpha der Quelle erhalten
+    for (let i = 3; i < mixed.length; i += 4) mixed[i] = orig.data[i];
+    rctx.putImageData(new ImageData(mixed, w, h), 0, 0);
+    return res;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Bildquellen
+ * ------------------------------------------------------------------ */
+let full = null, prev = null, showOrig = false;
+function fit(img, max) {
+    const w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height, k = Math.min(1, max / Math.max(w0, h0));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w0 * k)); c.height = Math.max(1, Math.round(h0 * k));
+    const x = c.getContext('2d', { willReadFrequently: true }); x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, c.width, c.height);
+    return c;
+}
+function setImage(img) {
+    full = fit(img, MAXFULL);
+    prev = full.width > MAXPREV || full.height > MAXPREV ? fit(full, MAXPREV) : full;
+    $('#dim').textContent = `${full.width} × ${full.height} px`;
+    schedule();
+}
+function demoImage() {
+    const W = 1200, H = 800, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    let g = x.createLinearGradient(0, 0, 0, H * 0.62); g.addColorStop(0, '#16113a'); g.addColorStop(0.35, '#6a2c91'); g.addColorStop(0.65, '#e4506a'); g.addColorStop(1, '#ffb24a');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    // Sterne
+    const r = rng(4); x.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 90; i++) { const sx = r() * W, sy = r() * H * 0.35; x.fillRect(sx, sy, 1.6, 1.6); }
+    // Sonne
+    g = x.createRadialGradient(W * 0.62, H * 0.52, 8, W * 0.62, H * 0.52, 190); g.addColorStop(0, '#fff6c8'); g.addColorStop(0.4, '#ffd36a'); g.addColorStop(1, 'rgba(255,170,70,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(W * 0.62, H * 0.52, 190, 0, 7); x.fill();
+    x.fillStyle = '#fff3c0'; x.beginPath(); x.arc(W * 0.62, H * 0.52, 74, 0, 7); x.fill();
+    // Berge
+    const mount = (col, base, amp, seed) => { const rr = rng(seed); x.fillStyle = col; x.beginPath(); x.moveTo(0, H); let y = base; for (let px = 0; px <= W; px += 20) { y = base - Math.abs(Math.sin(px * 0.004 + seed)) * amp - rr() * 22; x.lineTo(px, y); } x.lineTo(W, H); x.closePath(); x.fill(); };
+    mount('#3a1f55', H * 0.62, 190, 3); mount('#241238', H * 0.7, 150, 8); mount('#120a1f', H * 0.8, 110, 12);
+    // Wasser
+    g = x.createLinearGradient(0, H * 0.82, 0, H); g.addColorStop(0, '#2b1646'); g.addColorStop(1, '#07040f'); x.fillStyle = g; x.fillRect(0, H * 0.82, W, H);
+    x.fillStyle = 'rgba(255,214,120,.55)'; for (let i = 0; i < 22; i++) x.fillRect(W * 0.62 - 90 + i * 2 + r() * 40, H * 0.83 + i * 8, 120 - i * 3, 3);
+    // Schriftzug
+    x.fillStyle = '#fff'; x.font = '900 120px Archivo, Arial, sans-serif'; x.textBaseline = 'alphabetic'; x.fillText('JB', 70, 190);
+    x.fillStyle = '#E30613'; x.fillRect(70, 212, 120, 10);
+    return c;
+}
+function loadFile(f) {
+    if (!f || !f.type.startsWith('image/')) { toast('Das ist kein Bild'); return; }
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => { setImage(img); URL.revokeObjectURL(url); };
+    img.onerror = () => { toast('Bild konnte nicht gelesen werden'); URL.revokeObjectURL(url); };
+    img.src = url;
+}
+$('#load').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', (e) => { loadFile(e.target.files[0]); e.target.value = ''; });
+$('#demo').addEventListener('click', () => setImage(demoImage()));
+addEventListener('paste', (e) => { const it = [...(e.clipboardData ? e.clipboardData.items : [])].find((i) => i.type.startsWith('image/')); if (it) loadFile(it.getAsFile()); });
+['dragover', 'dragenter'].forEach((t) => view.addEventListener(t, (e) => { e.preventDefault(); }));
+view.addEventListener('drop', (e) => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+
+/* ------------------------------------------------------------------ *
+ *  UI
+ * ------------------------------------------------------------------ */
+const FMT = { angle: (v) => v + '°', lo: (v) => v, hi: (v) => v, sens: (v) => v + ' %', len: (v) => v + ' px', wl: (v) => v + ' px', wv: (v) => v + ' %', seed: (v) => v, mix: (v) => v + ' %' };
+['angle', 'lo', 'hi', 'sens', 'len', 'wl', 'wv', 'seed', 'mix'].forEach((k) => {
+    const el = $('#' + k), o = $('#o-' + k);
+    const sync = () => { el.value = P[k]; o.textContent = FMT[k](P[k]); };
+    sync(); el.addEventListener('input', () => { P[k] = +el.value; o.textContent = FMT[k](P[k]); if (k === 'angle') { P.dir = 0; setSeg('#dir', P.angle === 0 ? 0 : null); } schedule(); });
+    el._sync = sync;
+});
+function setSeg(id, v) { document.querySelectorAll(id + ' button').forEach((b) => b.setAttribute('aria-pressed', v !== null && b.dataset.v === String(v) ? 'true' : 'false')); }
+$('#dir').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; P.dir = +b.dataset.v; P.angle = 0; $('#angle')._sync(); setSeg('#dir', P.dir); schedule(); });
+$('#order').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; P.order = b.dataset.v; setSeg('#order', P.order); schedule(); });
+$('#key').addEventListener('change', (e) => { P.key = e.target.value; schedule(); });
+function modeUi() { document.querySelectorAll('.sl[data-m]').forEach((s) => { s.hidden = !s.dataset.m.split(' ').includes(P.mode); }); }
+$('#mode').addEventListener('change', (e) => { P.mode = e.target.value; modeUi(); schedule(); });
+modeUi();
+
+let timer = 0, busyT = 0;
+function schedule() { clearTimeout(timer); view.classList.add('busy'); timer = setTimeout(draw, 40); }
+function draw() {
+    if (!prev) return;
+    const t0 = performance.now();
+    const res = render(prev, P);
+    out.width = res.width; out.height = res.height;
+    octx.drawImage(showOrig ? prev : res, 0, 0);
+    lastRes = res;
+    $('#ms').textContent = Math.round(performance.now() - t0) + ' ms';
+    view.classList.remove('busy');
+}
+let lastRes = null;
+function holdOrig(v) { showOrig = v; view.classList.toggle('orig', v); if (prev && lastRes) { octx.clearRect(0, 0, out.width, out.height); octx.drawImage(v ? prev : lastRes, 0, 0); } }
+out.addEventListener('pointerdown', (e) => { out.setPointerCapture(e.pointerId); holdOrig(true); });
+out.addEventListener('pointerup', () => holdOrig(false)); out.addEventListener('pointercancel', () => holdOrig(false));
+
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1800); }
+$('#save').addEventListener('click', () => {
+    if (!full) return;
+    toast('Wird in voller Grösse berechnet …');
+    setTimeout(() => {
+        const res = render(full, P);
+        res.toBlob((b) => {
+            if (!b) { toast('Export fehlgeschlagen'); return; }
+            const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'jb-pixelsort.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            toast('PNG gespeichert');
+        }, 'image/png');
+    }, 30);
+});
+$('#rnd').addEventListener('click', () => {
+    const pick = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), one = (a) => a[pick(0, a.length - 1)];
+    P.dir = one([0, 0, 90]); P.angle = Math.random() < 0.35 ? pick(1, 179) : 0; if (P.angle) P.dir = 0;
+    P.key = one(['bri', 'bri', 'hue', 'sat', 'r', 'g', 'b']); P.order = one(['asc', 'desc']); P.mode = one(['thr', 'thr', 'edge', 'rand', 'wave']);
+    P.lo = pick(0, 120); P.hi = pick(150, 255); P.sens = pick(20, 85); P.len = pick(40, 500); P.wl = pick(40, 400); P.wv = pick(0, 90); P.seed = pick(1, 99); P.mix = pick(70, 100);
+    ['angle', 'lo', 'hi', 'sens', 'len', 'wl', 'wv', 'seed', 'mix'].forEach((k) => { const el = $('#' + k); el._sync(); });
+    $('#key').value = P.key; $('#mode').value = P.mode; setSeg('#dir', P.angle ? null : P.dir); setSeg('#order', P.order); modeUi(); schedule();
+});
+
+setImage(demoImage());
+window.__ps = { P, render, sortRows, setImage, demoImage, get prev() { return prev; } };
+})();
+</script>
+</body>
+</html>

@@ -11,6 +11,9 @@ npm-debug.log*
 .env.*
 !.env.example
 
+# Lokale Browser-Tests (Screenshots, Protokolle)
+.playwright-mcp/
+
 # Betriebssystem
 .DS_Store
 Thumbs.db

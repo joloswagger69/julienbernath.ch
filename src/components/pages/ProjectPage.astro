@@ -1,0 +1,97 @@
+---
+/* Projektseite (provisorisch): alle Inhalte des bisherigen Viewers –
+   Kategorie, Titel, Beschreibung, Kunde, Jahr, Rolle, Resultat, Videos, Bilder.
+   Videos sind vorerst als Links eingebunden (keine Drittanbieter-Einbettung ohne Klick).
+   Viewer mit Lupe, Pfeiltasten und Vollbild folgt in Phase 3. */
+import { Image, getImage } from 'astro:assets';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import SiteGraphic from '../SiteGraphic.astro';
+import {
+    categoryLabel, coverOf, getProjects, imagesOf, projectPath, slugOf, videoUrl, videosOf, type Project
+} from '../../lib/projects';
+import { path, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang; project: Project }
+const { lang, project } = Astro.props;
+const t = useTranslations(lang);
+const d = project.data;
+const slug = slugOf(project);
+const { Content } = await render(project);
+
+const all = (await getProjects(lang)).map((p) => p.project);
+const idx = all.findIndex((p) => slugOf(p) === slug);
+const prev = all[(idx - 1 + all.length) % all.length];
+const next = all[(idx + 1) % all.length];
+
+const images = imagesOf(project);
+// Grosse Version zum Öffnen: max. 2000 px breit, nie grösser als das Original
+const full = await Promise.all(images.map((m) => getImage({ src: m.src, width: Math.min(2000, m.src.width), format: 'webp' })));
+const cover = coverOf(project);
+const ogImage = cover ? (await getImage({ src: cover, width: 1200, height: 630, fit: 'cover', format: 'jpg' })).src : undefined;
+const videos = videosOf(project);
+---
+<Base lang={lang} alternates={{ de: projectPath(slug, 'de'), en: projectPath(slug, 'en') }}
+      title={`${d.title} | Julien Bernath`} ogImage={ogImage} untranslated={lang !== 'de'}>
+    <article class="block">
+        <p class="tc cat">{d.code} · {categoryLabel(d.category)}</p>
+        <h1>{d.title}</h1>
+        <div class="desc"><Content /></div>
+        <dl class="meta">
+            <div><dt>{t('project.client')}</dt><dd>{d.client}</dd></div>
+            <div><dt>{t('project.year')}</dt><dd>{d.year}</dd></div>
+            <div><dt>{t('project.role')}</dt><dd>{d.role}</dd></div>
+            <div><dt>{t('project.deliverables')}</dt><dd>{d.deliverables}</dd></div>
+        </dl>
+
+        {d.coverGraphic === 'site' && <div class="graphic"><SiteGraphic /></div>}
+
+        {videos.length > 0 && (
+            <section>
+                <h2>{t('project.videos')} <span class="tc">({videos.length})</span></h2>
+                <ul class="videos">
+                    {videos.map((v) => (
+                        <li><a href={videoUrl(v)} target="_blank" rel="noopener noreferrer">{t('project.openVideo')}: {v.label} ({v.type === 'youtube' ? 'YouTube' : 'TikTok'})</a></li>
+                    ))}
+                </ul>
+            </section>
+        )}
+
+        {images.length > 0 && (
+            <section>
+                <h2>{t('project.images')} <span class="tc">({images.length})</span></h2>
+                <ul class="gallery">
+                    {images.map((m, i) => (
+                        <li>
+                            <a href={full[i].src}>
+                                <Image src={m.src} alt={`${d.title}, Bild ${i + 1} von ${images.length}`} width={800} widths={[400, 800]} sizes="(max-width: 700px) 50vw, 25vw" loading={i < 4 ? 'eager' : 'lazy'} />
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+
+        <nav class="pager" aria-label={t('nav.work')}>
+            <a href={projectPath(slugOf(prev), lang)}>← {t('project.prev')}: {prev.data.title}</a>
+            <a href={path('work', lang)}>{t('project.back')}</a>
+            <a href={projectPath(slugOf(next), lang)}>{t('project.next')}: {next.data.title} →</a>
+        </nav>
+    </article>
+</Base>
+
+<style>
+    .block { padding: 48px var(--gutter) 0; }
+    .cat { color: var(--muted); font-size: 0.875rem; }
+    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; line-height: 1; margin: 8px 0 16px; }
+    h2 { font-size: 1.25rem; margin: 40px 0 12px; }
+    .desc { max-width: 65ch; }
+    .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; margin-top: 24px; max-width: 900px; }
+    .meta dt { font-size: 0.8rem; color: var(--muted); }
+    .graphic { max-width: 640px; margin-top: 32px; }
+    .videos { display: grid; gap: 6px; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(45%, 240px), 1fr)); gap: 8px; }
+    .gallery img { width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; background: var(--panel); }
+    .pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 48px; }
+</style>

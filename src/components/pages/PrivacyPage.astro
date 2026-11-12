@@ -1,0 +1,25 @@
+---
+/* Datenschutz (provisorisch): wortgleicher Text aus dem bisherigen Dialog. */
+import Base from '../../layouts/Base.astro';
+import PrivacyText from '../PrivacyText.astro';
+import { alternates, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+<Base lang={lang} alternates={alternates('privacy')} title={`${t('privacy.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
+    <section class="block">
+        <h1>{t('privacy.title')}</h1>
+        <PrivacyText />
+    </section>
+</Base>
+
+<style>
+    .block { padding: 48px var(--gutter) 0; max-width: 75ch; }
+    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 16px; }
+    .block :global(h3) { margin-top: 24px; font-size: 1.05rem; }
+    .block :global(p) { margin-top: 8px; }
+    .block :global(.privacy-date) { color: var(--muted); }
+</style>

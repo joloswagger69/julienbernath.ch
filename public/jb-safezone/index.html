@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Safe Zone | TikTok, Reels, Shorts</title>
+<meta name="description" content="Prüft, ob Text und Gesichter unter den Buttons von TikTok, Reels und Shorts verschwinden.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .phones { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+    .phone { width: min(320px, 80vw); }
+    .phone h3 { font-size: 0.95rem; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .phone h3 span { color: var(--muted); font-weight: 400; font-family: var(--mono); font-size: 0.8rem; }
+    .screen { position: relative; aspect-ratio: 9 / 16; background: #000; border-radius: 22px; overflow: hidden; border: 6px solid #111; box-shadow: 0 16px 40px rgba(0,0,0,.25); }
+    .screen img, .screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .screen.contain img, .screen.contain video { object-fit: contain; }
+    .placeholder { position: absolute; inset: 0; display: grid; place-items: center; color: #777; font-size: 0.9rem; text-align: center; padding: 20px; }
+    .zone { position: absolute; background: repeating-linear-gradient(45deg, rgba(227, 6, 19, .5) 0 6px, rgba(227, 6, 19, .22) 6px 12px); }
+    .safe { position: absolute; border: 2px dashed #3dff9a; box-shadow: 0 0 0 9999px rgba(0,0,0,.0); }
+    .ui { position: absolute; color: #fff; font: 600 11px var(--font); text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+    .ui .col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .ui .dot { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.85); }
+    .ui .bar { height: 9px; border-radius: 5px; background: rgba(255,255,255,.85); margin-top: 6px; }
+    .hide-ui .ui, .hide-zones .zone, .hide-safe .safe { display: none; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+    .legend i { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 5px; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Safe Zone</h1>
+    <span class="spacer"></span>
+    
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap layout">
+    <div>
+        <div class="panel">
+            <h2>Clip oder Standbild</h2>
+            <label class="drop" id="drop"><input id="file" type="file" accept="image/*,video/*" hidden><strong>Datei wählen</strong><span>Bild oder Video, 9:16</span></label>
+        </div>
+        <div class="panel">
+            <h2>Anzeige</h2>
+            <div class="field"><span class="lbl">Einpassen</span>
+                <div class="seg" id="fit"><button type="button" data-v="cover" aria-pressed="true">Füllen</button><button type="button" data-v="contain" aria-pressed="false">Ganz</button></div>
+            </div>
+            <div class="field"><label><input type="checkbox" id="showUi" checked> App-Oberfläche</label></div>
+            <div class="field"><label><input type="checkbox" id="showZones" checked> Verdeckte Bereiche</label></div>
+            <div class="field"><label><input type="checkbox" id="showSafe" checked> Sicherer Bereich</label></div>
+            <div class="legend"><span><i style="background:rgba(227,6,19,.5)"></i>verdeckt</span><span><i style="border:2px dashed #3dff9a"></i>sicher</span></div>
+            <p class="note" style="margin-top:12px">Richtwerte für 1080 × 1920. Die Apps ändern ihre Oberfläche regelmässig.</p>
+        </div>
+    </div>
+    <div class="phones" id="phones"></div>
+</div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    // Werte in Pixel bei 1080 × 1920 (top, right, bottom, left verdeckt)
+    const APPS = {
+        TikTok:  { top: 160, right: 140, bottom: 470, left: 60 },
+        Reels:   { top: 220, right: 150, bottom: 420, left: 60 },
+        Shorts:  { top: 200, right: 190, bottom: 380, left: 50 }
+    };
+    const pct = (v, total) => `${(v / total) * 100}%`;
+    let media = null;
+
+    function render() {
+        const phones = $('#phones');
+        phones.innerHTML = '';
+        for (const [name, z] of Object.entries(APPS)) {
+            const ph = document.createElement('div');
+            ph.className = 'phone';
+            ph.innerHTML = `<h3>${name} <span>${1080 - z.left - z.right} × ${1920 - z.top - z.bottom}</span></h3><div class="screen"></div>`;
+            const sc = ph.querySelector('.screen');
+            if (media) { const m = media.cloneNode(); if (m.tagName === 'VIDEO') { m.muted = true; m.loop = true; m.playsInline = true; m.autoplay = true; m.play?.(); } sc.appendChild(m); }
+            else sc.innerHTML = '<div class="placeholder">Lade links ein Bild oder Video, um es in den Apps zu prüfen.</div>';
+            // verdeckte Zonen
+            const zones = [
+                { left: 0, top: 0, width: '100%', height: pct(z.top, 1920) },
+                { right: 0, top: pct(z.top, 1920), width: pct(z.right, 1080), bottom: pct(z.bottom, 1920) },
+                { left: 0, bottom: 0, width: '100%', height: pct(z.bottom, 1920) },
+                { left: 0, top: pct(z.top, 1920), width: pct(z.left, 1080), bottom: pct(z.bottom, 1920) }
+            ];
+            zones.forEach(st => { const d = document.createElement('div'); d.className = 'zone'; Object.assign(d.style, st); sc.appendChild(d); });
+            const safe = document.createElement('div');
+            safe.className = 'safe';
+            Object.assign(safe.style, { left: pct(z.left, 1080), right: pct(z.right, 1080), top: pct(z.top, 1920), bottom: pct(z.bottom, 1920) });
+            sc.appendChild(safe);
+            // UI-Attrappe
+            const ui = document.createElement('div');
+            ui.className = 'ui';
+            ui.style.inset = '0';
+            ui.innerHTML = `
+                <div style="position:absolute;top:5%;left:0;right:0;text-align:center;opacity:.9">${name === 'TikTok' ? 'Folge ich &nbsp; <b>Für dich</b>' : name === 'Reels' ? '<b>Reels</b>' : ''}</div>
+                <div class="col" style="position:absolute;right:4%;bottom:${name === 'Shorts' ? '16%' : '20%'}"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>${name === 'TikTok' ? '<span class="dot" style="border-radius:8px"></span>' : ''}</div>
+                <div style="position:absolute;left:4%;right:24%;bottom:${name === 'TikTok' ? '9%' : '7%'}"><div>@julienbernath</div><div class="bar" style="width:90%"></div><div class="bar" style="width:60%"></div></div>`;
+            sc.appendChild(ui);
+            phones.appendChild(ph);
+        }
+        applyToggles();
+    }
+    function applyToggles() {
+        const ph = $('#phones');
+        ph.classList.toggle('hide-ui', !$('#showUi').checked);
+        ph.classList.toggle('hide-zones', !$('#showZones').checked);
+        ph.classList.toggle('hide-safe', !$('#showSafe').checked);
+        document.querySelectorAll('.screen').forEach(s => s.classList.toggle('contain', $('#fit [aria-pressed="true"]').dataset.v === 'contain'));
+    }
+    ['#showUi', '#showZones', '#showSafe'].forEach(id => $(id).addEventListener('change', applyToggles));
+    $('#fit').addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        [...$('#fit').children].forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        applyToggles();
+    });
+
+    function load(file) {
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('video/')) { media = document.createElement('video'); media.src = url; }
+        else { media = new Image(); media.src = url; media.alt = ''; }
+        render();
+    }
+    $('#file').addEventListener('change', (e) => e.target.files[0] && load(e.target.files[0]));
+    const drop = $('#drop');
+    ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('is-over'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('is-over')));
+    drop.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) load(e.dataTransfer.files[0]); });
+    render();
+})();
+</script>
+</body>
+</html>

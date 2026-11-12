@@ -1,0 +1,51 @@
+---
+/* Startseite (provisorisch): Intro-Texte, 6 ausgewählte Arbeiten, Kontakt-Aufruf.
+   Monitor-Intro und endgültige Gestaltung folgen in Phase 3/4. */
+import Base from '../../layouts/Base.astro';
+import ProjectCard from '../ProjectCard.astro';
+import { getProjects } from '../../lib/projects';
+import { alternates, path, useTranslations } from '../../i18n/utils';
+import { hero, meta, personJsonLd, status } from '../../data/site';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const projects = await getProjects(lang);
+const featured = projects
+    .filter((p) => p.project.data.featured !== null)
+    .sort((a, b) => a.project.data.featured! - b.project.data.featured!);
+---
+<Base lang={lang} alternates={alternates('home')} untranslated={lang !== 'de'}
+      title={lang === 'de' ? meta.title : undefined} description={lang === 'de' ? meta.description : undefined}>
+    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
+
+    <section class="block hero">
+        <h1 class="hero-name"><span>Julien</span> <span class="red">Bernath</span></h1>
+        <p class="hero-lede">{hero.lede}</p>
+        <p class="hero-status tc">{status.qualification} · {status.availability}</p>
+        <p class="hero-actions">
+            <a href={path('work', lang)}>{hero.ctaWork}</a>
+            <a href={path('contact', lang)}>{hero.ctaContact}</a>
+        </p>
+    </section>
+
+    <section class="block">
+        <h2>{t('work.featured')}</h2>
+        <ul class="grid">
+            {featured.map(({ project }, i) => <li><ProjectCard project={project} lang={lang} eager={i < 2} /></li>)}
+        </ul>
+        <p><a href={path('work', lang)}>{t('work.allLink')} ({projects.length})</a></p>
+    </section>
+</Base>
+
+<style>
+    .block { padding: 48px var(--gutter) 0; }
+    .block h2 { font-size: 1.5rem; margin-bottom: 16px; }
+    .hero-name { font-weight: 900; font-stretch: 70%; text-transform: uppercase; font-size: clamp(3.5rem, 15vw, 11rem); line-height: 0.86; display: flex; flex-direction: column; }
+    .red { color: var(--red); }
+    .hero-lede { margin-top: 24px; max-width: 52ch; font-size: 1.125rem; }
+    .hero-status { margin-top: 12px; color: var(--muted); font-size: 0.875rem; }
+    .hero-actions { margin-top: 16px; display: flex; gap: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 32px 24px; margin-bottom: 24px; }
+</style>

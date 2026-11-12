@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JB Fraktal | Mandelbrot-Zoom</title>
+<meta name="description" content="Mandelbrot-Menge auf der Grafikkarte: Zoom bis 10^28, mit Perturbationstheorie und Hochpräzisions-Referenzbahn.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../fehler.js?v=1" data-critical></script>
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    html, body { height: 100%; }
+    body { display: flex; flex-direction: column; overflow: hidden; background: #0b0b0c; }
+    .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #0b0b0c; }
+    #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+    #cv.drag { cursor: grabbing; }
+    .prog { position: absolute; left: 0; top: 0; height: 2px; width: 0; background: var(--red); transition: opacity .3s; pointer-events: none; }
+    .hud {
+        position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px);
+        padding: 8px 10px; border-radius: 3px; font-size: .78rem; line-height: 1.5; color: #e9e9e4;
+        background: rgba(12, 12, 12, .62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, .14); pointer-events: none; white-space: pre; overflow: hidden; text-overflow: ellipsis;
+    }
+    .hud b { color: var(--red); font-weight: 500; }
+    .ctl { position: absolute; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 3; }
+    .ctl button {
+        width: 42px; height: 42px; display: grid; place-items: center; color: #fff;
+        background: rgba(12, 12, 12, .62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, .22); border-radius: 3px; font-size: 1.3rem; font-weight: 700; line-height: 1;
+        transition: background .2s, border-color .2s;
+    }
+    .ctl button:hover { background: var(--red); border-color: var(--red); }
+    .ctl svg { width: 18px; height: 18px; }
+
+    .dock {
+        position: absolute; right: 64px; bottom: 12px; top: 12px; width: min(300px, calc(100% - 88px)); z-index: 2;
+        display: flex; flex-direction: column; gap: 14px; overflow: auto; padding: 14px;
+        background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--line); border-radius: 4px;
+        transition: transform .35s var(--ease), opacity .25s;
+    }
+    .dock.closed { transform: translateX(calc(100% + 80px)); opacity: 0; pointer-events: none; }
+    .dock h2 { font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--red-ink); font-variation-settings: "wdth" 100; margin: 0 0 8px; }
+    .targets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 2px; font-size: .85rem; font-weight: 600; transition: background .2s, color .2s; }
+    .chip:hover, .chip[aria-pressed="true"] { background: var(--ink); color: var(--base); }
+    .pals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .pal { height: 30px; border-radius: 2px; border: 2px solid transparent; outline: 1px solid var(--line); outline-offset: -1px; }
+    .pal[aria-pressed="true"] { border-color: var(--ink); }
+    .sl { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 8px; font-size: .85rem; color: var(--muted); font-weight: 600; margin-top: 6px; }
+    .tg { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .88rem; color: var(--ink-soft); }
+    .gap { display: flex; gap: 8px; margin-top: 4px; }
+    .gap .btn { flex: 1; padding: 8px 10px; }
+
+    .fallback { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: #fff; background: #0b0b0c; z-index: 5; }
+    .fallback p { max-width: 38ch; margin: 0 auto 14px; }
+
+    @media (max-width: 760px) {
+        .dock { right: 12px; left: 12px; width: auto; top: auto; bottom: 66px; max-height: 58%; }
+        .dock.closed { transform: translateY(calc(100% + 90px)); }
+        .ctl { flex-direction: row; right: 12px; bottom: 12px; }
+        .hud { left: 12px; bottom: 64px; font-size: .72rem; }
+        .hud .co { display: none; }
+        .stage.dockopen .hud { display: none; }
+    }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Fraktal</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn" type="button" id="share">Link kopieren</button>
+        <button class="btn solid" type="button" id="png">PNG</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<main class="stage" id="stage">
+    <canvas id="cv" aria-label="Mandelbrot-Menge"></canvas>
+    <div class="prog" id="prog"></div>
+    <div class="hud tc" id="hud"></div>
+
+    <aside class="dock closed" id="dock" aria-label="Einstellungen">
+        <section>
+            <h2>Reise</h2>
+            <div class="targets" id="targets"></div>
+        </section>
+        <section>
+            <h2>Farbe</h2>
+            <div class="pals" id="pals"></div>
+            <label class="sl">Dichte<input type="range" id="dens" min="0.05" max="1.6" step="0.01"></label>
+            <label class="sl">Relief<input type="range" id="rel" min="0" max="1" step="0.01"></label>
+            <label class="sl">Zyklus<input type="range" id="cyc" min="0" max="1" step="0.01"></label>
+        </section>
+        <section>
+            <h2>Qualität</h2>
+            <label class="sl">Detail<input type="range" id="det" min="0.4" max="3" step="0.05"></label>
+            <label class="tg"><input type="checkbox" id="aa"> Glättung (2 × 2)</label>
+            <div class="gap"><button class="btn" type="button" id="reset">Startansicht</button></div>
+        </section>
+    </aside>
+
+    <div class="ctl">
+        <button type="button" id="zin" aria-label="Hineinzoomen">+</button>
+        <button type="button" id="zout" aria-label="Herauszoomen">−</button>
+        <button type="button" id="opt" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+    </div>
+
+    <div class="fallback" id="fallback" hidden>
+        <div>
+            <p id="fbmsg">Dieser Browser kann WebGL 2 nicht nutzen.</p>
+            <a class="btn" style="color:#fff;border-color:#fff" href="../index.html#extras">Zurück zur Website</a>
+        </div>
+    </div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const stage = $('#stage'), canvas = $('#cv'), hud = $('#hud'), prog = $('#prog'), dock = $('#dock');
+
+/* ------------------------------------------------------------------ *
+ *  Festkomma-Arithmetik (BigInt) für die Referenzbahn
+ *  Alle Koordinaten: ganze Zahl × 2^-256
+ * ------------------------------------------------------------------ */
+const FS = 256, FSB = 256n, P256 = Math.pow(2, -FS);
+const f64 = new Float64Array(1), u64 = new BigUint64Array(f64.buffer);
+function dblToFixed(v) {
+    if (v === 0 || !isFinite(v)) return 0n;
+    f64[0] = v;
+    const b = u64[0], neg = (b >> 63n) === 1n, e = Number((b >> 52n) & 0x7ffn);
+    let m = b & 0xfffffffffffffn, ex;
+    if (e === 0) ex = -1074; else { m |= 1n << 52n; ex = e - 1075; }
+    const sh = ex + FS;
+    const r = sh >= 0 ? m << BigInt(sh) : m >> BigInt(-sh);
+    return neg ? -r : r;
+}
+function decToFixed(str) {
+    str = String(str).trim();
+    let neg = false;
+    if (str[0] === '-') { neg = true; str = str.slice(1); } else if (str[0] === '+') str = str.slice(1);
+    const [ip, fp = ''] = str.split('.');
+    const d = fp.length;
+    const num = BigInt((ip || '0') + fp);
+    const r = (num << FSB) / (10n ** BigInt(d));
+    return neg ? -r : r;
+}
+function fixedToDec(v, digits) {
+    const neg = v < 0n; if (neg) v = -v;
+    const n = (v * (10n ** BigInt(digits))) >> FSB;
+    const s = n.toString().padStart(digits + 1, '0');
+    const out = s.slice(0, s.length - digits) + '.' + s.slice(s.length - digits);
+    return (neg ? '-' : '') + out;
+}
+function buildOrbit(cx, cy, F, cap) {
+    const FB = BigInt(F), F1 = FB - 1n;
+    const out = new Float32Array((cap + 1) * 2);
+    const LIM = 1000000n << FB, sc = Math.pow(2, -F);
+    let x = 0n, y = 0n, len = cap + 1;
+    for (let n = 1; n <= cap; n++) {
+        const xx = (x * x) >> FB, yy = (y * y) >> FB;
+        if (n > 1 && xx + yy > LIM) { len = n; break; }
+        const xy = (x * y) >> F1;
+        x = xx - yy + cx; y = xy + cy;
+        out[2 * n] = Number(x) * sc; out[2 * n + 1] = Number(y) * sc;
+    }
+    return { data: out, len };
+}
+
+/* ------------------------------------------------------------------ *
+ *  Zustand
+ * ------------------------------------------------------------------ */
+const MAXZ = 1e28, MINZ = 0.7, MAXIT = 24000;
+const store = {
+    get(k, d) { try { const v = localStorage.getItem('jbf-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('jbf-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const S = {
+    ref: [0n, 0n], off: [0, 0], zoom: 1,
+    refBits: 96, orbitCap: 0, orbitLen: 1, lockRef: false,
+    pal: store.get('pal', 0), dens: store.get('dens', 0.5), rel: store.get('rel', 0.45), cyc: store.get('cyc', 0),
+    det: store.get('det', 1), aa: store.get('aa', true), shift: 0
+};
+const HOME = { re: -0.5, im: 0 };
+
+const PALS = [
+    { n: 'Glut',       a: [.5, .5, .5], b: [.5, .5, .5], c: [1, 1, .5], d: [.8, .9, .3], in: [.02, .01, .02] },
+    { n: 'Eis',        a: [.5, .6, .72], b: [.42, .38, .3], c: [1, 1, 1], d: [.55, .6, .7], in: [.01, .02, .05] },
+    { n: 'Gold',       a: [.55, .42, .2], b: [.45, .38, .22], c: [1, 1, 1], d: [0, .12, .25], in: [.03, .02, .01] },
+    { n: 'Regenbogen', a: [.5, .5, .5], b: [.5, .5, .5], c: [1, 1, 1], d: [0, .33, .67], in: [.03, .03, .04] },
+    { n: 'Neon',       a: [.5, .5, .5], b: [.5, .5, .5], c: [2, 1, 0], d: [.5, .2, .25], in: [.02, .02, .03] },
+    { n: 'Rot',        a: [.5, .12, .12], b: [.5, .12, .12], c: [1, 1, 1], d: [0, .1, .1], in: [.0, .0, .0] }
+];
+
+/* ------------------------------------------------------------------ *
+ *  WebGL
+ * ------------------------------------------------------------------ */
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+function fail(msg) { $('#fbmsg').textContent = msg; $('#fallback').hidden = false; }
+if (!gl) { fail('Dieser Browser kann WebGL 2 nicht nutzen.'); return; }
+const extF = gl.getExtension('EXT_color_buffer_float');
+const extH = gl.getExtension('EXT_color_buffer_half_float');
+if (!extF && !extH) { fail('Dieses Gerät kann keine Fliesskomma-Texturen rendern.'); return; }
+const FMT = extF
+    ? { internal: gl.R32F, format: gl.RED, type: gl.FLOAT }
+    : { internal: gl.R16F, format: gl.RED, type: gl.HALF_FLOAT };
+
+const VS = `#version 300 es
+void main(){ vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+
+const FS_ITER = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uOrbit;
+uniform vec2 uRes, uOffPix;
+uniform float uS;
+uniform int uMaxIter, uRefLen, uProbe;
+out vec4 outColor;
+vec2 cmul(vec2 a, vec2 b){ return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x); }
+vec2 orb(int n){ return texelFetch(uOrbit, ivec2(n & 2047, n >> 11), 0).rg; }
+void main(){
+    vec2 dcp = gl_FragCoord.xy - 0.5 * uRes + uOffPix;
+    vec2 w = vec2(0.0);
+    int n = 0, glitch = 0, iters = uMaxIter;
+    float res = -1.0;
+    for (int i = 0; i < uMaxIter; i++) {
+        vec2 Zn = orb(n);
+        vec2 q = uS * w;
+        vec2 z = Zn + q;
+        bool atEnd = n >= uRefLen - 1;
+        if (atEnd || (n > 0 && max(abs(z.x), abs(z.y)) < max(abs(q.x), abs(q.y)))) {
+            if (atEnd) glitch = 1;
+            w = z / uS; n = 0; Zn = vec2(0.0); q = z;
+        }
+        w = 2.0 * cmul(Zn, w) + cmul(q, w) + dcp;
+        n++;
+        vec2 zn = orb(n) + uS * w;
+        float zz = dot(zn, zn);
+        if (zz > 65536.0) { res = float(i) + 2.0 - log2(log2(zz)); iters = i; break; }
+    }
+    if (uProbe == 1) { outColor = vec4(float(glitch), float(iters) / float(uMaxIter), res < 0.0 ? 0.0 : 1.0, 1.0); return; }
+    outColor = vec4(res < 0.0 ? -1.0 : log2(max(res, 0.0) + 1.0), 0.0, 0.0, 1.0);
+}`;
+
+const FS_COLOR = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform sampler2D uLow, uHi;
+uniform vec2 uOutSize, uLowSize, uHiSize;
+uniform int uSS, uHiOn;
+uniform vec3 uPA, uPB, uPC, uPD, uInside;
+uniform float uDens, uShift, uRel;
+out vec4 o;
+vec3 pal(float lt){ float t = lt * uDens + uShift; return clamp(uPA + uPB * cos(6.28318530718 * (uPC * t + uPD)), 0.0, 1.0); }
+float L(sampler2D tx, ivec2 sz, ivec2 p){ return texelFetch(tx, clamp(p, ivec2(0), sz - 1), 0).r; }
+vec3 colAt(sampler2D tx, ivec2 sz, ivec2 p, float v){
+    if (v < -0.5) return uInside;
+    vec3 c = pal(v);
+    if (uRel > 0.001) {
+        float a = L(tx, sz, p + ivec2(1, 0)), b = L(tx, sz, p - ivec2(1, 0));
+        float cc = L(tx, sz, p + ivec2(0, 1)), d = L(tx, sz, p - ivec2(0, 1));
+        if (a < -0.5) a = v; if (b < -0.5) b = v; if (cc < -0.5) cc = v; if (d < -0.5) d = v;
+        float k = dot(vec2(a - b, cc - d) * 0.5, vec2(-0.7071, 0.7071));
+        c *= 1.0 + uRel * clamp(k * 2.4, -0.55, 0.55);
+    }
+    return c;
+}
+float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main(){
+    ivec2 px = ivec2(gl_FragCoord.xy);
+    vec3 col = vec3(0.0);
+    bool useLow = true;
+    if (uHiOn == 1) {
+        ivec2 hs = ivec2(uHiSize);
+        vec3 acc = vec3(0.0); bool ok = true;
+        for (int j = 0; j < 2; j++) for (int i = 0; i < 2; i++) {
+            if (i >= uSS || j >= uSS) continue;
+            ivec2 p = px * uSS + ivec2(i, j);
+            float v = L(uHi, hs, p);
+            if (v < -1.5) { ok = false; } else acc += colAt(uHi, hs, p, v);
+        }
+        if (ok) { col = acc / float(uSS * uSS); useLow = false; }
+    }
+    if (useLow) {
+        ivec2 ls = ivec2(uLowSize);
+        vec2 p = gl_FragCoord.xy / uOutSize * uLowSize - 0.5;
+        ivec2 i0 = ivec2(floor(p)); vec2 f = fract(p);
+        vec3 c00 = colAt(uLow, ls, i0, L(uLow, ls, i0));
+        vec3 c10 = colAt(uLow, ls, i0 + ivec2(1, 0), L(uLow, ls, i0 + ivec2(1, 0)));
+        vec3 c01 = colAt(uLow, ls, i0 + ivec2(0, 1), L(uLow, ls, i0 + ivec2(0, 1)));
+        vec3 c11 = colAt(uLow, ls, i0 + ivec2(1, 1), L(uLow, ls, i0 + ivec2(1, 1)));
+        col = mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
+    }
+    vec2 uv = gl_FragCoord.xy / uOutSize - 0.5;
+    col *= 1.0 - 0.32 * dot(uv, uv) * 1.6;
+    col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+    o = vec4(col, 1.0);
+}`;
+
+function compile(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+}
+function program(fs, names) {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    const u = {}; names.forEach((n) => (u[n] = gl.getUniformLocation(p, n)));
+    return { p, u };
+}
+let PI, PC;
+try {
+    PI = program(FS_ITER, ['uOrbit', 'uRes', 'uOffPix', 'uS', 'uMaxIter', 'uRefLen', 'uProbe']);
+    PC = program(FS_COLOR, ['uLow', 'uHi', 'uOutSize', 'uLowSize', 'uHiSize', 'uSS', 'uHiOn', 'uPA', 'uPB', 'uPC', 'uPD', 'uInside', 'uDens', 'uShift', 'uRel']);
+} catch (e) { console.error(e); fail('Die Shader konnten nicht kompiliert werden.'); return; }
+
+function makeTarget(w, h, internal, format, type) {
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { tex, fbo, w, h, ok };
+}
+function freeTarget(t) { if (t) { gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); } }
+
+const orbitTex = gl.createTexture();
+function uploadOrbit(o) {
+    const W = 2048, rows = Math.max(1, Math.ceil(o.len / W));
+    const data = new Float32Array(rows * W * 2); data.set(o.data.subarray(0, o.len * 2));
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, orbitTex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, W, rows, 0, gl.RG, gl.FLOAT, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Ansicht / Referenz
+ * ------------------------------------------------------------------ */
+let CW = 1, CH = 1;            // Canvas in Gerätepixeln
+let cssW = 1, cssH = 1;
+const baseH = () => Math.max(3.0, 3.2 * CH / CW);
+const viewH = () => baseH() / S.zoom;
+const maxIter = () => Math.max(120, Math.min(MAXIT, Math.round((220 + 105 * Math.log2(Math.max(S.zoom, 1))) * S.det)));
+const capFor = (it) => Math.min(MAXIT + 64, Math.ceil(it * 1.25) + 48);
+const bitsFor = (z) => Math.max(96, Math.min(FS, Math.ceil(Math.log2(Math.max(z, 1))) + 80));
+const center256 = () => [S.ref[0] + dblToFixed(S.off[0]), S.ref[1] + dblToFixed(S.off[1])];
+
+function setReference(c, zoomForBits, cap) {
+    const F = bitsFor(zoomForBits), sh = BigInt(FS - F);
+    const rx = c[0] >> sh, ry = c[1] >> sh;
+    const o = buildOrbit(rx, ry, F, cap);
+    S.ref = [rx << sh, ry << sh]; S.refBits = F; S.orbitCap = cap; S.orbitLen = o.len;
+    uploadOrbit(o);
+}
+function reRef(c, zoomForBits, cap) {
+    setReference(c, zoomForBits, cap);
+    S.off = [Number(c[0] - S.ref[0]) * P256, Number(c[1] - S.ref[1]) * P256];
+}
+function ensureRef() {
+    if (S.lockRef) return;      // während eines Flugs bleibt die Referenz fest
+    const mi = maxIter(), vh = viewH();
+    const far = Math.max(Math.abs(S.off[0]), Math.abs(S.off[1])) > 0.7 * vh;
+    const short = S.orbitLen > S.orbitCap && mi + 4 > S.orbitCap;      // Referenz entkommt nie, aber Bahn zu kurz
+    const bits = bitsFor(S.zoom) > S.refBits + 12;
+    if (far || short || bits) reRef(center256(), S.zoom, capFor(mi));
+}
+
+/* ------------------------------------------------------------------ *
+ *  Render-Ziele und Durchgänge
+ * ------------------------------------------------------------------ */
+let low = null, hi = null, probeT = null, ss = 1, lowMP = 0.22, hiOn = 0;
+function sizeCanvas() {
+    const r = stage.getBoundingClientRect();
+    cssW = Math.max(1, Math.round(r.width)); cssH = Math.max(1, Math.round(r.height));
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const maxPx = 4.2e6;
+    if (cssW * cssH * dpr * dpr > maxPx) dpr = Math.sqrt(maxPx / (cssW * cssH));
+    const w = Math.max(1, Math.round(cssW * dpr)), h = Math.max(1, Math.round(cssH * dpr));
+    if (w !== CW || h !== CH || !low) {
+        CW = canvas.width = w; CH = canvas.height = h;
+        freeTarget(hi); hi = null; hiOn = 0; freeTarget(low); low = null; refine = null;
+    }
+    ss = (S.aa && CW * CH * 4 <= 9e6) ? 2 : 1;
+    lowTarget();
+}
+function lowTarget() {
+    const sc = Math.min(1, Math.sqrt(lowMP * 1e6 / (CW * CH)));
+    const w = Math.max(32, Math.round(CW * sc)), h = Math.max(32, Math.round(CH * sc));
+    if (!low || low.w !== w || low.h !== h) { freeTarget(low); low = makeTarget(w, h, FMT.internal, FMT.format, FMT.type); }
+}
+function iterPass(target, w, h, probe) {
+    const s = viewH() / h;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo); gl.viewport(0, 0, w, h);
+    gl.useProgram(PI.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, orbitTex); gl.uniform1i(PI.u.uOrbit, 0);
+    gl.uniform2f(PI.u.uRes, w, h); gl.uniform2f(PI.u.uOffPix, S.off[0] / s, S.off[1] / s);
+    gl.uniform1f(PI.u.uS, s); gl.uniform1i(PI.u.uMaxIter, Math.min(maxIter(), S.orbitCap));
+    gl.uniform1i(PI.u.uRefLen, S.orbitLen); gl.uniform1i(PI.u.uProbe, probe ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+function colorPass() {
+    const P = PALS[S.pal];
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, CW, CH);
+    gl.useProgram(PC.p);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, low.tex); gl.uniform1i(PC.u.uLow, 1);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, hi ? hi.tex : low.tex); gl.uniform1i(PC.u.uHi, 2);
+    gl.uniform2f(PC.u.uOutSize, CW, CH); gl.uniform2f(PC.u.uLowSize, low.w, low.h);
+    gl.uniform2f(PC.u.uHiSize, hi ? hi.w : 1, hi ? hi.h : 1);
+    gl.uniform1i(PC.u.uSS, ss); gl.uniform1i(PC.u.uHiOn, hi && hiOn ? 1 : 0);
+    gl.uniform3fv(PC.u.uPA, P.a); gl.uniform3fv(PC.u.uPB, P.b); gl.uniform3fv(PC.u.uPC, P.c); gl.uniform3fv(PC.u.uPD, P.d);
+    gl.uniform3fv(PC.u.uInside, P.in);
+    gl.uniform1f(PC.u.uDens, S.dens); gl.uniform1f(PC.u.uShift, S.shift); gl.uniform1f(PC.u.uRel, S.rel);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+/* Referenz-Güte: kleine Testbild-Durchläufe suchen Pixel, deren Bahn länger ist als die Referenz */
+function probeReference() {
+    const pw = 96, ph = Math.max(24, Math.round(96 * CH / CW));
+    if (!probeT || probeT.w !== pw || probeT.h !== ph) { freeTarget(probeT); probeT = makeTarget(pw, ph, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE); }
+    const buf = new Uint8Array(pw * ph * 4);
+    for (let attempt = 0; attempt < 4; attempt++) {
+        iterPass(probeT, pw, ph, true);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, probeT.fbo); gl.readPixels(0, 0, pw, ph, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+        let bad = 0, best = -1, bi = 0;
+        for (let i = 0; i < pw * ph; i++) {
+            if (buf[i * 4] === 255) { bad++; if (buf[i * 4 + 1] > best) { best = buf[i * 4 + 1]; bi = i; } }
+        }
+        if (bad < Math.max(2, pw * ph * 0.004)) return;
+        const s = viewH() / ph, x = bi % pw, y = Math.floor(bi / pw);
+        const dx = (x + 0.5 - pw / 2) * s, dy = (y + 0.5 - ph / 2) * s;
+        const c = center256();
+        reRef([c[0] + dblToFixed(dx), c[1] + dblToFixed(dy)], S.zoom, capFor(maxIter()));
+        // Die Bildmitte bleibt, nur die Referenz wandert: Versatz neu setzen
+        S.off = [Number(c[0] - S.ref[0]) * P256, Number(c[1] - S.ref[1]) * P256];
+    }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Hauptschleife
+ * ------------------------------------------------------------------ */
+let needLow = true, needColor = true, refine = null, hiValid = false, lastTouch = 0, rows = 96;
+let lastDraw = performance.now();
+function doLow() {
+    ensureRef(); lowTarget();
+    const t0 = performance.now();
+    iterPass(low, low.w, low.h, false);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, low.fbo); gl.finish();
+    const dt = performance.now() - t0;
+    if (dt > 42) lowMP = Math.max(0.04, lowMP * 0.78); else if (dt < 14) lowMP = Math.min(0.9, lowMP * 1.12);
+    hiOn = 0; hiValid = false; refine = null; prog.style.opacity = 0;
+    needColor = true;
+}
+function startRefine() {
+    ensureRef(); probeReference();
+    const w = CW * ss, h = CH * ss;
+    if (!hi || hi.w !== w || hi.h !== h) { freeTarget(hi); hi = makeTarget(w, h, FMT.internal, FMT.format, FMT.type); }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, hi.fbo); gl.clearBufferfv(gl.COLOR, 0, [-2, 0, 0, 0]);
+    refine = { y: h, w, h }; hiOn = 1; prog.style.opacity = 1; prog.style.width = '0%';
+}
+function stepRefine() {
+    const r = refine, n = Math.min(r.y, Math.max(ss, Math.round(rows / ss) * ss));
+    const y0 = r.y - n, t0 = performance.now();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, hi.fbo); gl.enable(gl.SCISSOR_TEST); gl.scissor(0, y0, r.w, n);
+    iterPass(hi, r.w, r.h, false);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, hi.fbo); gl.finish(); gl.disable(gl.SCISSOR_TEST);
+    const dt = performance.now() - t0;
+    rows = dt > 26 ? Math.max(ss * 4, rows * 0.7) : dt < 9 ? Math.min(r.h, rows * 1.5) : rows;
+    r.y = y0; needColor = true;
+    prog.style.width = ((1 - r.y / r.h) * 100).toFixed(1) + '%';
+    if (r.y <= 0) { refine = null; hiValid = true; prog.style.opacity = 0; updateHash(); }
+}
+
+let anim = null, flight = null, inertia = null;
+function frame(t) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(64, t - lastDraw); lastDraw = t;
+    if (document.hidden) return;
+    if (!isFinite(S.zoom) || S.zoom <= 0) { S.zoom = 1; S.off = [0, 0]; reRef([dblToFixed(HOME.re), dblToFixed(HOME.im)], 1, capFor(220)); touchView(); }
+    if (flight) stepFlight(t);
+    if (anim) stepZoomAnim(dt);
+    if (inertia) stepInertia(dt);
+    if (S.cyc > 0) { S.shift += dt * 0.00006 * S.cyc * 14; needColor = true; }
+    if (needLow) { needLow = false; lastTouch = t; doLow(); updateHud(); }
+    else if (!refine && !hiValid && !flight && !anim && !inertia && t - lastTouch > 170) startRefine();
+    if (refine) { stepRefine(); }
+    if (needColor) { colorPass(); needColor = false; }
+}
+
+function touchView() { needLow = true; hiValid = false; }
+
+/* ------------------------------------------------------------------ *
+ *  Eingabe: Ziehen, Zoom, Pinch
+ * ------------------------------------------------------------------ */
+const clampZoom = (z) => Math.max(MINZ, Math.min(MAXZ, z));
+function zoomAt(f, px, py) {
+    const nz = clampZoom(S.zoom * f); f = nz / S.zoom;
+    if (f === 1) return false;
+    const sc = viewH() / cssH;
+    const dx = (px - cssW / 2) * sc, dy = -(py - cssH / 2) * sc;
+    S.off[0] += dx * (1 - 1 / f); S.off[1] += dy * (1 - 1 / f);
+    S.zoom = nz; touchView(); return true;
+}
+function panBy(dxCss, dyCss) {
+    const sc = viewH() / cssH;
+    S.off[0] -= dxCss * sc; S.off[1] += dyCss * sc; touchView();
+}
+function stepZoomAnim(dt) {
+    const cur = Math.log(S.zoom), diff = anim.target - cur;
+    if (Math.abs(diff) < 2e-4) { zoomAt(Math.exp(diff), anim.x, anim.y); anim = null; return; }
+    zoomAt(Math.exp(diff * (1 - Math.exp(-dt / 75))), anim.x, anim.y);
+}
+function startZoom(deltaLog, x, y) {
+    stopFlight();
+    const base = anim ? anim.target : Math.log(S.zoom);
+    const target = Math.max(Math.log(MINZ), Math.min(Math.log(MAXZ), base + deltaLog));
+    anim = { target, x, y };
+}
+function stepInertia(dt) {
+    inertia.vx *= Math.exp(-dt / 220); inertia.vy *= Math.exp(-dt / 220);
+    if (Math.abs(inertia.vx) + Math.abs(inertia.vy) < 0.02) { inertia = null; return; }
+    panBy(inertia.vx * dt, inertia.vy * dt);
+}
+const ptrs = new Map(); let lastMove = 0, vel = { x: 0, y: 0 };
+canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId); stopFlight(); anim = null; inertia = null;
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.classList.add('drag'); vel = { x: 0, y: 0 }; lastMove = performance.now();
+});
+canvas.addEventListener('pointermove', (e) => {
+    const p = ptrs.get(e.pointerId); if (!p) return;
+    const r = canvas.getBoundingClientRect();
+    if (ptrs.size === 1) {
+        const dx = e.clientX - p.x, dy = e.clientY - p.y, now = performance.now(), dtm = Math.max(1, now - lastMove);
+        panBy(dx, dy); vel = { x: 0.7 * vel.x + 0.3 * (dx / dtm), y: 0.7 * vel.y + 0.3 * (dy / dtm) }; lastMove = now;
+        p.x = e.clientX; p.y = e.clientY;
+    } else if (ptrs.size === 2) {
+        const [a, b] = [...ptrs.values()];
+        const d0 = Math.hypot(a.x - b.x, a.y - b.y), m0 = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        p.x = e.clientX; p.y = e.clientY;
+        const d1 = Math.hypot(a.x - b.x, a.y - b.y), m1 = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        panBy(m1.x - m0.x, m1.y - m0.y);
+        if (d0 > 8) zoomAt(d1 / d0, m1.x - r.left, m1.y - r.top);
+    }
+});
+function endPtr(e) {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId); canvas.classList.remove('drag');
+    if (ptrs.size === 0 && Math.abs(vel.x) + Math.abs(vel.y) > 0.08 && performance.now() - lastMove < 80) inertia = { vx: vel.x, vy: vel.y };
+}
+canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    const k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
+    startZoom(-e.deltaY * k * (e.ctrlKey ? 0.011 : 0.0017), e.clientX - r.left, e.clientY - r.top);
+}, { passive: false });
+canvas.addEventListener('dblclick', (e) => {
+    const r = canvas.getBoundingClientRect();
+    startZoom(e.shiftKey ? -Math.log(3) : Math.log(3), e.clientX - r.left, e.clientY - r.top);
+});
+$('#zin').addEventListener('click', () => startZoom(Math.log(2.2), cssW / 2, cssH / 2));
+$('#zout').addEventListener('click', () => startZoom(-Math.log(2.2), cssW / 2, cssH / 2));
+addEventListener('keydown', (e) => {
+    if (e.target.closest('input, select, textarea')) return;
+    const st = 60;
+    if (e.key === '+' || e.key === '=') startZoom(Math.log(1.8), cssW / 2, cssH / 2);
+    else if (e.key === '-') startZoom(-Math.log(1.8), cssW / 2, cssH / 2);
+    else if (e.key === 'ArrowLeft') { panBy(st, 0); } else if (e.key === 'ArrowRight') { panBy(-st, 0); }
+    else if (e.key === 'ArrowUp') { panBy(0, st); } else if (e.key === 'ArrowDown') { panBy(0, -st); }
+    else if (e.key === '0') resetView();
+    else if (e.key === 'Escape') stopFlight();
+    else return;
+    stopFlight(); e.preventDefault();
+});
+
+/* ------------------------------------------------------------------ *
+ *  Reisen (Flüge zu Zielpunkten)
+ * ------------------------------------------------------------------ */
+const TARGETS = [
+    // Mittelpunkte kleiner Mandelbrot-Kopien (Newton-Verfahren, 100 Stellen), Zoom ≈ 1 / Grösse
+    { name: 'Seepferdchental', re: '-0.743643887037158870778064543494', im: '0.131825904205312292821097354875', zoom: 3.0e8, pal: 1 },
+    { name: 'Perlenkette', re: '0.254987037514476620693153228198', im: '0.000567979052846500295325830213388', zoom: 1.4e16, pal: 2 },
+    { name: 'Dendrit', re: '-0.101096363845622161025708900137725993835492038', im: '0.956286510809141500775795650188424181230854446', zoom: 2.2e20, pal: 4 },
+    { name: 'Doppelspirale', re: '-0.775683768009053797471291460166813439828389928', im: '0.136467368294690124735587139740478775371511328', zoom: 6.0e20, pal: 1 },
+    { name: 'Insel', re: '0.360240443437614363428827472021', im: '-0.641313061064803174827038554568', zoom: 8.0e10, pal: 0 },
+    { name: 'Blitz', re: '-0.160701349993666619356850871396', im: '1.03756650000164402876504679208', zoom: 2.0e9, pal: 5 }
+];
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+function stopFlight() { if (flight) { flight = null; S.lockRef = false; markTargets(-1); } }
+function flyTo(idx) {
+    stopFlight(); anim = null; inertia = null;
+    const tg = TARGETS[idx]; if (!tg) return;
+    const T = [decToFixed(tg.re), decToFixed(tg.im)];
+    const C0 = center256();
+    const dist = Math.hypot(Number(C0[0] - T[0]), Number(C0[1] - T[1])) * P256;
+    const z0 = S.zoom, z1 = tg.zoom;
+    const zmid = Math.max(0.8, Math.min(z0, 1.2 / Math.max(dist, 1e-300)));
+    const dec = (a, b) => Math.abs(Math.log10(a / b));
+    const d1 = z0 > zmid * 1.01 ? 0.6 + 0.35 * dec(z0, zmid) : 0;
+    const d2 = 1.4 + 0.75 * dec(z1, zmid);
+    flight = { T, C0, tg, idx, z0, zmid, z1, d1, d2, t0: performance.now(), phase: d1 > 0 ? 1 : 2, diff: [Number(C0[0] - T[0]) * P256, Number(C0[1] - T[1]) * P256] };
+    if (flight.phase === 2) beginPhase2(flight);
+    if (tg.pal !== undefined && tg.pal !== S.pal) setPalette(tg.pal);
+    markTargets(idx);
+}
+function beginPhase2(f) {
+    f.phase = 2; f.t0 = performance.now();
+    S.lockRef = false;
+    const needIt = Math.round((220 + 105 * Math.log2(f.z1)) * S.det);
+    reRef(f.T, f.z1, capFor(Math.min(MAXIT, needIt)));
+    S.off = [f.diff[0] * f.zmid / S.zoom, f.diff[1] * f.zmid / S.zoom];
+    S.lockRef = true;
+}
+function stepFlight(now) {
+    const f = flight;
+    if (f.phase === 1) {
+        const u = Math.max(0, Math.min(1, (now - f.t0) / (f.d1 * 1000)));
+        S.zoom = Math.exp(lerp(Math.log(f.z0), Math.log(f.zmid), ease(u)));
+        touchView();
+        if (u >= 1) beginPhase2(f);
+        return;
+    }
+    const u = Math.max(0, Math.min(1, (now - f.t0) / (f.d2 * 1000)));
+    const e = u < 0.5 ? 0.5 * Math.pow(2 * u, 1.6) : 1 - 0.5 * Math.pow(2 - 2 * u, 1.6);
+    S.zoom = Math.exp(lerp(Math.log(f.zmid), Math.log(f.z1), e));
+    S.off = [f.diff[0] * f.zmid / S.zoom, f.diff[1] * f.zmid / S.zoom];
+    touchView();
+    if (u >= 1) { flight = null; S.lockRef = false; markTargets(-1); }
+}
+function markTargets(idx) { document.querySelectorAll('#targets .chip').forEach((c, i) => c.setAttribute('aria-pressed', i === idx ? 'true' : 'false')); }
+function resetView() {
+    stopFlight(); anim = null; inertia = null;
+    S.zoom = 1; reRef([dblToFixed(HOME.re), dblToFixed(HOME.im)], 1, capFor(maxIter())); touchView();
+}
+
+/* ------------------------------------------------------------------ *
+ *  UI, Hash, Export
+ * ------------------------------------------------------------------ */
+function fmtZoom(z) {
+    if (z < 1000) return (z < 10 ? z.toFixed(2) : z.toFixed(0)) + '×';
+    const e = Math.floor(Math.log10(z)), m = z / Math.pow(10, e);
+    return m.toFixed(2) + 'e' + e + '×';
+}
+let hudT = 0;
+function updateHud() {
+    const now = performance.now(); if (now - hudT < 60) return; hudT = now;
+    const digits = Math.min(40, 6 + Math.ceil(Math.log10(Math.max(S.zoom, 1))));
+    const c = center256();
+    hud.innerHTML = `<b>ZOOM</b> ${fmtZoom(S.zoom)}   <b>ITER</b> ${Math.min(maxIter(), S.orbitCap)}<span class="co">\n<b>RE</b> ${fixedToDec(c[0], digits)}\n<b>IM</b> ${fixedToDec(c[1], digits)}</span>`;
+}
+let hashT = 0;
+function hashString() {
+    const digits = Math.min(60, 12 + Math.ceil(Math.log10(Math.max(S.zoom, 1))));
+    const c = center256();
+    return `#re=${fixedToDec(c[0], digits)}&im=${fixedToDec(c[1], digits)}&z=${S.zoom.toExponential(6)}&p=${S.pal}`;
+}
+function updateHash() { try { history.replaceState(null, '', hashString()); } catch (e) {} }
+function readHash() {
+    const m = {}; location.hash.slice(1).split('&').forEach((kv) => { const [k, v] = kv.split('='); if (k && v !== undefined) m[k] = decodeURIComponent(v); });
+    if (m.re && m.im && m.z && /^-?\d+(\.\d+)?$/.test(m.re) && /^-?\d+(\.\d+)?$/.test(m.im) && isFinite(+m.z)) {
+        const z = clampZoom(+m.z);
+        S.zoom = z; reRef([decToFixed(m.re), decToFixed(m.im)], z, capFor(Math.min(MAXIT, Math.round((220 + 105 * Math.log2(Math.max(z, 1))) * S.det))));
+        if (m.p !== undefined && PALS[+m.p]) S.pal = +m.p;
+        return true;
+    }
+    return false;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1800); }
+$('#share').addEventListener('click', async () => {
+    updateHash();
+    try { await navigator.clipboard.writeText(location.href); toast('Link kopiert'); }
+    catch (e) { const ta = document.createElement('textarea'); ta.value = location.href; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Link kopiert'); } catch (e2) { toast('Kopieren nicht möglich'); } ta.remove(); }
+});
+$('#png').addEventListener('click', () => {
+    const save = () => canvas.toBlob((b) => {
+        if (!b) { toast('Export fehlgeschlagen'); return; }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `jb-fraktal-${fmtZoom(S.zoom).replace('×', '')}.png`;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, 'image/png');
+    if (refine || needLow) { toast('Bild wird fertig gerechnet …'); const t0 = performance.now(); const w = () => { if ((!refine && !needLow) || performance.now() - t0 > 20000) { colorPass(); save(); } else setTimeout(w, 120); }; w(); }
+    else { colorPass(); save(); }
+});
+
+function palGradient(P) {
+    const stops = [];
+    for (let i = 0; i <= 12; i++) {
+        const t = i / 12, c = [0, 1, 2].map((k) => Math.max(0, Math.min(1, P.a[k] + P.b[k] * Math.cos(6.28318 * (P.c[k] * t + P.d[k])))));
+        stops.push(`rgb(${c.map((v) => Math.round(v * 255)).join(',')}) ${(t * 100).toFixed(0)}%`);
+    }
+    return `linear-gradient(90deg, ${stops.join(',')})`;
+}
+function setPalette(i) {
+    S.pal = i; store.set('pal', i); needColor = true;
+    document.querySelectorAll('#pals .pal').forEach((b, k) => b.setAttribute('aria-pressed', k === i ? 'true' : 'false'));
+    if (hiValid) updateHash();
+}
+function buildUi() {
+    const pals = $('#pals');
+    PALS.forEach((P, i) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'pal'; b.title = P.n; b.setAttribute('aria-label', 'Palette ' + P.n);
+        b.style.background = palGradient(P); b.addEventListener('click', () => setPalette(i)); pals.appendChild(b);
+    });
+    const tg = $('#targets');
+    TARGETS.forEach((t, i) => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = t.name; b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', () => { flyTo(i); if (innerWidth <= 760) setDock(false); }); tg.appendChild(b);
+    });
+    const bind = (id, key, apply) => { const el = $(id); el.value = S[key]; el.addEventListener('input', () => { S[key] = +el.value; store.set(key, S[key]); apply && apply(); }); };
+    bind('#dens', 'dens', () => (needColor = true)); bind('#rel', 'rel', () => (needColor = true)); bind('#cyc', 'cyc', () => (needColor = true));
+    bind('#det', 'det', () => { reRef(center256(), S.zoom, capFor(maxIter())); touchView(); });
+    const aa = $('#aa'); aa.checked = S.aa; aa.addEventListener('change', () => { S.aa = aa.checked; store.set('aa', S.aa); freeTarget(hi); hi = null; ss = (S.aa && CW * CH * 4 <= 9e6) ? 2 : 1; touchView(); });
+    $('#reset').addEventListener('click', resetView);
+    setPalette(S.pal);
+}
+function setDock(open) { dock.classList.toggle('closed', !open); stage.classList.toggle('dockopen', open); $('#opt').setAttribute('aria-expanded', open); store.set('dock', open); }
+$('#opt').addEventListener('click', () => setDock(dock.classList.contains('closed')));
+
+/* ------------------------------------------------------------------ *
+ *  Start
+ * ------------------------------------------------------------------ */
+canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); toast('Grafik-Kontext verloren, bitte neu laden'); });
+new ResizeObserver(() => { sizeCanvas(); touchView(); }).observe(stage);
+sizeCanvas();
+if (!readHash()) { reRef([dblToFixed(HOME.re), dblToFixed(HOME.im)], 1, capFor(220)); }
+buildUi();
+setDock(innerWidth > 760 && store.get('dock', true));
+requestAnimationFrame(frame);
+
+// Testzugang für automatische Prüfungen
+window.__jbf = {
+    S, get hiValid() { return hiValid; }, get refine() { return !!refine; },
+    center256, setView(re, im, z) { stopFlight(); S.zoom = z; reRef([decToFixed(re), decToFixed(im)], z, capFor(Math.min(MAXIT, Math.round((220 + 105 * Math.log2(Math.max(z, 1))) * S.det)))); touchView(); },
+    moveRef(dx, dy) { const c = center256(); reRef([c[0] + dblToFixed(dx), c[1] + dblToFixed(dy)], S.zoom, capFor(maxIter())); S.off = [Number(c[0] - S.ref[0]) * P256, Number(c[1] - S.ref[1]) * P256]; touchView(); },
+    maxIter, flyTo, goto(i, m) { const t = TARGETS[i]; this.setView(t.re, t.im, t.zoom * m); if (t.pal !== undefined) setPalette(t.pal); }
+};
+})();
+</script>
+</body>
+</html>

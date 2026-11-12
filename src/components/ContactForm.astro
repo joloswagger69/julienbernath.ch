@@ -1,0 +1,94 @@
+---
+/* Kontaktformular – Markup wortgleich aus der bisherigen index.html (Zeilen 380–443).
+   Die Logik (Prüfung, Entwurf, Web3Forms-Versand, Mail-Fallback) kommt unverändert aus
+   public/scripts/contact.js, der Access Key unverändert aus public/scripts/form-config.js.
+   Gestaltung folgt in Phase 3. */
+---
+<div class="cform-wrap" id="cform-wrap">
+    <form class="cform" id="cform" novalidate autocomplete="on" aria-labelledby="cf-title">
+        <div class="cf-head">
+            <span class="cf-rec" aria-hidden="true"></span>
+            <h3 class="cf-title" id="cf-title">Neue Nachricht</h3>
+            <span class="cf-count tc" id="cf-count" aria-hidden="true">0000</span>
+        </div>
+
+        <div class="cf-row">
+            <div class="cf-field">
+                <label for="cf-name">Name</label>
+                <input type="text" id="cf-name" name="name" maxlength="80" autocomplete="name" required>
+                <p class="cf-err" id="cf-name-err" role="alert"></p>
+            </div>
+            <div class="cf-field">
+                <label for="cf-email">E-Mail</label>
+                <input type="email" id="cf-email" name="email" maxlength="120" autocomplete="email" inputmode="email" required>
+                <p class="cf-err" id="cf-email-err" role="alert"></p>
+            </div>
+        </div>
+
+        <fieldset class="cf-field cf-topics">
+            <legend>Worum geht es?</legend>
+            <div class="cf-chips" id="cf-topics">
+                <label><input type="radio" name="topic" value="Video" checked><span>Video</span></label>
+                <label><input type="radio" name="topic" value="Foto"><span>Foto</span></label>
+                <label><input type="radio" name="topic" value="Grafik"><span>Grafik</span></label>
+                <label><input type="radio" name="topic" value="Social Media"><span>Social Media</span></label>
+                <label><input type="radio" name="topic" value="Anderes"><span>Anderes</span></label>
+            </div>
+        </fieldset>
+
+        <div class="cf-field">
+            <label for="cf-msg">Nachricht</label>
+            <textarea id="cf-msg" name="message" rows="6" maxlength="2000" required></textarea>
+            <p class="cf-err" id="cf-msg-err" role="alert"></p>
+        </div>
+
+        <div class="cf-hp" aria-hidden="true">
+            <label>Website <input type="text" name="website" id="cf-hp" tabindex="-1" autocomplete="off"></label>
+            <input type="checkbox" name="botcheck" id="cf-bot" tabindex="-1">
+        </div>
+
+        <div class="cf-field cf-consent">
+            <label class="cf-check"><input type="checkbox" id="cf-consent" name="consent" required><span class="cf-box" aria-hidden="true"></span><span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden. <button type="button" class="cf-link" id="cf-privacy">Datenschutz</button></span></label>
+            <p class="cf-err" id="cf-consent-err" role="alert"></p>
+        </div>
+
+        <div class="cf-foot">
+            <button type="submit" class="btn btn-solid" id="cf-send"><span class="cf-send-label">Nachricht senden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg></button>
+            <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
+        </div>
+    </form>
+
+    <div class="cf-done" id="cf-done" hidden tabindex="-1">
+        <svg class="cf-tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg>
+        <h3 id="cf-done-title">Gesendet</h3>
+        <p id="cf-done-text">Danke, ich melde mich so schnell wie möglich.</p>
+        <div class="cf-done-actions">
+            <button type="button" class="btn btn-line" id="cf-again">Neue Nachricht</button>
+            <button type="button" class="btn btn-line" id="cf-copy" hidden>Text kopieren</button>
+        </div>
+    </div>
+</div>
+
+<script is:inline src="/scripts/form-config.js?v=1" defer></script>
+<script is:inline src="/scripts/contact.js?v=1" defer></script>
+
+<style is:global>
+    /* Funktionsnotwendige Regeln 1:1 aus style.css (Z. 812–813, 821).
+       Ohne sie wäre das Bot-Lockfeld sichtbar und echte Nachrichten würden still verworfen. */
+    .cf-hp { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+    .cf-err { min-height: 0; margin-top: 5px; font-size: 0.86rem; font-weight: 700; color: var(--red-ink); }
+    .cf-err:empty { display: none; }
+
+    /* Provisorische Lesbarkeit (Phase 2) – Gestaltung folgt in Phase 3 */
+    .cform { display: grid; gap: 16px; max-width: 640px; }
+    .cform input[type='text'], .cform input[type='email'], .cform textarea {
+        width: 100%; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line-strong); padding: 8px 10px;
+    }
+    .cf-field label, .cf-field legend { display: block; font-weight: 700; margin-bottom: 4px; }
+    .cf-chips { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .cf-topics { border: 0; }
+    .cf-head { display: flex; gap: 12px; align-items: baseline; }
+    .cf-link { text-decoration: underline; }
+    .btn { border: 1px solid var(--ink); padding: 8px 14px; display: inline-flex; gap: 8px; align-items: center; }
+    .btn svg { width: 18px; height: 18px; }
+</style>

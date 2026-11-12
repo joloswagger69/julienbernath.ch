@@ -1,0 +1,32 @@
+---
+/* Kontakt (provisorisch): Texte, E-Mail, LinkedIn, Ort und das unveränderte Web3Forms-Formular. */
+import Base from '../../layouts/Base.astro';
+import ContactForm from '../ContactForm.astro';
+import { contact, person } from '../../data/site';
+import { alternates, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+<Base lang={lang} alternates={alternates('contact')} title={`${t('contact.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
+    <section class="block">
+        <h1>{contact.title}</h1>
+        <p>{contact.lede}</p>
+        <p class="mail"><a id="contact-mail" href={`mailto:${person.email}`}>{person.email}</a></p>
+        <p><a href={person.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
+        <p class="loc">{contact.location}</p>
+    </section>
+    <section class="block">
+        <ContactForm />
+    </section>
+</Base>
+
+<style>
+    .block { padding: 48px var(--gutter) 0; }
+    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 12px; }
+    p { max-width: 60ch; margin-top: 8px; }
+    .mail { font-size: clamp(1.25rem, 4vw, 2rem); font-weight: 800; }
+    .loc { color: var(--muted); }
+</style>

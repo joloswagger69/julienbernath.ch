@@ -1,0 +1,104 @@
+---
+/* Über mich (provisorisch): Texte, Portraits, Steckbrief, Werdegang, Skills, Shotlist, Musik.
+   Interaktionen (Take-Wechsel, Filmklappe, Shotlist abhaken, Playlist einbetten) folgen in Phase 3. */
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import { about, career, playlist, portraitAlt, portraits, slate } from '../../data/about';
+import { mixer } from '../../data/skills';
+import { shotlist } from '../../data/shotlist';
+import { alternates, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+<Base lang={lang} alternates={alternates('about')} title={`${about.title} | Julien Bernath`} untranslated={lang !== 'de'}>
+    <section class="block">
+        <h1>{about.title}</h1>
+        <p class="lead">{about.lead}</p>
+        {about.paragraphs.map((p) => <p>{p}</p>)}
+    </section>
+
+    <section class="block">
+        <h2>{t('about.portraits')}</h2>
+        <ul class="portraits">
+            {portraits.map((src, i) => (
+                <li><Image src={src} alt={portraitAlt} width={600} widths={[300, 600]} sizes="(max-width: 700px) 50vw, 200px" /><span class="tc">Take {i + 1}</span></li>
+            ))}
+        </ul>
+    </section>
+
+    <section class="block">
+        <h2>{t('about.slate')}</h2>
+        <dl class="slate">
+            {slate.map((c) => <div><dt>{c.label}</dt><dd>{c.value}</dd></div>)}
+        </dl>
+    </section>
+
+    <section class="block">
+        <h2>{t('about.career')}</h2>
+        <ol class="career">
+            {career.map((c) => (
+                <li>
+                    <span class="tc">{c.years}</span>
+                    <h3>{c.title}</h3>
+                    <p class="place">{c.place}</p>
+                    <p>{c.text}</p>
+                    {'completed' in c && <p class="tc done">{t('about.completed')}</p>}
+                </li>
+            ))}
+        </ol>
+    </section>
+
+    <section class="block">
+        <h2>{t('about.skills')}</h2>
+        {mixer.map((bus) => (
+            <div class="bus">
+                <h3>{bus.bus}</h3>
+                <table>
+                    <tbody>
+                        {bus.channels.map((c) => <tr><th scope="row">{c.name}</th><td class="tc">{c.level}</td><td>{c.tags}</td></tr>)}
+                    </tbody>
+                </table>
+            </div>
+        ))}
+    </section>
+
+    <section class="block">
+        <h2>{shotlist.title} <small>{shotlist.hint}</small></h2>
+        <div class="shotlist">
+            {shotlist.groups.map((g) => (
+                <div>
+                    <h3>{g.group}</h3>
+                    <ul>{g.items.map((it) => <li class={it.done ? 'done' : undefined}>{it.done ? '✓ ' : ''}{it.text}</li>)}</ul>
+                </div>
+            ))}
+        </div>
+    </section>
+
+    <section class="block">
+        <h2>{playlist.title} <small>{playlist.hint}</small></h2>
+        <p><a href={playlist.url} target="_blank" rel="noopener noreferrer">{t('about.openMusic')}: {playlist.name}</a></p>
+    </section>
+</Base>
+
+<style>
+    .block { padding: 40px var(--gutter) 0; max-width: 1100px; }
+    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 16px; }
+    h2 { font-size: 1.25rem; margin-bottom: 12px; }
+    h2 small { font-weight: 400; color: var(--muted); font-size: 0.875rem; }
+    h3 { font-size: 1rem; margin-top: 8px; }
+    .lead { font-size: 1.2rem; font-weight: 600; max-width: 60ch; }
+    p { max-width: 65ch; margin-top: 8px; }
+    .portraits { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .portraits img { aspect-ratio: 1; object-fit: cover; width: 100%; }
+    .slate { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 24px; }
+    .slate dt, .place { font-size: 0.8rem; color: var(--muted); }
+    .career { display: grid; gap: 24px; }
+    .done { color: var(--muted); font-size: 0.85rem; }
+    table { border-collapse: collapse; width: 100%; max-width: 720px; margin-bottom: 16px; }
+    th, td { text-align: left; padding: 4px 12px 4px 0; border-bottom: 1px solid var(--line); font-weight: 400; }
+    .shotlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .shotlist li.done { color: var(--muted); text-decoration: line-through; }
+</style>

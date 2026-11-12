@@ -1,0 +1,42 @@
+---
+/* Werkzeuge (provisorisch): die 16 Browser-Tools mit ihren bisherigen Adressen.
+   Gezeichnete Kartenvorschauen und Spielmodus-Schalter folgen in Phase 3/4. */
+import Base from '../../layouts/Base.astro';
+import { toolGroups, toolHref, toolsIntro } from '../../data/tools';
+import { alternates, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const count = toolGroups.reduce((n, g) => n + g.tools.length, 0);
+---
+<Base lang={lang} alternates={alternates('tools')} title={`${t('tools.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
+    <section class="block">
+        <h1>{t('tools.title')} <span class="tc count">({count})</span></h1>
+        <p>{toolsIntro}</p>
+        {toolGroups.map((g) => (
+            <>
+                <h2>{g.title}</h2>
+                <ul class="tools">
+                    {g.tools.map((tool) => (
+                        <li style={`--c:${tool.color}`}>
+                            <a href={toolHref(tool)}><strong>{tool.name}</strong></a>
+                            <p>{tool.desc}</p>
+                        </li>
+                    ))}
+                </ul>
+            </>
+        ))}
+    </section>
+</Base>
+
+<style>
+    .block { padding: 48px var(--gutter) 0; }
+    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; }
+    .count { font-size: 1rem; color: var(--muted); font-weight: 400; }
+    h2 { font-size: 1.25rem; margin: 32px 0 12px; }
+    .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+    .tools li { border-left: 6px solid var(--c); padding: 8px 12px; background: var(--panel); }
+    .tools p { font-size: 0.9rem; color: var(--ink-soft); margin-top: 4px; }
+</style>

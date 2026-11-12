@@ -1,0 +1,32 @@
+---
+/* Projektkarte (provisorisch) – zeigt Vorschau, Titel, Kunde/Jahr, Umfang wie bisher. */
+import { Image } from 'astro:assets';
+import SiteGraphic from './SiteGraphic.astro';
+import { KIND_LABEL, coverOf, lengthLabel, projectPath, slugOf, type Project } from '../lib/projects';
+import type { Lang } from '../i18n/ui';
+
+interface Props { project: Project; lang: Lang; eager?: boolean }
+const { project, lang, eager = false } = Astro.props;
+const d = project.data;
+const cover = coverOf(project);
+---
+<a class="card" href={projectPath(slugOf(project), lang)} data-kind={d.kind}>
+    <div class="card-frame">
+        {cover
+            ? <Image src={cover} alt="" width={960} widths={[480, 960]} sizes="(max-width: 700px) 100vw, 50vw" loading={eager ? 'eager' : 'lazy'} />
+            : <SiteGraphic />}
+        <span class="card-badge">{KIND_LABEL[d.kind][lang]}</span>
+    </div>
+    <h3 class="card-title">{d.title}</h3>
+    <p class="card-meta">{d.client}, {d.year} · <span class="tc">{lengthLabel(project)}</span></p>
+</a>
+
+<style>
+    .card { display: block; text-decoration: none; }
+    .card-frame { position: relative; aspect-ratio: 16 / 10; background: var(--panel); overflow: hidden; }
+    .card-frame :global(img), .card-frame :global(.clip-graphic) { width: 100%; height: 100%; object-fit: cover; }
+    .card-frame :global(.clip-graphic) { display: grid; place-items: center; padding: 8%; }
+    .card-badge { position: absolute; top: 8px; left: 8px; background: var(--ink); color: var(--base); font-size: 0.75rem; padding: 2px 6px; }
+    .card-title { margin-top: 8px; font-size: 1.125rem; }
+    .card-meta { color: var(--muted); font-size: 0.9rem; }
+</style>
