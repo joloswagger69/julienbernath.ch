@@ -3,6 +3,7 @@
 import type { Lang } from '../i18n/ui';
 import { path, useTranslations } from '../i18n/utils';
 import { person, status } from '../data/site';
+import PlayModeToggle from './PlayModeToggle.astro';
 
 interface Props { lang: Lang; cta?: boolean }
 const { lang, cta = true } = Astro.props;
@@ -22,6 +23,7 @@ const t = useTranslations(lang);
     <div class="legal wrap">
         <span>© {new Date().getFullYear()} {person.name} · {status.qualification}</span>
         <a id="privacy-open" href={path('privacy', lang)}>{t('footer.privacy')}</a>
+        <PlayModeToggle lang={lang} />
         <a href="#main" class="rewind" data-rewind>{t('footer.rewind')}</a>
     </div>
 </footer>

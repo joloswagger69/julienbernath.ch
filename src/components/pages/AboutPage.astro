@@ -85,7 +85,13 @@ const tiers = [
     <section class="section wrap extras" aria-label={`${shotlist.title}, ${playlist.title}`}>
         <details class="drawer">
             <summary><span class="h3">{shotlist.title}</span><span class="muted">{shotlist.hint}</span></summary>
-            <p class="muted drawer-note">{t('about.shotlistNote')}</p>
+            <div class="shot-bar">
+                <p class="muted drawer-note">{t('about.shotlistNote')}</p>
+                <p class="shot-actions">
+                    <span class="tc" data-shot-count data-template={t('about.shotlistDone')} aria-live="polite"></span>
+                    <button type="button" class="btn shot-reset" data-shot-reset data-done={t('about.shotlistResetDone')}>{t('about.shotlistReset')}</button>
+                </p>
+            </div>
             <div class="shotlist" data-shotlist>
                 {shotlist.groups.map((g) => (
                     <div data-group={g.group}>
@@ -107,6 +113,8 @@ const tiers = [
 </Base>
 
 <script>
+    const fx = (id: string) => document.dispatchEvent(new CustomEvent('jb:fx', { detail: id }));
+
     // Portrait-Takes: Klick = nächster Take, Filmklappe schlägt
     const btn = document.querySelector<HTMLButtonElement>('[data-take]');
     if (btn) {
@@ -123,21 +131,44 @@ const tiers = [
             prep(take + 1);
             label.textContent = `Take ${take + 1}`;
             slate.classList.remove('is-clap'); void slate.offsetWidth; slate.classList.add('is-clap');
+            fx('take');
         });
     }
 
-    // Shotlist: Änderungen des Besuchers lokal speichern (gleicher Schlüssel wie bisher)
+    // Shotlist: Änderungen des Besuchers lokal speichern (gleicher Schlüssel wie bisher).
+    // Gespeichert wird nur, was der Besucher ändert; ohne Eintrag gilt der Stand von Julien.
     const KEY = 'jb2-shotlist2';
     let over: Record<string, boolean> = {};
     try { over = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { over = {}; }
-    document.querySelectorAll<HTMLInputElement>('[data-shotlist] input').forEach((box) => {
+    const boxes = [...document.querySelectorAll<HTMLInputElement>('[data-shotlist] input')];
+    const countEl = document.querySelector<HTMLElement>('[data-shot-count]');
+    const resetBtn = document.querySelector<HTMLButtonElement>('[data-shot-reset]');
+    const paint = () => {
+        const done = boxes.filter((b) => b.checked).length;
+        if (countEl) countEl.textContent = countEl.dataset.template!.replace('{n}', String(done)).replace('{total}', String(boxes.length));
+        if (resetBtn) resetBtn.disabled = Object.keys(over).length === 0;
+    };
+    const save = () => { try { Object.keys(over).length ? localStorage.setItem(KEY, JSON.stringify(over)) : localStorage.removeItem(KEY); } catch (e) { /* privater Modus */ } };
+    boxes.forEach((box) => {
         const k = box.dataset.key!;
         if (k in over) box.checked = !!over[k];
         box.addEventListener('change', () => {
-            over[k] = box.checked;
-            try { localStorage.setItem(KEY, JSON.stringify(over)); } catch (e) { /* privater Modus */ }
+            const def = box.dataset.default === '1';
+            if (box.checked === def) delete over[k]; else over[k] = box.checked;
+            save(); paint();
+            fx('check');
         });
     });
+    resetBtn?.addEventListener('click', () => {
+        over = {};
+        save();
+        boxes.forEach((b) => { b.checked = b.dataset.default === '1'; });
+        paint();
+        const label = resetBtn.textContent;
+        resetBtn.textContent = resetBtn.dataset.done!;
+        setTimeout(() => { resetBtn.textContent = label; paint(); }, 1600);
+    });
+    paint();
 
     // Playlist erst auf Wunsch einbinden
     const pl = document.querySelector<HTMLElement>('[data-embed-src]');
@@ -196,7 +227,13 @@ const tiers = [
     .drawer summary::after { content: '+'; font-family: var(--mono); font-size: 1.4rem; line-height: 1; margin-left: auto; }
     .drawer[open] summary::after { content: '–'; }
     .drawer summary .muted { font-size: var(--step--1); }
-    .drawer-note { font-size: var(--step--1); margin-bottom: 16px; }
+    .drawer-note { font-size: var(--step--1); }
+    .shot-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; margin-bottom: 20px; }
+    .shot-actions { display: flex; align-items: center; gap: 16px; }
+    .shot-actions .tc { font-size: var(--step--1); color: var(--muted); }
+    .shot-reset { min-height: 40px; padding: 0 14px; }
+    .shot-reset:disabled { opacity: 0.45; cursor: not-allowed; }
+    .shot-reset:disabled:hover { background: none; color: inherit; }
     .shotlist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-bottom: 32px; }
     .shot-group { font-size: var(--step-0); margin-bottom: 10px; }
     .shotlist ul { display: grid; gap: 4px; }

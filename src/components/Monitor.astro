@@ -53,7 +53,9 @@ const t = useTranslations(lang);
         const count = root.querySelector<HTMLElement>('[data-count]')!;
         const rec = root.querySelector<HTMLButtonElement>('[data-rec]')!;
         const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const FPS = 25, HOLD = 1600;
+        // Bildrate kann der Spielmodus umschalten (data-fps); Standard 25p
+        const fps = () => Number(root.dataset.fps) || 25;
+        const HOLD = 1600;
         let i = 0, frames = 90000, last = performance.now(), sinceCut = 0;
         let paused = reduced, visible = true;
         const p2 = (n: number) => String(n).padStart(2, '0');
@@ -72,7 +74,11 @@ const t = useTranslations(lang);
             rec.setAttribute('aria-pressed', String(p));
             root.classList.toggle('is-paused', p);
         };
-        rec.addEventListener('click', () => { setPaused(!paused); if (!paused) prep(i + 1); });
+        rec.addEventListener('click', () => {
+            setPaused(!paused);
+            if (!paused) prep(i + 1);
+            document.dispatchEvent(new CustomEvent('jb:fx', { detail: 'rec' }));
+        });
         new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(root);
         document.addEventListener('visibilitychange', () => { last = performance.now(); });
         setPaused(paused);
@@ -81,15 +87,15 @@ const t = useTranslations(lang);
             const dt = Math.min(100, now - last);
             last = now;
             if (!paused && visible && !document.hidden) {
-                frames += (dt / 1000) * FPS;
+                frames += (dt / 1000) * fps();
                 sinceCut += dt;
                 if (sinceCut >= HOLD && shots.length > 1) {
                     const n = (i + 1) % shots.length;
                     prep(n);
                     if (ready(n)) { sinceCut = 0; i = n; show(i); prep(i + 1); }
                 }
-                const f = Math.floor(frames), s = Math.floor(f / FPS);
-                tc.textContent = `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}:${p2(f % FPS)}`;
+                const r = Math.round(fps()), f = Math.floor(frames), s = Math.floor(f / r);
+                tc.textContent = `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}:${p2(f % r)}`;
             }
             requestAnimationFrame(tick);
         };

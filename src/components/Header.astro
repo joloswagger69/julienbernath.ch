@@ -50,6 +50,8 @@ const nav = [
         const next = isDark() ? 'light' : 'dark';
         root.dataset.theme = next;
         try { localStorage.setItem('jb2-theme', next); } catch (e) { /* privater Modus */ }
+        document.dispatchEvent(new CustomEvent('jb:fx', { detail: 'light' }));
+        document.dispatchEvent(new Event('jb:theme'));
     });
 
     // Handy-Menü

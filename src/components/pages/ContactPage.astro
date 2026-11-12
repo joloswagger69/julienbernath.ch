@@ -31,7 +31,9 @@ const t = useTranslations(lang);
 
 <script>
     const copy = document.querySelector<HTMLButtonElement>('[data-copy]');
-    copy?.addEventListener('click', async () => {
+    copy?.addEventListener('click', async (e) => {
+        // Für den Spielmodus (Papierflieger); ohne Spielmodus hört niemand zu
+        document.dispatchEvent(new CustomEvent('jb:plane', { detail: { x: e.clientX, y: e.clientY } }));
         const label = copy.textContent;
         try { await navigator.clipboard.writeText(copy.dataset.copy!); copy.textContent = copy.dataset.done!; }
         catch (e) { copy.textContent = copy.dataset.copy!; }

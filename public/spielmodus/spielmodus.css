@@ -1,0 +1,213 @@
+/* ==========================================================================
+   SPIELMODUS – Styles
+   Übernommen aus der bisherigen style.css (Hintergrund, Cursor, FX-Panel,
+   Effekt-Zustände, Mischpult) und an die neue Website angepasst.
+   Wird nur geladen, wenn der Spielmodus eingeschaltet ist.
+   ========================================================================== */
+
+/* Hintergrund-Canvas liegt hinter dem Inhalt */
+html.jb-play body { background: transparent; }
+#jbp-bg { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; }
+.jbp-grain {
+    position: fixed; inset: -50%; z-index: 1; pointer-events: none;
+    opacity: 0.045; background-size: 160px 160px;
+    animation: jbp-grain 0.6s steps(4) infinite;
+}
+.jbp-grain.is-off { display: none; }
+@keyframes jbp-grain {
+    0% { transform: translate(0, 0); } 25% { transform: translate(-3%, 2%); }
+    50% { transform: translate(2%, -3%); } 75% { transform: translate(-2%, -1%); } 100% { transform: translate(1%, 3%); }
+}
+#fx-layer { position: fixed; inset: 0; z-index: 90; pointer-events: none; overflow: hidden; }
+
+/* ---------- Cursor (nur, wenn ein anderer als «System» gewählt ist) ---------- */
+.has-cursor, .has-cursor * { cursor: none !important; }
+html:has(dialog[open]) .has-cursor, html:has(dialog[open]) .has-cursor * { cursor: auto !important; }
+html:has(dialog[open]) #jbp-cursor { display: none; }
+#jbp-cursor { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; display: none; will-change: transform; }
+.has-cursor #jbp-cursor { display: block; }
+.cur-cross {
+    position: absolute; left: -9px; top: -9px; width: 18px; height: 18px;
+    transition: transform 0.35s var(--ease), width 0.25s var(--ease), height 0.25s var(--ease), left 0.25s var(--ease), top 0.25s var(--ease);
+}
+.cur-cross::before, .cur-cross::after { content: ''; position: absolute; background: var(--red); }
+.cur-cross::before { left: 0; right: 0; top: 50%; height: 1.5px; margin-top: -0.75px; }
+.cur-cross::after { top: 0; bottom: 0; left: 50%; width: 1.5px; margin-left: -0.75px; }
+.cur-coords, .cur-label { position: absolute; left: 14px; top: 12px; font-family: var(--mono); font-size: 10px; white-space: nowrap; color: var(--muted); }
+.cur-label { top: -26px; padding: 2px 6px; background: var(--ink); color: var(--base); border-radius: 2px; font-size: 11px; opacity: 0; transform: translateY(4px); transition: opacity 0.2s, transform 0.2s; }
+.cur-label.is-on { opacity: 1; transform: none; }
+#jbp-cursor.is-hover .cur-cross { left: -18px; top: -18px; width: 36px; height: 36px; transform: none; }
+#jbp-cursor.is-hover .cur-cross::before, #jbp-cursor.is-hover .cur-cross::after { background: transparent; }
+#jbp-cursor.is-hover .cur-cross {
+    background:
+        linear-gradient(var(--red), var(--red)) top left / 9px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) top left / 1.5px 9px no-repeat,
+        linear-gradient(var(--red), var(--red)) top right / 9px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) top right / 1.5px 9px no-repeat,
+        linear-gradient(var(--red), var(--red)) bottom left / 9px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) bottom left / 1.5px 9px no-repeat,
+        linear-gradient(var(--red), var(--red)) bottom right / 9px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) bottom right / 1.5px 9px no-repeat;
+}
+#jbp-cursor.is-down .cur-cross { transform: scale(0.7) rotate(45deg); }
+#jbp-cursor[data-mode="sucher"] .cur-cross { left: -40px; top: -26px; width: 80px; height: 52px; border: 1.5px solid var(--red); }
+#jbp-cursor[data-mode="sucher"] .cur-cross::before { left: 34px; right: 34px; }
+#jbp-cursor[data-mode="sucher"] .cur-cross::after { top: 20px; bottom: 20px; }
+#jbp-cursor[data-mode="sucher"] .cur-coords::before { content: '● REC  '; color: var(--red); }
+#jbp-cursor[data-mode="sucher"] .cur-coords { top: 30px; left: -40px; }
+#jbp-cursor[data-mode="playhead"] .cur-cross { left: -1px; top: -100vh; width: 2px; height: 200vh; background: var(--red); opacity: 0.55; }
+#jbp-cursor[data-mode="playhead"] .cur-cross::before, #jbp-cursor[data-mode="playhead"] .cur-cross::after { display: none; }
+#jbp-cursor[data-mode="punkt"] .cur-cross { left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--red); mix-blend-mode: difference; }
+#jbp-cursor[data-mode="punkt"] .cur-cross::before, #jbp-cursor[data-mode="punkt"] .cur-cross::after { display: none; }
+#jbp-cursor[data-mode="punkt"].is-hover .cur-cross { left: -26px; top: -26px; width: 52px; height: 52px; background: #fff; }
+
+/* ---------- FX-Knopf und Panel ---------- */
+.jbp-fx-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 11px;
+    border: 1px solid var(--ink); border-radius: 2px; font-weight: 800; font-stretch: 110%; letter-spacing: 0.04em;
+}
+.jbp-fx-btn[aria-expanded="true"] { background: var(--ink); color: var(--base); }
+.jbp-fx-count { min-width: 22px; padding: 1px 5px; border-radius: 9px; background: var(--red); color: #fff; font-family: var(--mono); font-size: 0.72rem; font-weight: 500; text-align: center; letter-spacing: 0; }
+.jbp-panel {
+    position: fixed; right: var(--gutter); z-index: 120;
+    width: min(420px, calc(100vw - 2 * var(--gutter)));
+    max-height: calc(100vh - var(--jbp-top, 100px) - var(--tl-h) - 16px);
+    overflow-y: auto; padding: 18px;
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--ink); border-radius: 3px; box-shadow: 8px 8px 0 rgba(var(--ink-rgb), 0.9);
+}
+.fx-row + .fx-row { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.fx-row h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; gap: 12px; }
+.fx-progress { font-family: var(--mono); font-weight: 400; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 34px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 2px; font-size: 0.88rem; font-weight: 600; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--base); border-color: var(--ink); }
+.swatches .chip { width: 34px; height: 34px; padding: 0; background: var(--sw); border-color: transparent; }
+.swatches .chip[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--ink); background: var(--sw); }
+.fx-meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.fx-meter span { display: block; height: 100%; width: 0; background: var(--red); transition: width 0.6s var(--ease); }
+.fx-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.fx-list li { padding: 2px 7px; font-size: 0.8rem; border-radius: 2px; background: var(--line); color: var(--muted); cursor: help; }
+.fx-list li.found { background: var(--ink); color: var(--base); }
+.fx-list li:hover, .fx-list li.is-active, .fx-list li:focus-visible { outline: 1.5px solid var(--red); outline-offset: 1px; }
+.fx-hint { position: sticky; top: -18px; z-index: 1; min-height: 3.4em; margin: 0 0 10px; padding: 10px 12px; border-radius: 3px; background: var(--base); font-size: 0.88rem; line-height: 1.4; color: var(--ink-soft); box-shadow: 0 6px 10px -6px rgba(0, 0, 0, 0.25); }
+.fx-hint b { color: var(--ink); display: block; }
+.jbp-off { width: 100%; justify-content: center; margin-top: 4px; }
+.jbp-keys { font-size: 0.8rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+.jbp-keys kbd { font-family: var(--mono); font-size: 0.75rem; padding: 0 4px; border: 1px solid var(--line-strong); border-radius: 2px; }
+
+/* ---------- Toast ---------- */
+.jbp-toast {
+    position: fixed; left: 50%; bottom: calc(var(--tl-h) + 16px); z-index: 130;
+    transform: translate(-50%, 10px); padding: 10px 16px; max-width: calc(100vw - 32px);
+    background: var(--ink); color: var(--base); border-radius: 3px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+}
+.jbp-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Text-Effekte ---------- */
+.hero-name > span { white-space: nowrap; }   /* Buchstaben einzeln, aber Name nie umbrechen (wie bisher .name-row) */
+.hero-name .ch { display: inline-block; font-stretch: calc(var(--w, 66) * 1%); transition: transform 0.4s var(--ease), font-stretch 0.35s var(--ease); }
+.hero-name .ch.is-jump { animation: jbp-jump 0.6s var(--ease); }
+@keyframes jbp-jump { 35% { transform: translateY(-18%) rotate(-6deg); } 70% { transform: translateY(4%); } }
+.hero-lede .w { display: inline-block; transition: transform 0.3s var(--ease), color 0.3s; }
+.hero-lede .w:hover { transform: translateY(-3px); color: var(--red-ink); }
+.jbp-wave .ch { display: inline-block; transition: transform 0.25s var(--ease), color 0.25s; }
+.jbp-wave:hover .ch { color: var(--red-ink); transform: translateY(calc(sin(var(--i) * 0.6) * -10px)); }
+
+/* Button-Wischer: Füllung kommt von der Seite, wo die Maus hereinkommt */
+html.jb-play .btn { position: relative; overflow: hidden; isolation: isolate; }
+html.jb-play .btn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--fill, var(--ink)); transform: scaleX(0); transform-origin: var(--from, left); transition: transform 0.35s var(--ease); }
+html.jb-play .btn:hover { background: transparent; }
+html.jb-play .btn:hover::before { transform: scaleX(1); }
+html.jb-play .btn-solid { --fill: var(--red); }
+html.jb-play .btn-solid:hover { background: var(--ink); }
+
+/* 3D-Neigung der Projektbilder */
+html.jb-play .card-frame { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.25s var(--ease); }
+
+/* Equalizer bei der Playlist */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-right: 10px; cursor: pointer; }
+.eq i { width: 3px; height: 100%; background: var(--red); transform-origin: bottom; animation: jbp-eq 0.8s ease-in-out infinite alternate; }
+.eq i:nth-child(2) { animation-delay: 0.2s; } .eq i:nth-child(3) { animation-delay: 0.45s; } .eq i:nth-child(4) { animation-delay: 0.1s; }
+@keyframes jbp-eq { from { transform: scaleY(0.2); } to { transform: scaleY(1); } }
+
+/* ---------- Timeline-Extras ---------- */
+.tl-speed { flex: none; display: flex; align-items: center; padding: 0 10px; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); min-width: 0; }
+.tl-markers { position: absolute; left: 0; right: 0; top: 0; height: 8px; pointer-events: none; z-index: 2; }
+.tl-marker { position: absolute; top: 0; width: 10px; height: 8px; margin-left: -5px; background: #5BC0F8; clip-path: polygon(0 0, 100% 0, 50% 100%); pointer-events: auto; cursor: pointer; }
+.timeline.is-gold .tl-head, body.fx-gold .tl-head, body.fx-gold .rec-dot { background: #FFD700; }
+
+/* ---------- Mischpult (nur im Spielmodus, ohne Prozentzahlen) ---------- */
+.jbp-mixer-wrap { margin-top: 40px; }
+.jbp-mixer-wrap h3 { font-size: var(--step-1); font-weight: 760; margin-bottom: 6px; }
+.jbp-mixer-wrap > p { font-size: var(--step--1); color: var(--muted); margin-bottom: 14px; }
+.mixer { display: flex; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; }
+.bus { display: flex; flex-direction: column; flex: var(--n, 1) 1 0; min-width: calc(var(--n, 1) * 86px); }
+.bus + .bus { border-left: 1px solid var(--line); }
+.bus-channels { display: flex; flex: 1; }
+.bus-name { padding: 10px 14px 12px; font-size: 0.82rem; color: var(--muted); font-weight: 600; border-top: 1px solid var(--line); }
+.channel { flex: 1 1 0; min-width: 0; padding: 20px 8px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; transition: opacity 0.3s, background 0.3s; }
+.channel:hover { background: rgba(var(--ink-rgb), 0.03); }
+.mixer.has-solo .channel:not(.is-solo) { opacity: 0.3; }
+.ch-value { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-soft); text-align: center; min-height: 1.2em; }
+.ch-led { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.ch-led.is-hot { background: #39B86B; box-shadow: 0 0 6px #39B86B; }
+.ch-fader { position: relative; height: 160px; display: flex; justify-content: center; gap: 12px; touch-action: none; }
+.ch-meter { position: relative; width: 6px; height: 100%; border-radius: 3px; background: rgba(var(--ink-rgb), 0.08); overflow: hidden; }
+.ch-meter::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, var(--red) 0%, var(--label-design) 50%, #39B86B 100%); clip-path: inset(calc(100% - var(--live, var(--level))) 0 0 0 round 3px); transition: clip-path 0.12s linear; }
+.ch-slot { position: relative; width: 2px; height: 100%; background: rgba(var(--ink-rgb), 0.25); border-radius: 1px; }
+.ch-knob { position: absolute; left: 50%; bottom: var(--level); width: 26px; height: 10px; transform: translate(-50%, 50%); background: var(--ink); border-radius: 3px; cursor: grab; transition: bottom 0.5s cubic-bezier(0.3, 1.6, 0.4, 1), transform 0.2s; }
+.ch-knob::after { content: ''; position: absolute; left: 6px; right: 6px; top: 50%; height: 1px; background: var(--base); }
+.ch-fader.is-dragging .ch-knob { transition: none; cursor: grabbing; }
+.ch-name { font-size: 0.88rem; font-weight: 700; font-stretch: 78%; text-align: center; line-height: 1.15; min-height: 2.3em; }
+
+/* ---------- Effekt-Zustände (aus der bisherigen style.css) ---------- */
+.fx-particle { position: fixed; left: 0; top: 0; pointer-events: none; will-change: transform; line-height: 1; }
+.fx-click {
+    position: fixed; width: 40px; height: 40px; margin: -20px 0 0 -20px; pointer-events: none;
+    animation: jbp-click 0.7s var(--ease) forwards;
+    background:
+        linear-gradient(var(--red), var(--red)) top left / 10px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) top left / 1.5px 10px no-repeat,
+        linear-gradient(var(--red), var(--red)) top right / 10px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) top right / 1.5px 10px no-repeat,
+        linear-gradient(var(--red), var(--red)) bottom left / 10px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) bottom left / 1.5px 10px no-repeat,
+        linear-gradient(var(--red), var(--red)) bottom right / 10px 1.5px no-repeat, linear-gradient(var(--red), var(--red)) bottom right / 1.5px 10px no-repeat;
+}
+.fx-click span { position: absolute; top: 44px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-family: var(--mono); font-size: 10px; color: var(--muted); }
+@keyframes jbp-click { from { transform: scale(0.5); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+.fx-ring { position: fixed; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 2px solid var(--red); border-radius: 50%; pointer-events: none; animation: jbp-ring 0.8s var(--ease) forwards; }
+@keyframes jbp-ring { to { transform: scale(9); opacity: 0; } }
+.fx-flash { position: fixed; inset: 0; background: #fff; pointer-events: none; animation: jbp-flash 0.35s ease-out forwards; }
+@keyframes jbp-flash { from { opacity: 0.55; } to { opacity: 0; } }
+.fx-shake { animation: jbp-shake 0.45s; }
+@keyframes jbp-shake { 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, 2px); } }
+.fx-flip main { transform: rotate(180deg); transition: transform 0.8s var(--ease); }
+.fx-mirror main { transform: scaleX(-1); transition: transform 0.6s var(--ease); }
+body.fx-disco { animation: jbp-disco 1.2s linear infinite; }
+@keyframes jbp-disco { to { filter: hue-rotate(360deg); } }
+body.fx-mono main { filter: grayscale(1) contrast(1.15); transition: filter 0.6s; }
+body.fx-comic, body.fx-comic * { font-family: 'Comic Sans MS', 'Comic Neue', cursive !important; }
+body.fx-blur main { animation: jbp-refocus 2.2s var(--ease); }
+@keyframes jbp-refocus { 0% { filter: blur(0); } 30% { filter: blur(8px); } 100% { filter: blur(0); } }
+body.fx-vertigo main { animation: jbp-vertigo 2s var(--ease); transform-origin: 50% 40vh; }
+@keyframes jbp-vertigo { 50% { transform: scale(1.18); filter: blur(1px); } }
+body.fx-beat main { animation: jbp-beat 0.5s ease-out 8; }
+@keyframes jbp-beat { 0% { transform: scale(1.012); } 100% { transform: scale(1); } }
+body.fx-big .cur-cross { scale: 3; }
+body.fx-vhs main { animation: jbp-vhs 0.2s steps(2) infinite; }
+@keyframes jbp-vhs { 0% { text-shadow: 2px 0 rgba(255, 0, 0, 0.6), -2px 0 rgba(0, 200, 255, 0.6); } 100% { text-shadow: -2px 0 rgba(255, 0, 0, 0.6), 2px 0 rgba(0, 200, 255, 0.6); } }
+body.fx-vhs::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 89; background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 4px); }
+body.fx-frost::before { content: ''; position: fixed; inset: 0; z-index: 88; pointer-events: none; background: radial-gradient(ellipse at center, transparent 45%, rgba(200, 230, 255, 0.65) 100%); box-shadow: inset 0 0 120px rgba(220, 240, 255, 0.9); animation: jbp-frost 1s ease-out; }
+@keyframes jbp-frost { from { opacity: 0; } }
+body.fx-gold { --red: #D4A017; }
+.fx-viewfinder { position: fixed; inset: 18px; z-index: 89; pointer-events: none; border: 1px solid rgba(255, 255, 255, 0.9); mix-blend-mode: difference; }
+.fx-viewfinder span { position: absolute; font-family: var(--mono); font-size: 12px; color: #fff; }
+.fx-saver { position: fixed; z-index: 97; left: 0; top: 0; font-size: 5rem; font-weight: 900; font-stretch: 110%; pointer-events: none; line-height: 1; }
+.fx-saver-bg { position: fixed; inset: 0; z-index: 96; background: #000; opacity: 0.88; pointer-events: none; }
+.fx-rewind { position: fixed; inset: 0; z-index: 92; pointer-events: none; display: grid; place-items: center; font-size: 6rem; color: #fff; text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.18) 0 3px, transparent 3px 6px); }
+.fx-mountain { position: fixed; left: 0; right: 0; bottom: var(--tl-h); height: 45vh; z-index: 88; pointer-events: none; animation: jbp-rise 4.5s var(--ease) forwards; }
+@keyframes jbp-rise { 0% { transform: translateY(100%); } 25%, 75% { transform: translateY(0); } 100% { transform: translateY(100%); } }
+
+/* Bewegung reduzieren: dauerhafte Bewegungen aus */
+@media (prefers-reduced-motion: reduce) {
+    .jbp-grain, .eq i { animation: none !important; }
+    body.fx-disco, body.fx-vhs main, body.fx-beat main, body.fx-shake, body.fx-vertigo main, body.fx-blur main { animation: none !important; }
+}
+@media print { #jbp-bg, .jbp-grain, #fx-layer, #jbp-cursor, .jbp-panel, .jbp-toast { display: none !important; } }

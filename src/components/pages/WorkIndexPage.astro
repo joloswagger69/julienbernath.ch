@@ -32,7 +32,7 @@ const kinds = (['photo', 'video', 'design'] as const).map((k) => ({ k, n: projec
                 </li>
             ))}
         </ul>
-        <p class="visually-hidden" aria-live="polite" data-status></p>
+        <p class="visually-hidden" aria-live="polite" data-status data-template={t('work.filterStatus')}></p>
     </section>
 </Base>
 
@@ -46,15 +46,22 @@ const kinds = (['photo', 'video', 'design'] as const).map((k) => ({ k, n: projec
         const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
         buttons.forEach((b) => b.addEventListener('click', () => {
             const f = b.dataset.filter!;
-            const apply = () => {
-                buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-                let n = 0;
-                items.forEach((li) => { const on = f === 'all' || li.dataset.kind === f; li.hidden = !on; if (on) n++; });
-                if (status) status.textContent = `${n}`;
-            };
-            // Harter Schnitt statt Animation, wo der Browser View Transitions kann
-            const d = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-            d.startViewTransition && !reduced ? d.startViewTransition(apply) : apply();
+            if (b.getAttribute('aria-pressed') === 'true') return;
+            // FLIP: Positionen vorher merken, umschalten, Clips gleiten an den neuen Platz
+            const before = new Map(items.filter((li) => !li.hidden).map((li) => [li, li.getBoundingClientRect()]));
+            buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+            let n = 0;
+            items.forEach((li) => { const on = f === 'all' || li.dataset.kind === f; li.hidden = !on; if (on) n++; });
+            if (status) status.textContent = status.dataset.template!.replace('{n}', String(n));
+            if (f !== 'all') document.dispatchEvent(new CustomEvent('jb:fx', { detail: 'filter' }));
+            if (reduced) return;
+            items.forEach((li) => {
+                if (li.hidden) return;
+                const a = before.get(li), r = li.getBoundingClientRect();
+                if (!a) { li.animate([{ opacity: 0, transform: 'scale(0.97)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'ease-out' }); return; }
+                const dx = a.left - r.left, dy = a.top - r.top;
+                if (dx || dy) li.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.7,.1,1)' });
+            });
         }));
     }
 </script>

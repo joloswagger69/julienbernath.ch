@@ -3,6 +3,7 @@
    in «Werkzeug» und «Spielwiese». Jede Zeile trägt die Erkennungsfarbe des Tools. */
 import Base from '../../layouts/Base.astro';
 import { toolGroups, toolHref, toolsIntro } from '../../data/tools';
+import PlayModeToggle from '../PlayModeToggle.astro';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
 
@@ -40,6 +41,14 @@ const textOn = (hex: string) => {
             </ul>
         </section>
     ))}
+
+    <section class="wrap group play" data-clip={t('play.title')} aria-labelledby="g-play">
+        <h2 id="g-play" class="h2 group-title">{t('play.title')}</h2>
+        <div class="play-box">
+            <p class="prose">{t('play.text')}</p>
+            <PlayModeToggle lang={lang} variant="button" />
+        </div>
+    </section>
 </Base>
 
 <style>
@@ -67,6 +76,7 @@ const textOn = (hex: string) => {
     .tool:hover .tool-open { background-size: 100% 2px; }
     .tool:hover .tool-name { color: var(--red-ink); }
 
+    .play-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 40px; border-top: 1px solid var(--line-strong); padding-top: 20px; }
     @media (max-width: 760px) {
         .tool { grid-template-columns: 52px 1fr; gap: 4px 16px; }
         .tool-chip { width: 52px; grid-row: span 2; }
