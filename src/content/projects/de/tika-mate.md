@@ -11,6 +11,10 @@ client: "Tika Beverages (Eigenprojekt)"
 year: "2025"
 role: "Brand & Packaging Designer"
 deliverables: "Logo, Cans Packaging, Social Media Grid, Mockups"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Titelblatt des Gestaltungskonzepts «Tika Mate» in Rot und Gelb mit dem Logo der Marke."
+# Teamprojekt laut Julien. Namensnennung erst nach seiner Freigabe öffentlich (approved: false).
+team: { members: ["Silvan Vieille"], approved: false }
 media:
   - { type: image, src: "../../../assets/projects/tika-mate/tika-1.jpg" }
   - { type: image, src: "../../../assets/projects/tika-mate/tika-2.jpg" }

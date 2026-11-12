@@ -11,6 +11,8 @@ client: "Diverse"
 year: "2023 - 2026"
 role: "Designer / Editor"
 deliverables: "Grafikdesign, Foto-Pools, Layout-Experimente"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Langzeitbelichtung einer Strasse in der Dämmerung mit roten Lichtspuren vorbeifahrender Autos."
 cover: "../../../assets/projects/sonstiges/sonst-6.webp"
 media:
   - { type: image, src: "../../../assets/projects/sonstiges/sonst-1.webp" }

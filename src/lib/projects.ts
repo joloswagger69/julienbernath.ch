@@ -57,6 +57,26 @@ export function lengthLabel(p: Project) {
 /** Vorschaubild: festgelegtes Cover oder erstes Bild (wie bisher previewOf) */
 export const coverOf = (p: Project) => p.data.cover ?? imagesOf(p)[0]?.src;
 
+/** Bildbeschreibung des Vorschaubilds; ohne Vorschlag der Projekttitel */
+export const coverAltOf = (p: Project) => p.data.coverAlt ?? p.data.title;
+
+/** Bildbeschreibung eines Galeriebilds: Vorschlag, falls es das Vorschaubild ist, sonst Titel + Nummer */
+export function imageAlt(p: Project, src: { src: string }, fallback: string) {
+    const cover = coverOf(p);
+    return cover && cover.src === src.src && p.data.coverAlt ? p.data.coverAlt : fallback;
+}
+
+/**
+ * Team-Angabe: Namen nur, wenn Julien sie freigegeben hat – in der (nicht
+ * veröffentlichten) Vorschau werden sie zur Kontrolle angezeigt und markiert.
+ */
+export function teamOf(p: Project, preview: boolean): { names: string[] | null; pending: boolean } | null {
+    const team = p.data.team;
+    if (!team) return null;
+    if (team.approved) return { names: team.members, pending: false };
+    return preview ? { names: team.members, pending: true } : { names: null, pending: true };
+}
+
 export function videoUrl(m: { type: 'youtube' | 'tiktok'; id: string }) {
     return m.type === 'youtube'
         ? `https://www.youtube.com/watch?v=${m.id}`

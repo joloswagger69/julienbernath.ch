@@ -12,7 +12,8 @@ export default defineConfig({
 
     // Jede Seite wird als Ordner mit index.html gebaut: /arbeiten/ → /arbeiten/index.html
     // Das funktioniert auf GitHub Pages ohne Server-Konfiguration.
-    build: { format: 'directory' },
+    // CSS direkt in die Seite schreiben: keine blockierende Extra-Anfrage vor dem ersten Bild
+    build: { format: 'directory', inlineStylesheets: 'always' },
     trailingSlash: 'ignore',
 
     i18n: {

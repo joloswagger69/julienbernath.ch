@@ -30,6 +30,12 @@ const projects = defineCollection({
             role: z.string(),
             deliverables: z.string(),
             cover: image().optional(),
+            /** Bildbeschreibung für das Vorschaubild (Vorschlag – von Julien zu prüfen) */
+            coverAlt: z.string().optional(),
+            /** Verwendete Programme – nur wo von Julien bestätigt */
+            software: z.array(z.string()).optional(),
+            /** Teamprojekt: Namen werden erst öffentlich, wenn approved = true */
+            team: z.object({ members: z.array(z.string()), approved: z.boolean() }).optional(),
             /** Für Projekte ohne Bild: Name einer gezeichneten Grafik (bisher nur "site") */
             coverGraphic: z.string().optional(),
             /** Layout-Hinweis aus der alten Website (feature-l, feature-r, wide) – Entscheid in Phase 3 */

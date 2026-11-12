@@ -11,6 +11,8 @@ client: "FC Wil 1900"
 year: "2023"
 role: "Sportfotograf"
 deliverables: "Spieltags-Fotografie, Fankultur-Dokumentation, RAW"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Leere Sitzreihen einer Stadiontribüne, fotografiert mit geringer Schärfentiefe."
 cover: "../../../assets/projects/fc-wil/fcw-1.jpg"
 media:
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-1.jpg" }

@@ -12,6 +12,10 @@ client: "UHC Bulldogs Ehrendingen"
 year: "2024 - 2026"
 role: "Social Media Designer"
 deliverables: "Photoshop Templates, Spieltagsankündigungen, Resultatgrafiken"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Spieltagsgrafik der UHC Bulldogs Ehrendingen gegen Wasserschloss & Spreitenbach mit Datum, Anspielzeiten und Ort."
+# Programme laut Julien (Phase-3-Entscheid)
+software: ["Photoshop", "Illustrator"]
 cover: "../../../assets/projects/uhc-grafiken/uhc-grafiken-9.webp"
 media:
   - { type: youtube, id: "KXqK217Yzi4", label: "REEL_01.URL" }

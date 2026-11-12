@@ -11,6 +11,8 @@ client: "EHC Kloten"
 year: "2025"
 role: "Video Editor & Content Creator"
 deliverables: "Kurzvideo-Konzeption, Schnitt, Sound Design, Grading"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Ein Spieler des EHC Kloten mit der Nummer 10 führt den Puck übers Eis, dahinter die Bande mit Werbung."
 cover: "../../../assets/projects/ehc-kloten/ehck-6.webp"
 media:
   - { type: tiktok, id: "7332142480294464801", label: "TIKTOK_VIDEO.URL" }

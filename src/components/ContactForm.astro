@@ -1,5 +1,6 @@
 ---
-/* Kontaktformular – Markup wortgleich aus der bisherigen index.html (Zeilen 380–443).
+/* Kontaktformular – Markup wortgleich aus der bisherigen index.html (Zeilen 380–443);
+   einzige Änderung: Überschriften h3 → h2 (korrekte Überschriften-Reihenfolge).
    Die Logik (Prüfung, Entwurf, Web3Forms-Versand, Mail-Fallback) kommt unverändert aus
    public/scripts/contact.js, der Access Key unverändert aus public/scripts/form-config.js.
    Gestaltung folgt in Phase 3. */
@@ -8,7 +9,7 @@
     <form class="cform" id="cform" novalidate autocomplete="on" aria-labelledby="cf-title">
         <div class="cf-head">
             <span class="cf-rec" aria-hidden="true"></span>
-            <h3 class="cf-title" id="cf-title">Neue Nachricht</h3>
+            <h2 class="cf-title" id="cf-title">Neue Nachricht</h2>
             <span class="cf-count tc" id="cf-count" aria-hidden="true">0000</span>
         </div>
 
@@ -60,7 +61,7 @@
 
     <div class="cf-done" id="cf-done" hidden tabindex="-1">
         <svg class="cf-tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg>
-        <h3 id="cf-done-title">Gesendet</h3>
+        <h2 id="cf-done-title">Gesendet</h2>
         <p id="cf-done-text">Danke, ich melde mich so schnell wie möglich.</p>
         <div class="cf-done-actions">
             <button type="button" class="btn btn-line" id="cf-again">Neue Nachricht</button>
@@ -73,22 +74,57 @@
 <script is:inline src="/scripts/contact.js?v=1" defer></script>
 
 <style is:global>
-    /* Funktionsnotwendige Regeln 1:1 aus style.css (Z. 812–813, 821).
-       Ohne sie wäre das Bot-Lockfeld sichtbar und echte Nachrichten würden still verworfen. */
+    /* Funktionsnotwendig (1:1 aus der bisherigen style.css): Bot-Lockfeld verstecken, Fehlertexte */
     .cf-hp { position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
-    .cf-err { min-height: 0; margin-top: 5px; font-size: 0.86rem; font-weight: 700; color: var(--red-ink); }
+    .cf-err { min-height: 0; margin-top: 6px; font-size: var(--step--1); font-weight: 650; color: var(--red-ink); }
     .cf-err:empty { display: none; }
 
-    /* Provisorische Lesbarkeit (Phase 2) – Gestaltung folgt in Phase 3 */
-    .cform { display: grid; gap: 16px; max-width: 640px; }
+    /* «Neue Nachricht» – ruhiges Formular, Kopfzeile wie ein Aufnahme-Panel */
+    .cform-wrap { border: 1px solid var(--line-strong); background: var(--panel); border-radius: 3px; }
+    .cform, .cf-done { padding: clamp(20px, 3vw, 32px); display: grid; gap: 22px; }
+    .cf-head { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .cf-rec { width: 9px; height: 9px; border-radius: 50%; background: var(--red); flex: none; }
+    @media (prefers-reduced-motion: no-preference) { .cf-rec { animation: rec 1.6s steps(1) infinite; } }
+    .cf-title { font-size: var(--step-1); font-weight: 760; }
+    .cf-count { margin-left: auto; font-size: 0.8125rem; color: var(--muted); }
+    .cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+    .cf-field label, .cf-field legend { display: block; font-weight: 650; margin-bottom: 8px; }
     .cform input[type='text'], .cform input[type='email'], .cform textarea {
-        width: 100%; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line-strong); padding: 8px 10px;
+        width: 100%; font: inherit; color: inherit;
+        background: var(--base); border: 1px solid var(--line-strong); border-radius: 2px;
+        padding: 12px 14px; min-height: 48px;
+        transition: border-color var(--cut) var(--ease), box-shadow var(--cut) var(--ease);
     }
-    .cf-field label, .cf-field legend { display: block; font-weight: 700; margin-bottom: 4px; }
-    .cf-chips { display: flex; flex-wrap: wrap; gap: 8px 16px; }
-    .cf-topics { border: 0; }
-    .cf-head { display: flex; gap: 12px; align-items: baseline; }
-    .cf-link { text-decoration: underline; }
-    .btn { border: 1px solid var(--ink); padding: 8px 14px; display: inline-flex; gap: 8px; align-items: center; }
-    .btn svg { width: 18px; height: 18px; }
+    .cform textarea { resize: vertical; min-height: 160px; line-height: 1.5; }
+    .cform input:focus-visible, .cform textarea:focus-visible { outline: none; border-color: var(--ink); box-shadow: 0 0 0 2px var(--red); }
+    .cf-field.invalid input, .cf-field.invalid textarea { border-color: var(--red-ink); }
+    .cf-topics { border: 0; min-width: 0; }
+    .cf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cf-chips label { position: relative; margin: 0; font-weight: 550; }
+    .cf-chips input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+    .cf-chips span { display: inline-flex; align-items: center; min-height: 42px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 2px; cursor: pointer; }
+    .cf-chips input:checked + span { background: var(--ink); color: var(--base); border-color: var(--ink); }
+    .cf-chips input:focus-visible + span { outline: 2px solid var(--red); outline-offset: 2px; }
+    .cf-field .cf-check { position: relative; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; margin: 0; font-weight: 400; font-size: var(--step--1); cursor: pointer; }
+    .cf-check input { position: absolute; left: 0; top: 0; opacity: 0; width: 20px; height: 20px; margin: 0; }
+    .cf-box { width: 20px; height: 20px; border: 1px solid var(--ink); border-radius: 2px; margin-top: 1px; display: grid; place-items: center; }
+    .cf-check input:checked + .cf-box { background: var(--ink); }
+    .cf-check input:checked + .cf-box::after { content: ''; width: 10px; height: 5px; border: solid var(--base); border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
+    .cf-check input:focus-visible + .cf-box { outline: 2px solid var(--red); outline-offset: 2px; }
+    .cf-link { text-decoration: underline; text-underline-offset: 0.2em; color: inherit; font: inherit; }
+    .cf-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+    .cf-foot .btn svg { width: 18px; height: 18px; }
+    .cform.busy .btn { opacity: 0.6; cursor: progress; }
+    .cf-status { font-size: var(--step--1); color: var(--muted); }
+    .cf-status.error { color: var(--red-ink); font-weight: 600; }
+    .cf-done { justify-items: start; }
+    .cf-done:focus { outline: none; }
+    .cf-tick { width: 52px; height: 52px; fill: none; stroke: var(--ink); stroke-width: 2.5; }
+    .cf-done.warn .cf-tick { stroke: var(--red-ink); }
+    .cf-done h2 { font-size: var(--step-2); }
+    .cf-done-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    @media (max-width: 560px) {
+        .cf-row { grid-template-columns: 1fr; }
+        .cf-foot .btn { width: 100%; justify-content: center; }
+    }
 </style>

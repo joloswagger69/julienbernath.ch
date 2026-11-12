@@ -1,0 +1,103 @@
+---
+/* Bildansicht (Lightbox) für Galerien: öffnet Links mit data-viewer.
+   Pfeiltasten, Wischen, Klick = Lupe, F = Vollbild, Esc = schliessen.
+   Ohne JavaScript öffnen die Links einfach die grosse Bildversion. */
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+interface Props { lang: Lang; title: string }
+const { lang, title } = Astro.props;
+const t = useTranslations(lang);
+---
+<dialog class="viewer" data-viewer-dialog aria-label={`${t('viewer.label')}: ${title}`}>
+    <div class="v-top">
+        <span class="tc v-count" data-v-count aria-live="polite"></span>
+        <button type="button" class="v-close" data-v-close>{t('viewer.close')}</button>
+    </div>
+    <div class="v-stage" data-v-stage>
+        <img data-v-img alt="" decoding="async" title={t('viewer.zoom')} />
+        <button type="button" class="v-nav v-prev" data-v-prev aria-label={t('viewer.prev')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+        <button type="button" class="v-nav v-next" data-v-next aria-label={t('viewer.next')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+    </div>
+    <p class="v-cap" data-v-cap></p>
+</dialog>
+
+<script>
+    const dlg = document.querySelector<HTMLDialogElement>('[data-viewer-dialog]');
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('a[data-viewer]')];
+    if (dlg && links.length) {
+        const img = dlg.querySelector<HTMLImageElement>('[data-v-img]')!;
+        const count = dlg.querySelector<HTMLElement>('[data-v-count]')!;
+        const cap = dlg.querySelector<HTMLElement>('[data-v-cap]')!;
+        const stage = dlg.querySelector<HTMLElement>('[data-v-stage]')!;
+        let i = 0, opener: HTMLElement | null = null;
+        const p2 = (n: number) => String(n).padStart(2, '0');
+        const preload = (k: number) => { const l = links[(k + links.length) % links.length]; if (l) new Image().src = l.href; };
+        function show(k: number) {
+            i = (k + links.length) % links.length;
+            const l = links[i];
+            img.classList.remove('is-zoom');
+            img.src = l.href;
+            img.alt = l.querySelector('img')?.alt ?? '';
+            count.textContent = `${p2(i + 1)} / ${p2(links.length)}`;
+            cap.textContent = img.alt;
+            preload(i + 1); preload(i - 1);
+        }
+        links.forEach((l, k) => l.addEventListener('click', (e) => {
+            e.preventDefault();
+            opener = l;
+            show(k);
+            dlg.showModal();
+        }));
+        dlg.querySelector('[data-v-close]')!.addEventListener('click', () => dlg.close());
+        dlg.querySelector('[data-v-prev]')!.addEventListener('click', () => show(i - 1));
+        dlg.querySelector('[data-v-next]')!.addEventListener('click', () => show(i + 1));
+        dlg.addEventListener('close', () => { img.removeAttribute('src'); if (document.fullscreenElement) document.exitFullscreen(); opener?.focus(); });
+        dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+        dlg.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); show(i + 1); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); show(i - 1); }
+            else if (e.key.toLowerCase() === 'f' && document.fullscreenEnabled) {
+                document.fullscreenElement ? document.exitFullscreen() : stage.requestFullscreen();
+            }
+        });
+        // Lupe: Klick zoomt an die Stelle, Mausbewegung verschiebt
+        const origin = (e: MouseEvent) => {
+            const r = img.getBoundingClientRect();
+            img.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+        };
+        img.addEventListener('click', (e) => { origin(e); img.classList.toggle('is-zoom'); });
+        img.addEventListener('mousemove', (e) => { if (img.classList.contains('is-zoom')) origin(e); });
+        // Wischen auf dem Handy
+        let x0: number | null = null;
+        stage.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+        stage.addEventListener('touchend', (e) => {
+            if (x0 === null) return;
+            const dx = e.changedTouches[0].clientX - x0;
+            if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+            x0 = null;
+        });
+    }
+</script>
+
+<style>
+    .viewer {
+        width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+        background: #0A0A09; color: #F1F1EC;
+        display: none; grid-template-rows: auto 1fr auto;
+    }
+    .viewer[open] { display: grid; }
+    .viewer::backdrop { background: #000; }
+    .v-top { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--gutter); }
+    .v-count { font-size: 0.875rem; }
+    .v-close { min-height: 42px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 2px; font-weight: 600; }
+    .v-close:hover { background: #F1F1EC; color: #000; }
+    .v-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; padding: 0 clamp(8px, 6vw, 88px); background: #0A0A09; }
+    .v-stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; transition: transform 0.3s var(--ease); }
+    .v-stage img:global(.is-zoom) { transform: scale(2.2); cursor: zoom-out; }
+    .v-nav { position: absolute; top: 50%; translate: 0 -50%; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.5); }
+    .v-nav:hover { background: var(--red); }
+    .v-nav svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 2; }
+    .v-prev { left: 12px; }
+    .v-next { right: 12px; }
+    .v-cap { padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom)); font-size: var(--step--1); color: #B9BAB2; min-height: 44px; }
+</style>

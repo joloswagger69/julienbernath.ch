@@ -1,51 +1,154 @@
 ---
-/* Startseite (provisorisch): Intro-Texte, 6 ausgewählte Arbeiten, Kontakt-Aufruf.
-   Monitor-Intro und endgültige Gestaltung folgen in Phase 3/4. */
+/* Startseite: Intro mit Programm-Monitor, sechs ausgewählte Arbeiten im Editorial-
+   Raster, Bereiche (aus den Projektdaten abgeleitet), kurzes Über mich. */
+import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
+import Monitor from '../Monitor.astro';
 import ProjectCard from '../ProjectCard.astro';
-import { getProjects } from '../../lib/projects';
+import { coverAltOf, coverOf, getProjects, projectPath, slugOf, videosOf, type Project } from '../../lib/projects';
 import { alternates, path, useTranslations } from '../../i18n/utils';
-import { hero, meta, personJsonLd, status } from '../../data/site';
+import { hero, meta, personJsonLd } from '../../data/site';
+import { about, portraitAlts, portraits } from '../../data/about';
 import type { Lang } from '../../i18n/ui';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const projects = await getProjects(lang);
-const featured = projects
-    .filter((p) => p.project.data.featured !== null)
-    .sort((a, b) => a.project.data.featured! - b.project.data.featured!);
+const all = (await getProjects(lang)).map((p) => p.project);
+const featured = all.filter((p) => p.data.featured !== null).sort((a, b) => a.data.featured! - b.data.featured!);
+
+const shots = featured
+    .map((p) => ({ p, src: coverOf(p) }))
+    .filter((x) => x.src)
+    .map(({ p, src }) => ({ src: src!, alt: coverAltOf(p), title: p.data.title, href: projectPath(slugOf(p), lang) }));
+
+/* Editorial-Raster: Zeile 1 gross, Zeile 2 asymmetrisch, Zeile 3 drei Hochformate */
+const layout = [
+    { span: 'full', ratio: '16 / 8', sizes: '100vw' },
+    { span: 'seven', ratio: '3 / 2', sizes: '(max-width: 760px) 100vw, 58vw' },
+    { span: 'five', ratio: '5 / 4.15', sizes: '(max-width: 760px) 100vw, 42vw' },
+    { span: 'third', ratio: '4 / 5', sizes: '(max-width: 760px) 100vw, 33vw' },
+    { span: 'third', ratio: '4 / 5', sizes: '(max-width: 760px) 100vw, 33vw' },
+    { span: 'third', ratio: '4 / 5', sizes: '(max-width: 760px) 100vw, 33vw' }
+];
+
+/* Bereiche: ausschliesslich aus vorhandenen Projektdaten abgeleitet */
+const isSocial = (p: Project) => /SOCIAL MEDIA/.test(p.data.category);
+const fields = [
+    { key: 'field.photo', list: all.filter((p) => p.data.kind === 'photo') },
+    { key: 'field.video', list: all.filter((p) => p.data.kind === 'video' || videosOf(p).length > 0) },
+    { key: 'field.design', list: all.filter((p) => p.data.kind === 'design' && !isSocial(p)) },
+    { key: 'field.social', list: all.filter(isSocial) }
+] as const;
 ---
 <Base lang={lang} alternates={alternates('home')} untranslated={lang !== 'de'}
       title={lang === 'de' ? meta.title : undefined} description={lang === 'de' ? meta.description : undefined}>
     <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
 
-    <section class="block hero">
-        <h1 class="hero-name"><span>Julien</span> <span class="red">Bernath</span></h1>
-        <p class="hero-lede">{hero.lede}</p>
-        <p class="hero-status tc">{status.qualification} · {status.availability}</p>
-        <p class="hero-actions">
-            <a href={path('work', lang)}>{hero.ctaWork}</a>
-            <a href={path('contact', lang)}>{hero.ctaContact}</a>
-        </p>
+    <section class="hero wrap" data-clip={t('home.clip.intro')}>
+        <div class="hero-text">
+            <h1 class="hero-name display" aria-label="Julien Bernath">
+                <span aria-hidden="true">Julien</span>
+                <span aria-hidden="true" class="hero-last">Bernath</span>
+            </h1>
+            <p class="lede hero-lede">{hero.lede}</p>
+            <p class="hero-status"><span class="rec-dot" aria-hidden="true"></span>{t('footer.status')}</p>
+            <p class="hero-actions">
+                <a class="btn btn-solid" href={path('work', lang)}>{hero.ctaWork}</a>
+                <a class="btn" href={path('contact', lang)}>{hero.ctaContact}</a>
+            </p>
+        </div>
+        <div class="hero-monitor">
+            <Monitor lang={lang} shots={shots} />
+        </div>
     </section>
 
-    <section class="block">
-        <h2>{t('work.featured')}</h2>
-        <ul class="grid">
-            {featured.map(({ project }, i) => <li><ProjectCard project={project} lang={lang} eager={i < 2} /></li>)}
+    <section class="section wrap" data-clip={t('home.clip.work')} aria-labelledby="featured-title">
+        <div class="section-head">
+            <h2 id="featured-title" class="h2">{t('work.featured')}</h2>
+            <a href={path('work', lang)}>{t('work.allLink')} ({all.length})</a>
+        </div>
+        <ul class="editorial">
+            {featured.map((project, i) => (
+                <li class={`span-${layout[i].span}`}>
+                    <ProjectCard project={project} lang={lang} ratio={layout[i].ratio} sizes={layout[i].sizes} />
+                </li>
+            ))}
         </ul>
-        <p><a href={path('work', lang)}>{t('work.allLink')} ({projects.length})</a></p>
+    </section>
+
+    <section class="section wrap" data-clip={t('home.clip.fields')} aria-labelledby="fields-title">
+        <h2 id="fields-title" class="h2 section-head">{t('home.fields')}</h2>
+        <ul class="fields">
+            {fields.map((f) => (
+                <li>
+                    <h3 class="h3">{t(f.key)} <span class="tc muted field-count">{String(f.list.length).padStart(2, '0')}</span></h3>
+                    <ul class="field-list">
+                        {f.list.map((p) => <li><a href={projectPath(slugOf(p), lang)}>{p.data.title}</a></li>)}
+                    </ul>
+                </li>
+            ))}
+        </ul>
+    </section>
+
+    <section class="section wrap about" data-clip={t('home.clip.about')} aria-labelledby="about-title">
+        <Image class="about-img" src={portraits[0]} alt={portraitAlts[0]} width={720} widths={[360, 720]} sizes="(max-width: 760px) 60vw, 26vw" />
+        <div>
+            <h2 id="about-title" class="h2">{about.title}</h2>
+            <p class="lede about-lead">{about.lead}</p>
+            <p class="about-more"><a class="btn" href={path('about', lang)}>{t('home.aboutMore')}</a></p>
+        </div>
     </section>
 </Base>
 
 <style>
-    .block { padding: 48px var(--gutter) 0; }
-    .block h2 { font-size: 1.5rem; margin-bottom: 16px; }
-    .hero-name { font-weight: 900; font-stretch: 70%; text-transform: uppercase; font-size: clamp(3.5rem, 15vw, 11rem); line-height: 0.86; display: flex; flex-direction: column; }
-    .red { color: var(--red); }
-    .hero-lede { margin-top: 24px; max-width: 52ch; font-size: 1.125rem; }
-    .hero-status { margin-top: 12px; color: var(--muted); font-size: 0.875rem; }
-    .hero-actions { margin-top: 16px; display: flex; gap: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 32px 24px; margin-bottom: 24px; }
+    /* ---------- Intro ---------- */
+    .hero {
+        display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+        gap: clamp(24px, 4vw, 64px); align-items: end;
+        padding-top: clamp(32px, 6vw, 88px);
+    }
+    .hero-name { font-size: clamp(4rem, 11.5vw, 11.5rem); display: flex; flex-direction: column; }
+    .hero-last { color: var(--red); }
+    .hero-lede { margin-top: clamp(20px, 3vw, 36px); }
+    .hero-status { display: flex; align-items: center; gap: 10px; margin-top: 16px; color: var(--muted); font-size: var(--step--1); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
+    /* ---------- Editorial-Raster ---------- */
+    .editorial { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(40px, 6vw, 80px) clamp(16px, 2.4vw, 32px); }
+    .span-full { grid-column: 1 / -1; }
+    .span-seven { grid-column: span 7; }
+    .span-five { grid-column: span 5; align-self: end; }
+    .span-third { grid-column: span 4; }
+
+    /* ---------- Bereiche ---------- */
+    .fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; border-top: 1px solid var(--line-strong); padding-top: 24px; }
+    .field-count { font-size: var(--step--1); font-weight: 400; margin-left: 6px; }
+    .field-list { margin-top: 14px; display: grid; gap: 6px; }
+    .field-list a { text-decoration: none; }
+    .field-list a:hover { text-decoration: underline; text-decoration-color: var(--red); }
+
+    /* ---------- Über mich ---------- */
+    .about { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 5vw, 80px); align-items: end; }
+    .about :global(.about-img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+    .about-lead { margin-top: 20px; max-width: 30ch; font-size: var(--step-2); line-height: 1.25; }
+    .about-more { margin-top: 28px; }
+
+    @media (max-width: 1100px) {
+        .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 860px) {
+        .hero { grid-template-columns: 1fr; align-items: start; }
+        .hero-monitor { order: 2; }
+    }
+    @media (max-width: 760px) {
+        .editorial > li { grid-column: 1 / -1; }
+        .editorial > li :global(.card-frame) { aspect-ratio: 4 / 3 !important; }
+        .editorial > li.span-full :global(.card-frame) { aspect-ratio: 4 / 3.4 !important; }
+        .about { grid-template-columns: 1fr; }
+        .about :global(.about-img) { max-width: 320px; }
+    }
+    @media (max-width: 480px) {
+        .fields { grid-template-columns: 1fr; }
+    }
 </style>

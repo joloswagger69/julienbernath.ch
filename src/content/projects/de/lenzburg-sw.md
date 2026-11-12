@@ -11,6 +11,8 @@ client: "Freies Projekt"
 year: "2024"
 role: "Fotograf / Editor"
 deliverables: "Fine Art Prints, Schwarz-Weiss-Farbkorrektur"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Schwarz-Weiss-Aufnahme: Kirche auf einem bewaldeten Hügel über einer Siedlung, darüber dunkle Gewitterwolken."
 media:
   - { type: image, src: "../../../assets/projects/lenzburg/lb-1.jpg" }
   - { type: image, src: "../../../assets/projects/lenzburg/lb-2.jpg" }

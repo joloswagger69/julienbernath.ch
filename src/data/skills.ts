@@ -1,30 +1,39 @@
 /* ==========================================================================
-   Skills («Mischpult») – wortgleich aus script.js → MIXER übernommen.
-   Die Zahlen bleiben vorerst erhalten. Laut Konzept sollen sie später durch
-   drei Stufen ersetzt werden (Hauptwerkzeug / sicher / Grundlagen) –
-   die Einstufung macht Julien (offene Frage).
+   Skills – drei Stufen statt Prozentzahlen (Entscheid Julien, Phase 3).
+   Software-Einstufung von Julien. Beschreibungen (tags) aus dem bisherigen
+   Mischpult übernommen. Handwerk und Schwerpunkte ohne Stufe, weil keine
+   Einstufung vorliegt.
    ========================================================================== */
 
-export interface Channel { name: string; level: number; tags: string }
-export interface Bus { bus: string; channels: Channel[] }
+export interface Skill { name: string; tags: string }
 
-export const mixer: Bus[] = [
-    { bus: 'Software', channels: [
-        { name: 'Premiere Pro', level: 100, tags: 'Schnitt, Grading, Storytelling' },
-        { name: 'Lightroom', level: 90, tags: 'RAW, Presets' },
-        { name: 'Photoshop', level: 85, tags: 'Retusche, Compositing' },
-        { name: 'Illustrator', level: 80, tags: 'Vektor, Logos, Icons' },
-        { name: 'InDesign', level: 80, tags: 'Editorial, Print' },
-        { name: 'After Effects', level: 75, tags: 'VFX, Motion' },
-        { name: 'Canva', level: 70, tags: 'Content, Templates' },
-        { name: 'Audition', level: 50, tags: 'Audio-Cleanup' },
-        { name: 'Blender', level: 5, tags: '3D, im Aufbau' }
-    ] },
-    { bus: 'Handwerk', channels: [
-        { name: 'Filmen & Regie', level: 90, tags: 'Kamera, Drohne, Interviews' },
-        { name: 'Fotografieren', level: 80, tags: 'Sport, Natur, Tiere' }
-    ] },
-    { bus: 'Strategie', channels: [
-        { name: 'Social Media', level: 99, tags: 'Instagram, TikTok, YouTube, LinkedIn' }
-    ] }
+export const software = {
+    main: [
+        { name: 'Premiere Pro', tags: 'Schnitt, Grading, Storytelling' },
+        { name: 'Lightroom', tags: 'RAW, Presets' },
+        { name: 'Photoshop', tags: 'Retusche, Compositing' },
+        { name: 'Illustrator', tags: 'Vektor, Logos, Icons' },
+        { name: 'InDesign', tags: 'Editorial, Print' }
+    ],
+    solid: [
+        { name: 'After Effects', tags: 'VFX, Motion' },
+        { name: 'Audition', tags: 'Audio-Cleanup' },
+        { name: 'Canva', tags: 'Content, Templates' }
+    ],
+    basic: [
+        { name: 'Blender', tags: '3D, im Aufbau' }
+    ]
+} satisfies Record<'main' | 'solid' | 'basic', Skill[]>;
+
+/** KI separat aufgeführt – Formulierung nach Juliens Angabe, Stufe: Grundlagen */
+export const ai: Skill = {
+    name: 'KI-Tools',
+    tags: 'Arbeiten mit künstlicher Intelligenz, schon viel getestet'
+};
+
+/** Handwerk und Schwerpunkte aus dem bisherigen Mischpult (ohne Stufe) */
+export const craft: Skill[] = [
+    { name: 'Filmen & Regie', tags: 'Kamera, Drohne, Interviews' },
+    { name: 'Fotografieren', tags: 'Sport, Natur, Tiere' },
+    { name: 'Social Media', tags: 'Instagram, TikTok, YouTube, LinkedIn' }
 ];

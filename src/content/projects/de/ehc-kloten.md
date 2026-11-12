@@ -11,6 +11,8 @@ client: "EHC Kloten"
 year: "2026"
 role: "Sportfotograf / Mediamatiker"
 deliverables: "Action-Fotografie, Spieltags-Reportage, Bildbearbeitung"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Zwei Spieler des EHC Kloten in blauen Trikots jubeln und winken dem Publikum zu."
 cover: "../../../assets/projects/ehc-kloten/ehck-14.webp"
 legacyLayout: "feature-l"
 media:

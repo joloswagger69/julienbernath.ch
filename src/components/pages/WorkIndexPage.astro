@@ -1,29 +1,76 @@
 ---
-/* Alle Arbeiten (provisorisch): 13 Projekte in der bisherigen Reihenfolge.
-   Der Filter (Alle / Foto / Video / Design) folgt in Phase 3. */
+/* Alle Arbeiten: 13 Projekte in der bisherigen Reihenfolge, Filter wie bisher
+   (Alle / Foto / Video / Design). Ohne JavaScript sind alle Projekte sichtbar. */
 import Base from '../../layouts/Base.astro';
 import ProjectCard from '../ProjectCard.astro';
-import { getProjects } from '../../lib/projects';
+import { KIND_LABEL, getProjects } from '../../lib/projects';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const projects = await getProjects(lang);
+const projects = (await getProjects(lang)).map((p) => p.project);
+const kinds = (['photo', 'video', 'design'] as const).map((k) => ({ k, n: projects.filter((p) => p.data.kind === k).length }));
 ---
 <Base lang={lang} alternates={alternates('work')} title={`${t('work.all')} | Julien Bernath`} untranslated={lang !== 'de'}>
-    <section class="block">
-        <h1>{t('work.all')} <span class="tc count">({projects.length})</span></h1>
-        <ul class="grid">
-            {projects.map(({ project }, i) => <li><ProjectCard project={project} lang={lang} eager={i < 2} /></li>)}
+    <section class="wrap head" data-clip={t('home.clip.work')}>
+        <h1 class="h1">{t('work.all')}</h1>
+        <div class="filters" role="group" aria-label={t('work.filter')} data-filters hidden>
+            <button type="button" data-filter="all" aria-pressed="true">{t('work.filterAll')} <span class="tc">{projects.length}</span></button>
+            {kinds.map(({ k, n }) => (
+                <button type="button" data-filter={k} aria-pressed="false"><span class="label" data-kind={k}>{KIND_LABEL[k][lang]}</span> <span class="tc">{n}</span></button>
+            ))}
+        </div>
+    </section>
+
+    <section class="wrap">
+        <ul class="grid" data-grid>
+            {projects.map((project, i) => (
+                <li data-kind={project.data.kind}>
+                    <ProjectCard project={project} lang={lang} eager={i === 0} ratio="3 / 2" level="h2" />
+                </li>
+            ))}
         </ul>
+        <p class="visually-hidden" aria-live="polite" data-status></p>
     </section>
 </Base>
 
+<script>
+    const group = document.querySelector<HTMLElement>('[data-filters]');
+    const items = [...document.querySelectorAll<HTMLElement>('[data-grid] > li')];
+    const status = document.querySelector<HTMLElement>('[data-status]');
+    if (group) {
+        group.hidden = false;
+        const buttons = [...group.querySelectorAll<HTMLButtonElement>('button')];
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        buttons.forEach((b) => b.addEventListener('click', () => {
+            const f = b.dataset.filter!;
+            const apply = () => {
+                buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+                let n = 0;
+                items.forEach((li) => { const on = f === 'all' || li.dataset.kind === f; li.hidden = !on; if (on) n++; });
+                if (status) status.textContent = `${n}`;
+            };
+            // Harter Schnitt statt Animation, wo der Browser View Transitions kann
+            const d = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+            d.startViewTransition && !reduced ? d.startViewTransition(apply) : apply();
+        }));
+    }
+</script>
+
 <style>
-    .block { padding: 48px var(--gutter) 0; }
-    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 24px; }
-    .count { font-size: 1rem; color: var(--muted); font-weight: 400; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 32px 24px; }
+    .head { padding-top: clamp(32px, 6vw, 80px); display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 20px 40px; margin-bottom: clamp(28px, 4vw, 56px); }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .filters button {
+        display: inline-flex; align-items: center; gap: 10px;
+        min-height: 42px; padding: 0 14px;
+        border: 1px solid var(--line-strong); border-radius: 2px; font-weight: 600;
+    }
+    .filters button .label { color: inherit; font-size: inherit; }
+    .filters button .tc { color: var(--muted); font-size: var(--step--1); }
+    .filters button[aria-pressed='true'] { background: var(--ink); color: var(--base); border-color: var(--ink); }
+    .filters button[aria-pressed='true'] .tc { color: inherit; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vw, 80px) clamp(16px, 2.4vw, 32px); }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
 </style>

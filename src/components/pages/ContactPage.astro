@@ -1,5 +1,6 @@
 ---
-/* Kontakt (provisorisch): Texte, E-Mail, LinkedIn, Ort und das unveränderte Web3Forms-Formular. */
+/* Kontakt: Aufruf, E-Mail (kopieren), LinkedIn, Ort mit Ortszeit und das
+   unveränderte Web3Forms-Formular. */
 import Base from '../../layouts/Base.astro';
 import ContactForm from '../ContactForm.astro';
 import { contact, person } from '../../data/site';
@@ -10,23 +11,54 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
-<Base lang={lang} alternates={alternates('contact')} title={`${t('contact.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
-    <section class="block">
-        <h1>{contact.title}</h1>
-        <p>{contact.lede}</p>
-        <p class="mail"><a id="contact-mail" href={`mailto:${person.email}`}>{person.email}</a></p>
-        <p><a href={person.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a></p>
-        <p class="loc">{contact.location}</p>
-    </section>
-    <section class="block">
-        <ContactForm />
+<Base lang={lang} alternates={alternates('contact')} title={`${t('contact.title')} | Julien Bernath`} untranslated={lang !== 'de'} footerCta={false}>
+    <section class="wrap contact" data-clip={t('contact.title')}>
+        <div class="left">
+            <h1 class="h1">{contact.title}</h1>
+            <p class="lede">{contact.lede}</p>
+            <a class="mail" id="contact-mail" href={`mailto:${person.email}`}>{person.email}</a>
+            <p class="actions">
+                <button type="button" class="btn" data-copy={person.email} data-done={t('contact.copied')}>{t('contact.copy')}</button>
+                <a class="btn" href={person.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </p>
+            <p class="loc muted">{contact.location} <span><span class="visually-hidden">{t('contact.localTime')}: </span><span class="tc" data-clock></span></span></p>
+        </div>
+        <div class="right">
+            <ContactForm />
+        </div>
     </section>
 </Base>
 
+<script>
+    const copy = document.querySelector<HTMLButtonElement>('[data-copy]');
+    copy?.addEventListener('click', async () => {
+        const label = copy.textContent;
+        try { await navigator.clipboard.writeText(copy.dataset.copy!); copy.textContent = copy.dataset.done!; }
+        catch (e) { copy.textContent = copy.dataset.copy!; }
+        setTimeout(() => { copy.textContent = label; }, 2200);
+    });
+    const clock = document.querySelector<HTMLElement>('[data-clock]');
+    if (clock) {
+        const tick = () => { clock.textContent = new Date().toLocaleTimeString('de-CH', { timeZone: 'Europe/Zurich', hour12: false }); };
+        tick(); setInterval(tick, 1000);
+    }
+</script>
+
 <style>
-    .block { padding: 48px var(--gutter) 0; }
-    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 12px; }
-    p { max-width: 60ch; margin-top: 8px; }
-    .mail { font-size: clamp(1.25rem, 4vw, 2rem); font-weight: 800; }
-    .loc { color: var(--muted); }
+    .contact { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 96px); padding-top: clamp(32px, 6vw, 80px); align-items: start; }
+    .left { position: sticky; top: calc(var(--top-h) + 24px); }
+    .lede { margin-top: 20px; }
+    .mail {
+        display: inline-block; margin-top: 32px;
+        font-size: clamp(1.7rem, 3.6vw, 3rem); font-weight: 860; font-stretch: 66%;
+        line-height: 1; text-decoration: none; overflow-wrap: anywhere;
+    }
+    .mail:hover { color: var(--red); }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .loc { margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .loc .tc { color: var(--red-ink); }
+    @media (max-width: 960px) {
+        .contact { grid-template-columns: 1fr; }
+        .left { position: static; }
+    }
 </style>

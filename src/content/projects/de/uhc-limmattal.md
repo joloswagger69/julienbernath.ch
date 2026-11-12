@@ -11,6 +11,8 @@ client: "UHC Limmattal"
 year: "2026"
 role: "Sportfotograf"
 deliverables: "Spielszenen-Fotografie, Social Media Assets"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Bully im Unihockey: Spieler in schwarz-orangen und in weissen Trikots kämpfen um den Ball, im Hintergrund das Publikum."
 cover: "../../../assets/projects/uhc-limmattal/limmattal-26.webp"
 media:
   - { type: youtube, id: "3kHn7e8IcUo", label: "YOUTUBE_VIDEO.URL" }

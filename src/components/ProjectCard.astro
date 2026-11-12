@@ -1,32 +1,57 @@
 ---
-/* Projektkarte (provisorisch) – zeigt Vorschau, Titel, Kunde/Jahr, Umfang wie bisher. */
+/* Projekt im Raster: grosses Bild ohne Rahmen, darunter Titel, Kunde/Jahr und
+   Clip-Label (Kategorie). Seitenverhältnis je nach Platz im Editorial-Raster. */
 import { Image } from 'astro:assets';
 import SiteGraphic from './SiteGraphic.astro';
 import { KIND_LABEL, coverOf, lengthLabel, projectPath, slugOf, type Project } from '../lib/projects';
 import type { Lang } from '../i18n/ui';
 
-interface Props { project: Project; lang: Lang; eager?: boolean }
-const { project, lang, eager = false } = Astro.props;
+interface Props {
+    project: Project;
+    lang: Lang;
+    eager?: boolean;
+    /** CSS-Seitenverhältnis des Bildes, z.B. "16 / 9" */
+    ratio?: string;
+    /** sizes-Attribut für responsive Bilder */
+    sizes?: string;
+    /** Überschriften-Ebene im Kontext der Seite */
+    level?: 'h2' | 'h3';
+}
+const { project, lang, eager = false, ratio = '3 / 2', sizes = '(max-width: 760px) 100vw, 50vw', level = 'h3' } = Astro.props;
 const d = project.data;
 const cover = coverOf(project);
+const Heading = level;
 ---
-<a class="card" href={projectPath(slugOf(project), lang)} data-kind={d.kind}>
-    <div class="card-frame">
-        {cover
-            ? <Image src={cover} alt="" width={960} widths={[480, 960]} sizes="(max-width: 700px) 100vw, 50vw" loading={eager ? 'eager' : 'lazy'} />
-            : <SiteGraphic />}
-        <span class="card-badge">{KIND_LABEL[d.kind][lang]}</span>
-    </div>
-    <h3 class="card-title">{d.title}</h3>
-    <p class="card-meta">{d.client}, {d.year} · <span class="tc">{lengthLabel(project)}</span></p>
-</a>
+<article class="card" data-kind={d.kind}>
+    <a class="card-link" href={projectPath(slugOf(project), lang)}>
+        <div class="card-frame" style={`aspect-ratio:${ratio}`}>
+            {cover
+                ? <Image src={cover} alt="" width={1600} widths={[480, 800, 1200, 1600]} sizes={sizes} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} />
+                : <SiteGraphic />}
+        </div>
+        <div class="card-caption">
+            <Heading class="card-title">{d.title}</Heading>
+            <p class="card-meta">
+                <span class="label" data-kind={d.kind}>{KIND_LABEL[d.kind][lang]}</span>
+                <span>{d.client}, {d.year}</span>
+                <span class="tc card-len">{lengthLabel(project)}</span>
+            </p>
+        </div>
+    </a>
+</article>
 
 <style>
-    .card { display: block; text-decoration: none; }
-    .card-frame { position: relative; aspect-ratio: 16 / 10; background: var(--panel); overflow: hidden; }
-    .card-frame :global(img), .card-frame :global(.clip-graphic) { width: 100%; height: 100%; object-fit: cover; }
-    .card-frame :global(.clip-graphic) { display: grid; place-items: center; padding: 8%; }
-    .card-badge { position: absolute; top: 8px; left: 8px; background: var(--ink); color: var(--base); font-size: 0.75rem; padding: 2px 6px; }
-    .card-title { margin-top: 8px; font-size: 1.125rem; }
-    .card-meta { color: var(--muted); font-size: 0.9rem; }
+    .card-link { display: block; text-decoration: none; }
+    .card-frame { position: relative; overflow: hidden; background: var(--panel); }
+    .card-frame :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--ease), filter 0.3s var(--ease); }
+    /* Grafiken und Plakate tragen ihren Titel oben – Ausschnitt oben ausrichten */
+    .card[data-kind='design'] .card-frame :global(img) { object-position: 50% 0; }
+    .card-frame :global(.clip-graphic) { width: 100%; height: 100%; display: grid; place-items: center; padding: 8%; }
+    .card-link:hover .card-frame :global(img) { transform: scale(1.025); }
+    .card-caption { padding-top: 14px; }
+    .card-title { font-size: var(--step-2); font-weight: 820; font-stretch: 78%; line-height: 1; transition: color var(--cut) var(--ease); }
+    .card-link:hover .card-title { color: var(--red-ink); }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; color: var(--muted); font-size: var(--step--1); }
+    .card-len { margin-left: auto; }
+    .card-link:focus-visible { outline-offset: 6px; }
 </style>

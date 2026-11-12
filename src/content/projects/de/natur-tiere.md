@@ -11,6 +11,8 @@ client: "Freies Projekt"
 year: "2023 - 2026"
 role: "Naturfotograf"
 deliverables: "Outdoor-Fotografie, Makro-Aufnahmen, Color-Grading"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Blick einen bemoosten Baumstamm hinauf in die Baumkronen, darüber Wolken."
 media:
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-1.webp" }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-2.jpg" }

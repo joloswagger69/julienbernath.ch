@@ -11,6 +11,8 @@ client: "OK Dorffest Ehrendingen"
 year: "2025"
 role: "Grafikdesigner / Mediamatiker"
 deliverables: "Visual Identity, Flyer-Design, Plakate, Druckdaten"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Blaues Plakat der UHC Bulldogs Ehrendingen zum 25-Jahre-Jubiläum mit dem Programm von Freitag bis Sonntag in gelber und weisser Schrift."
 cover: "../../../assets/projects/uhc-dorffest/dorffest-7.jpg"
 media:
   - { type: image, src: "../../../assets/projects/uhc-dorffest/dorffest-1.jpg" }

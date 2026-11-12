@@ -14,6 +14,11 @@ export function useTranslations(lang: Lang) {
     };
 }
 
+/** Platzhalter ersetzen: fmt('Bild {n} von {total}', { n: 1, total: 9 }) */
+export function fmt(text: string, vars: Record<string, string | number>): string {
+    return text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? `{${k}}`));
+}
+
 /** Adresse einer Seite in einer bestimmten Sprache, z.B. path('work', 'en') → "/en/work/" */
 export function path(key: RouteKey, lang: Lang): string {
     return routes[key][lang];

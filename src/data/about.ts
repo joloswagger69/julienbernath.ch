@@ -21,12 +21,16 @@ export const about = {
 /** Portrait-«Takes» in der bisherigen Reihenfolge (Take 1 = me-1) */
 export const portraits = [me1, me2, me3, me4, me5, me6];
 export const portraitAlt = 'Portrait von Julien Bernath';
+/** Bildbeschreibungen je Take. Take 1: Vorschlag von Claude, ungeprüft. Übrige: allgemein. */
+export const portraitAlts = [
+    'Julien Bernath mit Skibrille im Schnee, dahinter Berge.',
+    ...[2, 3, 4, 5, 6].map((n) => `${portraitAlt}, Take ${n}`)
+];
 
-/** Steckbrief auf der Filmklappe. Hinweis: «Alter 22» ist fest eingetragen – Entscheid offen (Phase 5). */
+/** Steckbrief auf der Filmklappe. «Alter» entfernt (Entscheid Julien, Phase 3: kein Alter, kein Geburtsdatum). */
 export const slate = [
     { label: 'Produktion', value: 'julienbernath.ch', wide: true },
     { label: 'Name', value: 'Julien Bernath' },
-    { label: 'Alter', value: '22' },
     { label: 'Ort', value: 'Baden, Aargau' },
     { label: 'Ausbildung', value: 'Mediamatiker EFZ' },
     { label: 'Fokus', value: 'Videoschnitt, Social Media, Fotografie', wide: true }

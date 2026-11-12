@@ -11,6 +11,8 @@ client: "Berufsschule (Eigenprojekt)"
 year: "2025"
 role: "Organisator & Videograf"
 deliverables: "Multimediales Konzept, Droneshots, Video-Visualisierung"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Titelbild des Kurzfilms «ITSON – In The Silence Of Nature»: kleiner Bergsee in einem Alpental unter bewölktem Himmel."
 cover: "../../../assets/projects/itson/itson-8.webp"
 legacyLayout: "feature-r"
 media:

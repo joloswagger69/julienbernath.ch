@@ -1,0 +1,134 @@
+---
+/* «Programm-Monitor» im Intro: Bilder aus den ausgewählten Arbeiten wechseln in
+   harten Schnitten, mit REC-Anzeige und laufendem Timecode. Bilder werden wie auf
+   einem echten Vorschaumonitor eingepasst (Letterbox), nicht beschnitten.
+   REC anklicken = anhalten/weiterlaufen (WCAG 2.2.2). Bei «Bewegung reduzieren»
+   bleibt das erste Bild stehen. */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+
+interface Shot { src: ImageMetadata; alt: string; title: string; href: string }
+interface Props { lang: Lang; shots: Shot[] }
+const { lang, shots } = Astro.props;
+const t = useTranslations(lang);
+---
+<figure class="monitor" data-monitor aria-label={t('monitor.label')}>
+    <div class="screen">
+        {shots.map((s, i) => {
+            // Eingepasst in ein 3:2-Bild: Hochformate werden schmaler dargestellt → kleinere Bildvariante genügt
+            // Querformate füllen den Monitor (leichter Beschnitt), Hoch- und Quadratformate werden eingepasst.
+            // So ist kein späteres Bild grösser als das erste – das hält die Ladezeit-Messung (LCP) stabil.
+            const ratio = s.src.width / s.src.height;
+            const fill = ratio >= 1.2;
+            const f = fill ? '1' : Math.min(1, (2 / 3) * ratio).toFixed(2);
+            return (
+                <a class:list={['shot', { fill }]} href={s.href} data-shot data-title={s.title} hidden={i !== 0}>
+                    <Image src={s.src} alt={s.alt} width={1200} widths={[480, 800, 1200]}
+                           sizes={`(max-width: 860px) calc(${f} * (100vw - 32px)), calc(${f} * 52vw)`}
+                           loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} />
+                </a>
+            );
+        })}
+        <span class="safe" aria-hidden="true"></span>
+        <button class="rec" type="button" data-rec aria-pressed="false">
+            <span class="rec-dot is-live" aria-hidden="true"></span><span>REC</span>
+            <span class="visually-hidden">– Bildwechsel anhalten oder fortsetzen</span>
+        </button>
+        <span class="tc screen-tc" data-tc aria-hidden="true">01:00:00:00</span>
+    </div>
+    <figcaption class="caption">
+        <span class="caption-title" data-caption>{shots[0]?.title}</span>
+        <span class="tc caption-count" aria-hidden="true"><span data-count>01</span> / {String(shots.length).padStart(2, '0')}</span>
+    </figcaption>
+</figure>
+
+<script>
+    const root = document.querySelector<HTMLElement>('[data-monitor]');
+    if (root) {
+        const shots = [...root.querySelectorAll<HTMLAnchorElement>('[data-shot]')];
+        const tc = root.querySelector<HTMLElement>('[data-tc]')!;
+        const cap = root.querySelector<HTMLElement>('[data-caption]')!;
+        const count = root.querySelector<HTMLElement>('[data-count]')!;
+        const rec = root.querySelector<HTMLButtonElement>('[data-rec]')!;
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const FPS = 25, HOLD = 1600;
+        let i = 0, frames = 90000, last = performance.now(), sinceCut = 0;
+        let paused = reduced, visible = true;
+        const p2 = (n: number) => String(n).padStart(2, '0');
+        // Nur das aktuelle Bild ist sichtbar; das nächste wird kurz vorher geladen
+        const imgOf = (k: number) => shots[k % shots.length].querySelector('img')!;
+        const prep = (k: number) => { const im = imgOf(k); if (im.loading === 'lazy') im.loading = 'eager'; };
+        const ready = (k: number) => { const im = imgOf(k); return im.complete && im.naturalWidth > 0; };
+        const show = (n: number) => {
+            shots.forEach((s, k) => { s.hidden = k !== n; });
+            cap.textContent = shots[n].dataset.title ?? '';
+            count.textContent = p2(n + 1);
+        };
+        addEventListener('load', () => { if (!paused) prep(1); }, { once: true });
+        const setPaused = (p: boolean) => {
+            paused = p;
+            rec.setAttribute('aria-pressed', String(p));
+            root.classList.toggle('is-paused', p);
+        };
+        rec.addEventListener('click', () => { setPaused(!paused); if (!paused) prep(i + 1); });
+        new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(root);
+        document.addEventListener('visibilitychange', () => { last = performance.now(); });
+        setPaused(paused);
+        show(0);
+        const tick = (now: number) => {
+            const dt = Math.min(100, now - last);
+            last = now;
+            if (!paused && visible && !document.hidden) {
+                frames += (dt / 1000) * FPS;
+                sinceCut += dt;
+                if (sinceCut >= HOLD && shots.length > 1) {
+                    const n = (i + 1) % shots.length;
+                    prep(n);
+                    if (ready(n)) { sinceCut = 0; i = n; show(i); prep(i + 1); }
+                }
+                const f = Math.floor(frames), s = Math.floor(f / FPS);
+                tc.textContent = `${p2(Math.floor(s / 3600))}:${p2(Math.floor(s / 60) % 60)}:${p2(s % 60)}:${p2(f % FPS)}`;
+            }
+            requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+    }
+</script>
+
+<style>
+    .monitor { margin: 0; }
+    .screen {
+        position: relative; aspect-ratio: 3 / 2; overflow: hidden;
+        background: var(--monitor); color: #F1F1EC;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    }
+    /* Nicht sichtbare Bilder tragen das hidden-Attribut (display: none) und werden erst kurz vor dem Schnitt geladen */
+    .shot { position: absolute; inset: 0; }
+    .shot :global(img) { width: 100%; height: 100%; object-fit: contain; }
+    .shot.fill :global(img) { object-fit: cover; }
+    .shot:focus-visible { outline-offset: -4px; }
+
+    /* Title-Safe-Markierungen */
+    .safe { position: absolute; inset: 7%; pointer-events: none;
+        background:
+            linear-gradient(#fff, #fff) left top / 18px 1px no-repeat, linear-gradient(#fff, #fff) left top / 1px 18px no-repeat,
+            linear-gradient(#fff, #fff) right top / 18px 1px no-repeat, linear-gradient(#fff, #fff) right top / 1px 18px no-repeat,
+            linear-gradient(#fff, #fff) left bottom / 18px 1px no-repeat, linear-gradient(#fff, #fff) left bottom / 1px 18px no-repeat,
+            linear-gradient(#fff, #fff) right bottom / 18px 1px no-repeat, linear-gradient(#fff, #fff) right bottom / 1px 18px no-repeat;
+        opacity: 0.45; mix-blend-mode: difference; }
+
+    .rec, .screen-tc {
+        position: absolute; top: 14px; z-index: 2;
+        font-family: var(--mono); font-size: 0.8125rem; line-height: 1;
+        padding: 6px 8px; background: rgba(0, 0, 0, 0.55); border-radius: 2px; color: #F1F1EC;
+    }
+    .rec { left: 14px; display: inline-flex; align-items: center; gap: 8px; }
+    .screen-tc { right: 14px; }
+    :global(.monitor.is-paused) .rec-dot { animation: none; opacity: 0.35; }
+
+    .caption { display: flex; justify-content: space-between; gap: 16px; margin-top: 12px; font-size: var(--step--1); color: var(--muted); }
+    .caption-title { color: var(--ink); font-weight: 600; }
+</style>

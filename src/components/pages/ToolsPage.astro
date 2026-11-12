@@ -1,6 +1,6 @@
 ---
-/* Werkzeuge (provisorisch): die 16 Browser-Tools mit ihren bisherigen Adressen.
-   Gezeichnete Kartenvorschauen und Spielmodus-Schalter folgen in Phase 3/4. */
+/* Werkzeuge: die 16 Browser-Tools mit ihren bisherigen Adressen, gegliedert
+   in «Werkzeug» und «Spielwiese». Jede Zeile trägt die Erkennungsfarbe des Tools. */
 import Base from '../../layouts/Base.astro';
 import { toolGroups, toolHref, toolsIntro } from '../../data/tools';
 import { alternates, useTranslations } from '../../i18n/utils';
@@ -10,33 +10,67 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 const count = toolGroups.reduce((n, g) => n + g.tools.length, 0);
+const initials = (name: string) => name.replace(/^JB\s+/, '').slice(0, 2);
+/** Schwarze oder weisse Schrift je nach Helligkeit der Tool-Farbe */
+const textOn = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.32 ? '#000' : '#fff';
+};
 ---
 <Base lang={lang} alternates={alternates('tools')} title={`${t('tools.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
-    <section class="block">
-        <h1>{t('tools.title')} <span class="tc count">({count})</span></h1>
-        <p>{toolsIntro}</p>
-        {toolGroups.map((g) => (
-            <>
-                <h2>{g.title}</h2>
-                <ul class="tools">
-                    {g.tools.map((tool) => (
-                        <li style={`--c:${tool.color}`}>
-                            <a href={toolHref(tool)}><strong>{tool.name}</strong></a>
-                            <p>{tool.desc}</p>
-                        </li>
-                    ))}
-                </ul>
-            </>
-        ))}
+    <section class="wrap head" data-clip={t('tools.title')}>
+        <h1 class="h1">{t('tools.title')} <span class="tc count">{count}</span></h1>
+        <p class="lede">{toolsIntro}</p>
     </section>
+
+    {toolGroups.map((g) => (
+        <section class="wrap group" data-clip={g.title} aria-labelledby={`g-${g.title}`}>
+            <h2 id={`g-${g.title}`} class="h2 group-title">{g.title} <span class="tc count">{g.tools.length}</span></h2>
+            <ul class="tools">
+                {g.tools.map((tool) => (
+                    <li>
+                        <a class="tool" href={toolHref(tool)} style={`--c:${tool.color};--on:${textOn(tool.color)}`}>
+                            <span class="tool-chip" aria-hidden="true">{initials(tool.name)}</span>
+                            <span class="tool-name">{tool.name}</span>
+                            <span class="tool-desc">{tool.desc}</span>
+                            <span class="tool-open">{t('tools.open')}</span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </section>
+    ))}
 </Base>
 
 <style>
-    .block { padding: 48px var(--gutter) 0; }
-    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; }
-    .count { font-size: 1rem; color: var(--muted); font-weight: 400; }
-    h2 { font-size: 1.25rem; margin: 32px 0 12px; }
-    .tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 16px; }
-    .tools li { border-left: 6px solid var(--c); padding: 8px 12px; background: var(--panel); }
-    .tools p { font-size: 0.9rem; color: var(--ink-soft); margin-top: 4px; }
+    .head { padding-top: clamp(32px, 6vw, 80px); display: grid; gap: 20px; }
+    .count { font-size: var(--step--1); font-weight: 400; color: var(--muted); vertical-align: super; }
+    .group { padding-top: clamp(48px, 7vw, 96px); }
+    .group-title { margin-bottom: 20px; }
+    .tools { border-top: 1px solid var(--line-strong); }
+    .tool {
+        display: grid; grid-template-columns: 64px minmax(160px, 3fr) minmax(0, 7fr) auto;
+        gap: 20px; align-items: center;
+        padding-block: 16px; border-bottom: 1px solid var(--line);
+        text-decoration: none;
+    }
+    .tool-chip {
+        width: 64px; height: 44px; display: grid; place-items: center;
+        background: var(--c); border-radius: 2px;
+        font-weight: 860; font-stretch: 70%; text-transform: uppercase; letter-spacing: 0.02em;
+        color: var(--on);
+        box-shadow: inset 0 0 0 1px rgba(var(--ink-rgb), 0.12);
+    }
+    .tool-name { font-size: var(--step-1); font-weight: 760; }
+    .tool-desc { color: var(--muted); }
+    .tool-open { font-weight: 650; padding: 6px 0; background: linear-gradient(var(--red), var(--red)) left bottom / 0 2px no-repeat; transition: background-size var(--cut) var(--ease); }
+    .tool:hover .tool-open { background-size: 100% 2px; }
+    .tool:hover .tool-name { color: var(--red-ink); }
+
+    @media (max-width: 760px) {
+        .tool { grid-template-columns: 52px 1fr; gap: 4px 16px; }
+        .tool-chip { width: 52px; grid-row: span 2; }
+        .tool-desc { grid-column: 2; font-size: var(--step--1); }
+        .tool-open { display: none; }
+    }
 </style>

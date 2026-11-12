@@ -1,15 +1,17 @@
 ---
 /* ==========================================================================
    Grundlayout für alle Seiten
-   Kümmert sich um: Sprache, Titel, Beschreibung, Canonical, hreflang,
-   Open Graph, Theme (Hell/Dunkel ohne Aufblitzen), Skip-Link, Navigation.
-   Gestaltung von Header und Footer ist provisorisch und folgt in Phase 3.
+   Sprache, Titel, Beschreibung, Canonical, hreflang, Open Graph, Theme ohne
+   Aufblitzen, Schrift-Preload, Kopfzeile, Timeline, Fusszeile.
    ========================================================================== */
 import '../styles/base.css';
-import LangSwitch from '../components/LangSwitch.astro';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Timeline from '../components/Timeline.astro';
 import { PREVIEW } from '../config';
 import { defaultLang, locales, type Lang } from '../i18n/ui';
-import { path, useTranslations } from '../i18n/utils';
+import { useTranslations } from '../i18n/utils';
 
 interface Props {
     lang: Lang;
@@ -19,13 +21,14 @@ interface Props {
     description?: string;
     /** Vorschaubild für Social Media (absolute oder relative URL) */
     ogImage?: string;
-    /** Seite nicht in Suchmaschinen aufnehmen */
     noindex?: boolean;
     /** Englische Seite zeigt noch den deutschen Originalinhalt */
     untranslated?: boolean;
+    /** Kontakt-Aufruf in der Fusszeile zeigen (auf der Kontaktseite nicht nötig) */
+    footerCta?: boolean;
 }
 
-const { lang, alternates, title, description, ogImage, noindex = false, untranslated = false } = Astro.props;
+const { lang, alternates, title, description, ogImage, noindex = false, untranslated = false, footerCta = true } = Astro.props;
 const t = useTranslations(lang);
 
 const site = Astro.site ?? new URL('https://julienbernath.ch');
@@ -35,13 +38,6 @@ const canonical = new URL(alternates[lang], site).href;
 const ogImageUrl = ogImage ? new URL(ogImage, site).href : undefined;
 const langs = Object.keys(alternates) as Lang[];
 const robotsNoindex = noindex || PREVIEW;
-const current = Astro.url.pathname;
-const nav = [
-    { href: path('work', lang), label: t('nav.work') },
-    { href: path('about', lang), label: t('nav.about') },
-    { href: path('tools', lang), label: t('nav.tools') },
-    { href: path('contact', lang), label: t('nav.contact') }
-];
 ---
 <!doctype html>
 <html lang={locales[lang].html}>
@@ -52,8 +48,10 @@ const nav = [
     <meta name="description" content={pageDescription} />
     <meta name="author" content="Julien Bernath" />
     <meta name="theme-color" content="#DCDDD8" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1E1F1C" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
     {robotsNoindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
 
     <link rel="canonical" href={canonical} />
     {langs.map((code) => (
@@ -83,41 +81,18 @@ const nav = [
 <body>
     <a class="skip-link" href="#main">{t('skip')}</a>
     {PREVIEW && <p class="preview-badge tc">{t('preview.badge')}</p>}
-    <header class="topbar-temp">
-        <a class="brand" href={path('home', lang)} aria-label="Julien Bernath">
-            <span class="brand-j">J</span><span class="brand-b">B</span>
-        </a>
-        <nav class="nav-temp" aria-label={t('nav.label')}>
-            {nav.map((n) => (
-                <a href={n.href} aria-current={current.startsWith(n.href) ? 'page' : undefined}>{n.label}</a>
-            ))}
-        </nav>
-        <LangSwitch lang={lang} alternates={alternates} />
-    </header>
-    {untranslated && <p class="en-notice" role="note">{t('en.notice')}</p>}
-    <main id="main" lang={untranslated ? locales.de.html : undefined}>
+    <Header lang={lang} alternates={alternates} />
+    {untranslated && <p class="en-notice wrap" role="note">{t('en.notice')}</p>}
+    <main id="main" tabindex="-1" lang={untranslated ? locales.de.html : undefined}>
         <slot />
     </main>
-    <footer class="footer-temp">
-        <span>© {new Date().getFullYear()} Julien Bernath</span>
-        <a id="privacy-open" href={path('privacy', lang)}>{t('footer.privacy')}</a>
-    </footer>
+    <Footer lang={lang} cta={footerCta} />
+    <Timeline lang={lang} />
 </body>
 </html>
 
 <style>
-    /* Provisorisch (Phase 2) – wird in Phase 3 durch den echten Header/Footer ersetzt */
-    .preview-badge { background: var(--ink); color: var(--base); font-size: 0.75rem; padding: 4px var(--gutter); }
-    .topbar-temp {
-        min-height: var(--top-h); padding: 8px var(--gutter);
-        display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: space-between;
-        border-bottom: 1px solid var(--line);
-    }
-    .brand { font-weight: 900; font-stretch: 75%; font-size: 1.5rem; letter-spacing: -0.02em; text-decoration: none; line-height: 1; }
-    .brand-b { color: var(--red); }
-    .nav-temp { display: flex; flex-wrap: wrap; gap: 4px 18px; }
-    .nav-temp a { text-decoration: none; padding: 4px 0; }
-    .nav-temp a[aria-current='page'] { box-shadow: inset 0 -2px 0 var(--red); }
-    .en-notice { margin: 16px var(--gutter) 0; padding: 10px 14px; border: 1px solid var(--line-strong); max-width: 70ch; }
-    .footer-temp { display: flex; gap: 24px; padding: 32px var(--gutter); border-top: 1px solid var(--line); margin-top: 64px; color: var(--muted); }
+    .preview-badge { background: var(--ink); color: var(--base); font-size: 0.75rem; padding: 5px var(--gutter); text-align: center; }
+    .en-notice { margin-top: 20px; padding-block: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
+    main:focus { outline: none; }
 </style>

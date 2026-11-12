@@ -11,6 +11,8 @@ client: "EV Zug Damen"
 year: "2026"
 role: "Sportfotograf"
 deliverables: "Action-Shooting, Bildredaktion, Postproduction"
+# Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
+coverAlt: "Zweikampf vor dem Tor: eine Spielerin in Gelb und eine Spielerin des EV Zug in Blau, dahinter Zuschauerinnen und Zuschauer auf der Tribüne."
 cover: "../../../assets/projects/ev-zug/evz-13.jpg"
 media:
   - { type: image, src: "../../../assets/projects/ev-zug/evz-1.jpg" }

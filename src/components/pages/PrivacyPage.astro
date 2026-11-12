@@ -1,5 +1,5 @@
 ---
-/* Datenschutz (provisorisch): wortgleicher Text aus dem bisherigen Dialog. */
+/* Datenschutz: wortgleicher Text, gut lesbar gesetzt. */
 import Base from '../../layouts/Base.astro';
 import PrivacyText from '../PrivacyText.astro';
 import { alternates, useTranslations } from '../../i18n/utils';
@@ -10,16 +10,24 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
 <Base lang={lang} alternates={alternates('privacy')} title={`${t('privacy.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
-    <section class="block">
-        <h1>{t('privacy.title')}</h1>
-        <PrivacyText />
+    <section class="wrap privacy" data-clip={t('privacy.title')}>
+        <h1 class="h1">{t('privacy.title')}</h1>
+        <div class="text">
+            <PrivacyText />
+        </div>
     </section>
 </Base>
 
 <style>
-    .block { padding: 48px var(--gutter) 0; max-width: 75ch; }
-    h1 { font-size: clamp(2rem, 6vw, 3.5rem); font-stretch: 75%; margin-bottom: 16px; }
-    .block :global(h3) { margin-top: 24px; font-size: 1.05rem; }
-    .block :global(p) { margin-top: 8px; }
-    .block :global(.privacy-date) { color: var(--muted); }
+    .privacy { padding-top: clamp(32px, 6vw, 80px); display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 5vw, 80px); align-items: start; }
+    .privacy h1 { position: sticky; top: calc(var(--top-h) + 24px); }
+    .text { max-width: 66ch; }
+    .text :global(h2) { font-size: var(--step-1); font-weight: 760; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .text :global(p) { margin-top: 12px; }
+    .text :global(p:first-child) { font-size: var(--step-1); line-height: 1.45; margin-top: 0; }
+    .text :global(.privacy-date) { margin-top: 40px; color: var(--muted); font-size: var(--step--1); }
+    @media (max-width: 860px) {
+        .privacy { grid-template-columns: 1fr; }
+        .privacy h1 { position: static; }
+    }
 </style>
