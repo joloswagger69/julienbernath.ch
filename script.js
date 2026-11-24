@@ -214,7 +214,7 @@
             client: 'Eigenprojekt',
             year: '2026',
             role: 'Art Director & Chef-Prompter',
-            deliverables: 'Ideen, Geschmack und ungefähr 400-mal „nein, nochmal“',
+            deliverables: 'Ideen, Geschmack und ungefähr 400-mal „nei, nomal“',
             description: 'Diese Website. Ehrlich gesagt hat die KI den Code geschrieben, und ich habe danebengesessen und gesagt, was mir nicht gefällt. Ziemlich oft. Die Ideen, die Fotos und der Geschmack sind von mir, die Tipparbeit eher nicht. Beim Film nennt man das Regie.',
             media: []
         }
