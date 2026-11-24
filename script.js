@@ -205,7 +205,7 @@
             role: 'Designer / Editor',
             deliverables: 'Grafikdesign, Foto-Pools, Layout-Experimente',
             description: 'Kreative Vielfalt: Diverse Grafikdesigns, Fotografie-Pools und gestalterische Layout-Experimente aus verschiedenen Projekten und Übungen.',
-            media: gallery('assets/images/sonstiges/sonst-', 'webp webp webp jpg webp webp webp webp jpg webp png png webp webp')
+                        media: gallery('assets/images/sonstiges/sonst-', 'webp webp webp jpg webp webp webp webp jpg webp png png webp webp webp webp webp webp webp webp webp webp webp webp webp webp webp webp')
         },
         portfolio_website: {
             id: 'JB-PRJ-14',
