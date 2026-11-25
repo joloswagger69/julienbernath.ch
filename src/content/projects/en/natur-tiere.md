@@ -12,9 +12,10 @@ year: "2023 - 2026"
 role: "Nature photographer"
 deliverables: "Outdoor photography, macro shots, colour grading"
 # Alt texts: suggestions by Claude, not yet reviewed by Julien
-coverAlt: "Looking up a moss-covered tree trunk into the treetops, clouds above."
+coverAlt: "The silhouette of a person on a hill at sunset."
+cover: "../../../assets/projects/natur-tiere/nt-27.webp"
 media:
-  - { type: image, src: "../../../assets/projects/natur-tiere/nt-1.webp" }
+  - { type: image, src: "../../../assets/projects/natur-tiere/nt-1.webp", alt: "Looking up a moss-covered tree trunk into the treetops, clouds above." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-2.jpg", alt: "A white cat lying in a patch of light on the floor." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-3.webp", alt: "A snow-covered mountain peak against a blue sky." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-4.jpg", alt: "A young fern shoot in a dark forest." }

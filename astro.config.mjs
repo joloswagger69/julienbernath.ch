@@ -21,6 +21,9 @@ export default defineConfig({
     build: { format: 'directory', inlineStylesheets: 'always' },
     trailingSlash: 'ignore',
 
+    // Keine Code-Blöcke in den Inhalten: Syntax-Hervorhebung (Shiki) aus – sie wäre mit der CSP unverträglich
+    markdown: { syntaxHighlight: false },
+
     i18n: {
         defaultLocale: 'de',
         locales: ['de', 'en'],

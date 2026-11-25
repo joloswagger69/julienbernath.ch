@@ -13,10 +13,10 @@ year: "2023"
 role: "Sportfotograf"
 deliverables: "Spieltags-Fotografie, Fankultur-Dokumentation, RAW"
 # Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
-coverAlt: "Leere Sitzreihen einer Stadiontribüne, fotografiert mit geringer Schärfentiefe."
-cover: "../../../assets/projects/fc-wil/fcw-1.jpg"
+coverAlt: "Gelbe Eckfahne auf dem Rasen, dahinter Stadion und Flutlichtmasten."
+cover: "../../../assets/projects/fc-wil/fcw-2.jpg"
 media:
-  - { type: image, src: "../../../assets/projects/fc-wil/fcw-1.jpg" }
+  - { type: image, src: "../../../assets/projects/fc-wil/fcw-1.jpg", alt: "Leere Sitzreihen einer Stadiontribüne, fotografiert mit geringer Schärfentiefe." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-2.jpg", alt: "Gelbe Eckfahne auf dem Rasen, dahinter Stadion und Flutlichtmasten." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-3.webp", alt: "Flutlichtmast vor bewölktem Himmel." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-4.webp", alt: "Schriftzug «FC Wil» über dem Trainingsplatz im Stadion." }

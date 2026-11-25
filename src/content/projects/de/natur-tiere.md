@@ -13,9 +13,10 @@ year: "2023 - 2026"
 role: "Naturfotograf"
 deliverables: "Outdoor-Fotografie, Makro-Aufnahmen, Color-Grading"
 # Alt-Text: Vorschlag von Claude, von Julien noch nicht geprüft
-coverAlt: "Blick einen bemoosten Baumstamm hinauf in die Baumkronen, darüber Wolken."
+coverAlt: "Silhouette einer Person auf einem Hügel im Sonnenuntergang."
+cover: "../../../assets/projects/natur-tiere/nt-27.webp"
 media:
-  - { type: image, src: "../../../assets/projects/natur-tiere/nt-1.webp" }
+  - { type: image, src: "../../../assets/projects/natur-tiere/nt-1.webp", alt: "Blick einen bemoosten Baumstamm hinauf in die Baumkronen, darüber Wolken." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-2.jpg", alt: "Weisse Katze liegt in einem Lichtfleck auf dem Boden." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-3.webp", alt: "Schneebedeckter Berggipfel vor blauem Himmel." }
   - { type: image, src: "../../../assets/projects/natur-tiere/nt-4.jpg", alt: "Junger Farntrieb im dunklen Wald." }

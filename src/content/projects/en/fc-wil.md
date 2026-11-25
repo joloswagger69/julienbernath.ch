@@ -12,10 +12,10 @@ year: "2023"
 role: "Sports photographer"
 deliverables: "Matchday photography, fan culture documentation, RAW files"
 # Alt texts: suggestions by Claude, not yet reviewed by Julien
-coverAlt: "Empty rows of seats in a stadium stand, shot with a shallow depth of field."
-cover: "../../../assets/projects/fc-wil/fcw-1.jpg"
+coverAlt: "A yellow corner flag on the pitch, the stadium and floodlights behind it."
+cover: "../../../assets/projects/fc-wil/fcw-2.jpg"
 media:
-  - { type: image, src: "../../../assets/projects/fc-wil/fcw-1.jpg" }
+  - { type: image, src: "../../../assets/projects/fc-wil/fcw-1.jpg", alt: "Empty rows of seats in a stadium stand, shot with a shallow depth of field." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-2.jpg", alt: "A yellow corner flag on the pitch, the stadium and floodlights behind it." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-3.webp", alt: "A floodlight mast against a cloudy sky." }
   - { type: image, src: "../../../assets/projects/fc-wil/fcw-4.webp", alt: "The words “FC Wil” over the training pitch in the stadium." }
