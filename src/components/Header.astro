@@ -1,6 +1,5 @@
 ---
-/* Kopfzeile: Logo, Navigation, Sprache, Licht. Auf dem Handy als Vollbild-Menü. */
-import LangSwitch from './LangSwitch.astro';
+/* Kopfzeile: Logo, Navigation, Licht (Sprachwechsel dezent in der Fusszeile). Auf dem Handy als Vollbild-Menü. */
 import type { Lang } from '../i18n/ui';
 import { path, useTranslations } from '../i18n/utils';
 
@@ -27,9 +26,6 @@ const nav = [
                     <li><a href={n.href} aria-current={current.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>
                 ))}
             </ul>
-            <div class="nav-extra">
-                <LangSwitch lang={lang} alternates={alternates} />
-            </div>
         </nav>
 
         <div class="actions">

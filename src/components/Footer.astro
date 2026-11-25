@@ -1,12 +1,14 @@
 ---
-/* Fusszeile: Kontakt-Aufruf (Abspann), Links, «Zurückspulen» wie bisher. */
+/* Fusszeile: Kontakt-Aufruf (Abspann), Links, «Zurückspulen» wie bisher.
+   Sprachwechsel: bewusst klein und unauffällig (Wunsch von Julien) – «EN» bzw. «DE». */
 import type { Lang } from '../i18n/ui';
 import { path, useTranslations } from '../i18n/utils';
 import { person, status } from '../data/site';
 import PlayModeToggle from './PlayModeToggle.astro';
 
-interface Props { lang: Lang; cta?: boolean }
-const { lang, cta = true } = Astro.props;
+interface Props { lang: Lang; cta?: boolean; alternates?: Record<Lang, string> }
+const { lang, cta = true, alternates } = Astro.props;
+const other: Lang = lang === 'de' ? 'en' : 'de';
 const t = useTranslations(lang);
 ---
 <footer class="footer" data-clip={t('footer.clip')}>
@@ -24,6 +26,7 @@ const t = useTranslations(lang);
         <span>© {new Date().getFullYear()} {person.name} · {status[lang].qualification}</span>
         <a id="privacy-open" href={path('privacy', lang)}>{t('footer.privacy')}</a>
         <PlayModeToggle lang={lang} />
+        {alternates && <a class="lang-link" href={alternates[other]} hreflang={other} lang={other} aria-label={other === 'en' ? 'English version' : 'Deutsche Version'}>{other.toUpperCase()}</a>}
         <a href="#main" class="rewind" data-rewind>{t('footer.rewind')}</a>
     </div>
 </footer>
@@ -54,4 +57,6 @@ const t = useTranslations(lang);
     }
     .legal a { color: inherit; }
     .rewind { margin-left: auto; }
+    .lang-link { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.04em; text-decoration: none; padding: 4px 2px; }
+    .lang-link:hover, .lang-link:focus-visible { color: var(--ink); }
 </style>
