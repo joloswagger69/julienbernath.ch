@@ -25,6 +25,8 @@
     /* ---------- Prüfung ---------- */
     const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     const clean = (s) => String(s || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim();
+    // Sicherheit: einzeilige Felder (Name, E-Mail, Betreff) ohne Zeilenumbrüche – verhindert Header-Injection
+    const line = (s) => clean(s).replace(/[^\S \t]+/g, ' ');
     const rules = {
         name: () => { const v = clean(el.name.value); return v.length < 2 ? 'Please enter your name.' : ''; },
         email: () => { const v = clean(el.email.value); return !EMAIL.test(v) ? 'Please enter a valid email address.' : ''; },
@@ -77,7 +79,7 @@
         return `${clean(el.msg.value)}\n\n–\n${clean(el.name.value)}\n${clean(el.email.value)}`;
     }
     function mailtoHref() {
-        const subject = `Anfrage (${topic()}) von ${clean(el.name.value)}`;
+        const subject = `Anfrage (${line(topic())}) von ${line(el.name.value)}`;
         let body = mailBody(); if (body.length > 1500) body = body.slice(0, 1500) + ' …';
         return `mailto:${cfg.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace(/%0A/g, '%0D%0A')}`;
     }
@@ -122,10 +124,10 @@
         const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), cfg.timeoutMs);
         const payload = {
             access_key: cfg.accessKey,
-            subject: `Anfrage (${topic()}) von ${clean(el.name.value)}`,
+            subject: `Anfrage (${line(topic())}) von ${line(el.name.value)}`,
             from_name: 'julienbernath.ch',
-            name: clean(el.name.value), email: clean(el.email.value), replyto: clean(el.email.value),
-            thema: topic(), message: clean(el.msg.value), botcheck: el.bot.checked ? 'true' : ''
+            name: line(el.name.value), email: line(el.email.value), replyto: line(el.email.value),
+            thema: line(topic()), message: clean(el.msg.value), botcheck: el.bot.checked ? 'true' : ''
         };
         try {
             const res = await fetch(cfg.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload), signal: ctrl.signal });

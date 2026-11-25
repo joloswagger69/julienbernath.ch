@@ -15,6 +15,13 @@
 #  - GitHub Pages: Settings → Pages → Source auf "GitHub Actions" stellen
 #  - Variable ASTRO_DEPLOY_ENABLED = true setzen
 #  - unten den Block "push" einkommentieren
+#
+# Sicherheit (security/hardening):
+#  - Alle Actions sind auf einen festen Commit (SHA) gepinnt; die Versionsnummer
+#    steht als Kommentar dahinter. Dependabot schlägt Updates vor.
+#  - Standardrechte nur "contents: read". Schreibrechte für Pages und das
+#    OIDC-Token erhält ausschliesslich der Deploy-Job.
+#  - Der Checkout speichert keine Zugangsdaten im Arbeitsordner.
 # ==========================================================================
 name: Astro – Build & Deploy
 
@@ -25,8 +32,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Nie zwei Veröffentlichungen gleichzeitig
 concurrency:
@@ -36,12 +41,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Repository auschecken
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Abhängigkeiten auf bekannte Schwachstellen prüfen
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Installieren, bauen und Ergebnis bereitstellen
-        uses: withastro/action@v6
+        uses: withastro/action@a8b97df764791eb61fbf3338ef713b0e61ae05c5 # v6.1.4
         with:
           node-version: 24
           package-manager: npm
@@ -50,10 +61,14 @@ jobs:
     needs: build
     if: ${{ vars.ASTRO_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Auf GitHub Pages veröffentlichen
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

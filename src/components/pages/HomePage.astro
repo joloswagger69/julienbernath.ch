@@ -42,7 +42,7 @@ const fields = [
 ] as const;
 ---
 <Base lang={lang} alternates={alternates('home')} title={meta[lang].home.title} description={meta[lang].home.description}>
-    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd(lang))} />
+    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd(lang)).replace(/</g, '\\u003c')} />
 
     <section class="hero wrap" data-clip={t('home.clip.intro')}>
         <div class="hero-text">

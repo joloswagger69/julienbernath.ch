@@ -41,6 +41,8 @@
     /* =====================================================================
        0. GERÜST: Ebenen, Toast, Cursor, FX-Knopf und Panel
        ===================================================================== */
+    // Sicherheit: Seitentext vor dem erneuten Einsetzen als HTML maskieren
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const make = (tag, attrs = {}, html = '') => { const el = document.createElement(tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); el.innerHTML = html; return el; };
     const cv = make('canvas', { id: 'jbp-bg', 'aria-hidden': 'true' });
     const grain = make('div', { class: 'jbp-grain', 'aria-hidden': 'true' });
@@ -738,7 +740,7 @@
     // Wackelwörter
     const lede = $('.hero-lede');
     if (lede) {
-        lede.innerHTML = lede.textContent.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
+        lede.innerHTML = lede.textContent.split(' ').map(w => `<span class="w">${esc(w)}</span>`).join(' ');
         lede.addEventListener('mouseover', (e) => { if (e.target.classList.contains('w')) found('words'); });
     }
 
@@ -747,7 +749,7 @@
     mails.forEach(mail => {
         mail.setAttribute('aria-label', mail.textContent);
         mail.classList.add('jbp-wave');
-        mail.innerHTML = [...mail.textContent].map((c, i) => `<span class="ch" aria-hidden="true" style="--i:${i}">${c}</span>`).join('');
+        mail.innerHTML = [...mail.textContent].map((c, i) => `<span class="ch" aria-hidden="true" style="--i:${i}">${esc(c)}</span>`).join('');
         mail.addEventListener('mouseenter', () => found('mailwave'));
     });
 

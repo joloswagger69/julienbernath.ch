@@ -12,6 +12,7 @@ import Timeline from '../components/Timeline.astro';
 import { getImage } from 'astro:assets';
 import defaultOg from '../assets/projects/ehc-kloten/ehck-14.webp';
 import { PREVIEW } from '../config';
+import { THEME_INIT } from '../lib/theme-init.mjs';
 import { defaultLang, locales, type Lang } from '../i18n/ui';
 import { useTranslations } from '../i18n/utils';
 
@@ -54,6 +55,8 @@ const robotsNoindex = noindex || PREVIEW;
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     <meta name="author" content="Julien Bernath" />
+    {/* Sicherheit: Fremdseiten erhalten nur die Domain, nie den vollständigen Pfad */}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="theme-color" content="#DCDDD8" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
     {robotsNoindex && <meta name="robots" content="noindex, nofollow" />}
@@ -85,9 +88,7 @@ const robotsNoindex = noindex || PREVIEW;
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Hell/Dunkel vor dem ersten Rendern setzen (gleicher Speicher-Schlüssel wie bisher) -->
-    <script is:inline>
-        try { var t = localStorage.getItem('jb2-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
-    </script>
+    <script is:inline set:html={THEME_INIT}></script>
     <slot name="head" />
 </head>
 <body>
