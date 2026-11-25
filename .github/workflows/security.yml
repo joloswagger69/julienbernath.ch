@@ -1,0 +1,60 @@
+# ==========================================================================
+# Sicherheitsprüfungen für die Live-Seite (main)
+#
+# Läuft bei jedem Push und Pull Request auf main, einmal pro Woche und auf
+# Wunsch von Hand. Veröffentlicht nichts und verändert die Website nicht.
+#
+#  1. Secrets: Gitleaks durchsucht die gesamte Git-Historie
+#  2. Code: CodeQL (statische Analyse für JavaScript und die Workflows)
+#
+# Alle Actions sind auf feste Commits gepinnt; jeder Job hat nur Leserechte,
+# CodeQL zusätzlich das Recht, Befunde im Tab «Security» abzulegen.
+# ==========================================================================
+name: Sicherheit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'   # montags 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secret-Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: false   # keine PR-Kommentare → kein Schreibrecht nötig
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: javascript-typescript, actions
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5

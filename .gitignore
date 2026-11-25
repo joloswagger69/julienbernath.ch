@@ -1,0 +1,9 @@
+# Lokale Arbeitsdateien – gehören nicht ins Repository
+node_modules/
+dist/
+.astro/
+.playwright-mcp/
+.env
+.env.*
+.DS_Store
+Thumbs.db

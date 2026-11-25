@@ -11,6 +11,8 @@
     const JB = window.JB;
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+    // Sicherheit: Seitentext vor dem erneuten Einsetzen als HTML maskieren
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const root = document.documentElement;
     const body = document.body;
     const layer = $('#fx-layer');
@@ -562,12 +564,12 @@
 
     // Wackelwörter
     const lede = $('#hero-lede');
-    lede.innerHTML = lede.textContent.split(' ').map(w => `<span class="w">${w}</span>`).join(' ');
+    lede.innerHTML = lede.textContent.split(' ').map(w => `<span class="w">${esc(w)}</span>`).join(' ');
     lede.addEventListener('mouseover', (e) => { if (e.target.classList.contains('w')) found('words'); });
 
     // E-Mail-Welle
     const mail = $('#contact-mail');
-    mail.innerHTML = [...mail.textContent].map((c, i) => `<span class="ch" style="--i:${i}">${c}</span>`).join('');
+    mail.innerHTML = [...mail.textContent].map((c, i) => `<span class="ch" style="--i:${i}">${esc(c)}</span>`).join('');
     mail.addEventListener('mouseenter', () => found('mailwave'));
 
     // Entschlüsseln

@@ -1,0 +1,14 @@
+# Dependabot: schlägt einmal pro Woche Updates der gepinnten GitHub Actions
+# als Pull Request vor. Nichts wird automatisch übernommen oder veröffentlicht.
+# (Die Live-Seite hat keine npm-Pakete.)
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ['*']
