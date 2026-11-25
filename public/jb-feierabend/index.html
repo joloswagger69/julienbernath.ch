@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>JB Feierabend | Countdown</title>
+<meta name="description" content="Countdown bis Feierabend, Wochenende und eigene Termine. Mit Tagesring, Wochenübersicht und Jahresfortschritt.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script src="../fehler.js?v=1" data-critical></script>
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; max-width: 1180px; margin: 0 auto; align-items: start; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .hero { position: relative; display: grid; place-items: center; padding: clamp(18px, 4vw, 40px); text-align: center; overflow: hidden; }
+    .ringbox { position: relative; width: min(100%, 460px); aspect-ratio: 1; display: grid; place-items: center; }
+    .ringbox svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ringbox .inner { position: relative; z-index: 1; padding: 0 8%; }
+    .kicker { font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--red-ink); }
+    .time { font-family: var(--mono); font-weight: 500; font-size: clamp(1.9rem, 8.6vw, 4.4rem); line-height: 1.05; letter-spacing: -.02em; margin: 8px 0 4px; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }
+    .time small { font-size: .42em; color: var(--muted); margin-left: 2px; }
+    .time .d { font-size: .5em; font-family: var(--font); font-weight: 700; margin-right: 6px; letter-spacing: 0; }
+    .phrase { min-height: 1.5em; font-weight: 600; color: var(--ink-soft); font-size: 1.05rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+    .chip { padding: 5px 10px; border: 1px solid var(--line); border-radius: 99px; background: var(--base); font-size: .82rem; font-weight: 600; color: var(--ink-soft); }
+    .chip b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
+    .ring-bg { fill: none; stroke: var(--line); stroke-width: 10; }
+    .ring-lunch { fill: none; stroke: var(--line-strong); stroke-width: 10; opacity: .55; }
+    .ring-fg { fill: none; stroke: var(--red); stroke-width: 10; stroke-linecap: butt; transition: stroke .3s; }
+    .ring-tick { stroke: var(--line-strong); stroke-width: 1.5; }
+    .ring-dot { fill: var(--ink); }
+    body[data-phase="after"] .ring-fg, body[data-phase="off"] .ring-fg { stroke: #2fd27a; }
+    .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .wd { display: grid; gap: 6px; justify-items: center; font-size: .8rem; font-weight: 700; color: var(--muted); }
+    .wd i { position: relative; display: block; width: 100%; aspect-ratio: 1; border-radius: 4px; border: 1.5px solid var(--line-strong); overflow: hidden; background: var(--base); }
+    .wd i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--p, 0%); background: var(--ink); opacity: .85; }
+    .wd.off i { border-style: dashed; opacity: .5; }
+    .wd.today { color: var(--ink); }
+    .wd.today i { border-color: var(--red); box-shadow: 0 0 0 2px var(--red); }
+    .wd.today i::after { background: var(--red); }
+    .bar { height: 10px; border-radius: 99px; background: var(--base); border: 1px solid var(--line); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: var(--p, 0%); background: var(--ink); }
+    .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 10px 0 6px; font-weight: 700; }
+    .kv span { font-family: var(--mono); font-weight: 500; font-size: .95rem; text-align: right; }
+    .set { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .days { display: flex; gap: 4px; margin-top: 4px; }
+    .days button { flex: 1; padding: 8px 0; border: 1px solid var(--line-strong); border-radius: 3px; font-weight: 700; font-size: .85rem; background: var(--base); }
+    .days button[aria-pressed="true"] { background: var(--ink); color: var(--base); }
+    .ev { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .ev b { font-weight: 700; overflow-wrap: anywhere; }
+    .ev span { font-family: var(--mono); font-size: .88rem; }
+    .ev button { width: 28px; height: 28px; border-radius: 3px; border: 1px solid var(--line-strong); line-height: 1; font-size: 1.1rem; }
+    .ev button:hover { background: var(--red); color: #fff; border-color: var(--red); }
+    .addev { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+    .addev input[type=text] { grid-column: 1 / -1; }
+    #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+    @media (max-width: 420px) { .set { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-phase="off">
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Feierabend</h1>
+    <span class="spacer"></span>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap">
+    <div class="grid">
+        <div>
+            <div class="panel hero">
+                <div class="ringbox">
+                    <svg viewBox="0 0 300 300" aria-hidden="true">
+                        <circle class="ring-bg" cx="150" cy="150" r="136"/>
+                        <circle class="ring-lunch" id="rl" cx="150" cy="150" r="136" pathLength="1000"/>
+                        <circle class="ring-fg" id="rf" cx="150" cy="150" r="136" pathLength="1000" stroke-dasharray="0 1000"/>
+                        <g id="ticks"></g>
+                    </svg>
+                    <div class="inner">
+                        <div class="kicker" id="kick">–</div>
+                        <div class="time" id="time" title="Konfetti">00:00:00<small>.00</small></div>
+                        <div class="phrase" id="phrase"></div>
+                        <div class="chips" id="chips"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h2>Woche</h2>
+                <div class="week" id="week"></div>
+                <div class="kv"><div>Wochenende</div><span id="weTime">–</span></div>
+                <div class="bar"><i id="weBar"></i></div>
+                <div class="kv" style="margin-top:16px"><div>Jahr <span id="yPct" style="margin-left:6px"></span></div><span id="yLeft">–</span></div>
+                <div class="bar"><i id="yBar"></i></div>
+            </div>
+
+            <div class="panel">
+                <h2>Termine</h2>
+                <div id="evs"></div>
+                <form class="addev" id="evForm" autocomplete="off">
+                    <input type="text" id="evName" placeholder="Name" maxlength="40" aria-label="Name des Termins" required>
+                    <input type="date" id="evDate" aria-label="Datum" required>
+                    <button class="btn solid" type="submit">Hinzufügen</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h2>Arbeitszeit</h2>
+                <div class="set">
+                    <div class="field"><label for="cStart">Beginn</label><input type="time" id="cStart"></div>
+                    <div class="field"><label for="cEnd">Feierabend</label><input type="time" id="cEnd"></div>
+                    <div class="field"><label for="cLa">Mittag von</label><input type="time" id="cLa"></div>
+                    <div class="field"><label for="cLb">Mittag bis</label><input type="time" id="cLb"></div>
+                </div>
+                <div class="lbl" style="margin-top:4px">Arbeitstage</div>
+                <div class="days" id="days" role="group" aria-label="Arbeitstage"></div>
+                <div class="row" style="margin-top:14px"><button class="btn" type="button" id="confetti">Konfetti</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const store = {
+    get(k, d) { try { const v = localStorage.getItem('jbfa-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('jbfa-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const DEF = { start: '08:00', lunchA: '12:00', lunchB: '13:00', end: '17:00', days: [1, 2, 3, 4, 5] };
+const T2M = (t) => { const m = /^(\d{1,2}):(\d{2})$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : NaN; };
+const valid = (c) => {
+    if (!c || !Array.isArray(c.days)) return false;
+    const s = T2M(c.start), a = T2M(c.lunchA), b = T2M(c.lunchB), e = T2M(c.end);
+    return [s, a, b, e].every(Number.isFinite) && s < e && a <= b && s <= a && b <= e;
+};
+let cfg = store.get('cfg', DEF); if (!valid(cfg)) cfg = { ...DEF };
+cfg.days = cfg.days.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+let events = store.get('events', []); if (!Array.isArray(events)) events = [];
+events = events.filter((e) => e && typeof e.n === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.d)).slice(0, 30);
+
+/* ---------- Zeitlogik (rein, testbar) ---------- */
+const at = (day, min) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, min, 0, 0);
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const isWork = (d, c) => c.days.includes(d.getDay());
+function nextWorkStart(now, c) {
+    for (let i = 0; i < 8; i++) {
+        const d = addDays(now, i); if (!isWork(d, c)) continue;
+        const s = at(d, T2M(c.start)); if (s > now) return s;
+    }
+    return null;
+}
+function weekendTarget(now, c) {
+    if (c.days.length === 0 || c.days.length === 7) return null;
+    for (let i = 0; i < 14; i++) {
+        const d = addDays(now, i);
+        if (isWork(d, c) && !isWork(addDays(d, 1), c)) { const e = at(d, T2M(c.end)); if (e > now) return { target: e, from: lastBreakStart(d, c) }; }
+    }
+    return null;
+}
+function lastBreakStart(d, c) { // Start des Arbeitsblocks (erster Arbeitsbeginn nach der letzten freien Pause)
+    let x = d; for (let i = 0; i < 7; i++) { const p = addDays(x, -1); if (!isWork(p, c)) break; x = p; }
+    return at(x, T2M(c.start));
+}
+function status(now, c) {
+    const today = dayStart(now);
+    const S = T2M(c.start), E = T2M(c.end), LA = T2M(c.lunchA), LB = T2M(c.lunchB);
+    const out = { phase: 'off', target: null, frac: 0, netLeft: 0, workday: isWork(today, c) };
+    if (out.workday) {
+        const s = at(today, S), e = at(today, E), la = at(today, LA), lb = at(today, LB);
+        const total = (e - s) - (lb - la);
+        if (now < s) { out.phase = 'before'; out.target = s; out.frac = 0; out.netLeft = total; }
+        else if (now < e) {
+            out.phase = (now >= la && now < lb) ? 'lunch' : 'work'; out.target = e;
+            const done = Math.max(0, Math.min(now, la) - s) + Math.max(0, now - lb);
+            out.frac = Math.max(0, Math.min(1, (e - s) ? (now - s) / (e - s) : 0));
+            out.netLeft = Math.max(0, total - done); out.total = total; out.done = done;
+        } else { out.phase = 'after'; out.frac = 1; out.since = now - e; out.target = nextWorkStart(now, c); }
+    } else { out.target = nextWorkStart(now, c); }
+    return out;
+}
+function dayFill(d, now, c) {
+    if (!isWork(d, c)) return 0;
+    const s = at(d, T2M(c.start)), e = at(d, T2M(c.end));
+    if (now >= e) return 1; if (now <= s) return 0; return (now - s) / (e - s);
+}
+
+/* ---------- Format ---------- */
+const p2 = (n) => String(n).padStart(2, '0');
+function fmt(ms, hund) {
+    ms = Math.max(0, ms); const cs = Math.floor(ms / 10) % 100, t = Math.floor(ms / 1000);
+    const d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+    return (d ? `<span class="d">${d} T</span>` : '') + `${p2(h)}:${p2(m)}:${p2(s)}` + (hund ? `<small>.${p2(cs)}</small>` : '');
+}
+function human(ms) {
+    const t = Math.max(0, Math.floor(ms / 1000)), d = Math.floor(t / 86400), h = Math.floor(t % 86400 / 3600), m = Math.floor(t % 3600 / 60);
+    if (d) return `${d} T ${h} h`; if (h) return `${h} h ${p2(m)} min`; return `${m} min`;
+}
+const hm = (min) => `${p2(Math.floor(min / 60))}:${p2(min % 60)}`;
+
+/* ---------- Sätze ---------- */
+const PH = {
+    before: ['Kaffee zuerst.', 'Der Tag hat noch nicht angefangen.', 'Noch ein bisschen Ruhe.'],
+    early: ['Noch alles offen.', 'Posteingang: bezwingbar.', 'Der Tag gehört dir.'],
+    mid: ['Läuft.', 'Die Mitte ist überschritten.', 'Einfach weitermachen.'],
+    late: ['Zielgerade.', 'Fast geschafft.', 'Der Weg nach draussen ist sichtbar.'],
+    last: ['Letzte Stunde.', 'Jetzt keine neuen Aufgaben anfangen.', 'Noch kurz durchhalten.'],
+    lunch: ['Mittag. Bildschirm weg.', 'Pause ist Pause.', 'Frische Luft.'],
+    after: ['Feierabend. Ab ins Freie.', 'Geschafft.', 'Laptop zu. Schuhe an.'],
+    off: ['Frei. Geniess es.', 'Heute zählt nichts.', 'Ausschlafen ist ein Recht.']
+};
+let phraseKey = '', phraseText = '', phraseAt = 0;
+function phrase(st, now) {
+    let k = st.phase;
+    if (k === 'work') { const left = st.target - now; k = left <= 3600e3 ? 'last' : st.frac < 0.34 ? 'early' : st.frac < 0.67 ? 'mid' : 'late'; }
+    if (k !== phraseKey || now - phraseAt > 60000) { const a = PH[k]; phraseText = a[Math.floor(Math.random() * a.length)]; phraseKey = k; phraseAt = +now; }
+    return phraseText;
+}
+
+/* ---------- Ring ---------- */
+function buildRing() {
+    const g = $('#ticks'); g.innerHTML = '';
+    for (let i = 0; i < 24; i++) {
+        const a = i / 24 * Math.PI * 2, r1 = 118, r2 = i % 6 === 0 ? 106 : 112;
+        const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        l.setAttribute('x1', 150 + Math.cos(a) * r1); l.setAttribute('y1', 150 + Math.sin(a) * r1);
+        l.setAttribute('x2', 150 + Math.cos(a) * r2); l.setAttribute('y2', 150 + Math.sin(a) * r2);
+        l.setAttribute('class', 'ring-tick'); l.setAttribute('opacity', i % 6 === 0 ? 1 : .4); g.appendChild(l);
+    }
+}
+function ringLunch() {
+    const S = T2M(cfg.start), E = T2M(cfg.end), LA = T2M(cfg.lunchA), LB = T2M(cfg.lunchB), L = E - S;
+    const a = (LA - S) / L * 1000, b = (LB - LA) / L * 1000;
+    const el = $('#rl'); el.setAttribute('stroke-dasharray', `0 ${a} ${b} ${1000}`); el.style.display = b > 0 ? '' : 'none';
+}
+
+/* ---------- Konfetti ---------- */
+const fx = $('#fx'), fc = fx.getContext('2d'); let parts = [], fxRun = false;
+function size() { const r = Math.min(devicePixelRatio || 1, 2); fx.width = innerWidth * r; fx.height = innerHeight * r; fc.setTransform(r, 0, 0, r, 0, 0); }
+function confetti() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { toast('Feierabend!'); return; }
+    size();
+    const cols = ['#E30613', '#2fd27a', '#F5C44A', '#4aa3ff', '#ffffff', '#111111'];
+    for (let k = 0; k < 160; k++) {
+        const left = k % 2; parts.push({ x: left ? 0 : innerWidth, y: innerHeight * 0.85, vx: (left ? 1 : -1) * (4 + Math.random() * 11), vy: -(9 + Math.random() * 13),
+            w: 6 + Math.random() * 7, h: 3 + Math.random() * 5, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4, c: cols[k % cols.length], life: 0 });
+    }
+    if (!fxRun) { fxRun = true; requestAnimationFrame(stepFx); }
+}
+function stepFx() {
+    fc.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter((p) => p.y < innerHeight + 30 && p.life < 260);
+    for (const p of parts) {
+        p.vy += 0.34; p.vx *= 0.992; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+        fc.save(); fc.translate(p.x, p.y); fc.rotate(p.r); fc.fillStyle = p.c; fc.globalAlpha = Math.max(0, 1 - p.life / 260); fc.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2) + .3)); fc.restore();
+    }
+    if (parts.length) requestAnimationFrame(stepFx); else { fxRun = false; fc.clearRect(0, 0, innerWidth, innerHeight); }
+}
+let tt = 0; function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2200); }
+
+/* ---------- Rendern ---------- */
+const el = { kick: $('#kick'), time: $('#time'), phrase: $('#phrase'), chips: $('#chips'), rf: $('#rf'), week: $('#week'), weTime: $('#weTime'), weBar: $('#weBar'), yPct: $('#yPct'), yLeft: $('#yLeft'), yBar: $('#yBar'), evs: $('#evs') };
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'], WDI = [1, 2, 3, 4, 5, 6, 0];
+let lastPhase = null, lastSlow = 0, lastTitle = '';
+function render(now, silent) {
+    const st = status(now, cfg);
+    document.body.dataset.phase = st.phase;
+    const hund = st.target && st.target - now < 86400e3;
+    let kick = '', chips = '';
+    if (st.phase === 'before') kick = 'Bis Arbeitsbeginn';
+    else if (st.phase === 'work') kick = 'Bis Feierabend';
+    else if (st.phase === 'lunch') kick = 'Mittagspause · bis Feierabend';
+    else if (st.phase === 'after') kick = 'Feierabend seit ' + human(st.since);
+    else kick = st.workday ? 'Frei' : 'Frei bis Arbeitsbeginn';
+    const ms = st.phase === 'after' ? (st.target ? st.target - now : 0) : (st.target ? st.target - now : 0);
+    if (st.phase === 'after') kick = 'Feierabend · seit ' + human(st.since);
+    el.kick.textContent = kick;
+    el.time.innerHTML = st.target ? fmt(ms, hund) : '–';
+    el.phrase.textContent = phrase(st, now);
+    // Ring
+    el.rf.setAttribute('stroke-dasharray', `${(st.phase === 'off' ? 1 : st.frac) * 1000} 1000`);
+    // Chips alle ~250 ms
+    if (now - lastSlow > 250 || silent) {
+        lastSlow = +now;
+        const c = [];
+        if (st.phase === 'work' || st.phase === 'lunch') c.push(`Netto noch <b>${human(st.netLeft)}</b>`, `Tag <b>${Math.floor(st.frac * 100)} %</b>`);
+        if (st.phase === 'before') c.push(`Netto <b>${human(st.netLeft)}</b>`);
+        if (st.phase === 'after' || st.phase === 'off' || st.phase === 'before') { if (st.target && st.phase !== 'before') c.push(`Nächster Start <b>${p2(st.target.getDate())}.${p2(st.target.getMonth() + 1)}. ${p2(st.target.getHours())}:${p2(st.target.getMinutes())}</b>`); }
+        if (st.workday) c.push(`${hm(T2M(cfg.start))} – ${hm(T2M(cfg.end))}`);
+        el.chips.innerHTML = c.map((x) => `<span class="chip">${x}</span>`).join('');
+        renderSide(now);
+        const title = (st.phase === 'work' || st.phase === 'lunch' ? 'Noch ' + human(ms) : st.phase === 'after' ? 'Feierabend' : st.phase === 'before' ? 'Beginn in ' + human(ms) : 'Frei') + ' | JB Feierabend';
+        if (title !== lastTitle) { document.title = title; lastTitle = title; }
+    }
+    if (!silent && lastPhase && (lastPhase === 'work' || lastPhase === 'lunch') && st.phase === 'after' && !document.hidden) confetti();
+    lastPhase = st.phase;
+}
+function renderSide(now) {
+    // Woche (Mo–So)
+    const today = dayStart(now), mondayOff = (today.getDay() + 6) % 7, mon = addDays(today, -mondayOff);
+    el.week.innerHTML = WDI.map((wd, i) => {
+        const d = addDays(mon, i), on = isWork(d, cfg), cur = +dayStart(d) === +today;
+        const f = on ? dayFill(d, now, cfg) : 0;
+        return `<div class="wd ${on ? '' : 'off'} ${cur ? 'today' : ''}"><i style="--p:${(f * 100).toFixed(1)}%"></i>${WD[wd]}</div>`;
+    }).join('');
+    // Wochenende
+    const we = weekendTarget(now, cfg);
+    if (we) { const tot = we.target - we.from, p = Math.max(0, Math.min(1, (now - we.from) / tot)); el.weTime.textContent = human(we.target - now); el.weBar.style.setProperty('--p', (p * 100).toFixed(1) + '%'); }
+    else { el.weTime.textContent = '–'; el.weBar.style.setProperty('--p', '0%'); }
+    // Jahr
+    const y = now.getFullYear(), a = new Date(y, 0, 1), b = new Date(y + 1, 0, 1), fr = (now - a) / (b - a);
+    el.yPct.textContent = (fr * 100).toFixed(1) + ' %'; el.yLeft.textContent = Math.ceil((b - now) / 86400e3) + ' Tage übrig';
+    el.yBar.style.setProperty('--p', (fr * 100).toFixed(2) + '%');
+    // Termine
+    renderEvents(now);
+}
+function evDate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+let evSig = '';
+function renderEvents(now) {
+    const today = dayStart(now);
+    const rows = events.map((e, i) => ({ ...e, i, dt: evDate(e.d) })).sort((x, y) => x.dt - y.dt);
+    const html = rows.map((e) => {
+        const n = Math.round((e.dt - today) / 86400e3);
+        const t = n === 0 ? 'heute' : n === 1 ? 'morgen' : n > 1 ? `in ${n} T` : `vor ${-n} T`;
+        return `<div class="ev" style="${n < 0 ? 'opacity:.5' : ''}"><b>${esc(e.n)}</b><span>${t}</span><button type="button" data-i="${e.i}" aria-label="Löschen">×</button></div>`;
+    }).join('');
+    if (html !== evSig) { evSig = html; el.evs.innerHTML = html; }
+}
+const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ---------- Einstellungen ---------- */
+function fillSettings() {
+    $('#cStart').value = cfg.start; $('#cEnd').value = cfg.end; $('#cLa').value = cfg.lunchA; $('#cLb').value = cfg.lunchB;
+    $('#days').innerHTML = WDI.map((d) => `<button type="button" data-d="${d}" aria-pressed="${cfg.days.includes(d)}">${WD[d]}</button>`).join('');
+}
+function readSettings() {
+    const c = { start: $('#cStart').value, end: $('#cEnd').value, lunchA: $('#cLa').value, lunchB: $('#cLb').value, days: cfg.days };
+    ['cStart', 'cEnd', 'cLa', 'cLb'].forEach((id) => $('#' + id).style.borderColor = '');
+    if (!valid(c)) { ['cStart', 'cEnd', 'cLa', 'cLb'].forEach((id) => $('#' + id).style.borderColor = 'var(--red)'); return; }
+    cfg = c; store.set('cfg', cfg); ringLunch(); lastPhase = null; render(new Date(), true);
+}
+['cStart', 'cEnd', 'cLa', 'cLb'].forEach((id) => $('#' + id).addEventListener('input', readSettings));
+$('#days').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return; const d = +b.dataset.d;
+    const set = new Set(cfg.days); set.has(d) ? set.delete(d) : set.add(d);
+    cfg = { ...cfg, days: [...set].sort() }; b.setAttribute('aria-pressed', set.has(d)); store.set('cfg', cfg); lastPhase = null; render(new Date(), true);
+});
+$('#evForm').addEventListener('submit', (e) => {
+    e.preventDefault(); const n = $('#evName').value.trim(), d = $('#evDate').value; if (!n || !d) return;
+    if (events.length >= 30) { toast('Maximal 30 Termine'); return; }
+    events.push({ n: n.slice(0, 40), d }); store.set('events', events); $('#evName').value = ''; evSig = ''; render(new Date(), true);
+});
+el.evs.addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (!b) return; events.splice(+b.dataset.i, 1); store.set('events', events); evSig = ''; render(new Date(), true); });
+$('#confetti').addEventListener('click', confetti);
+el.time.addEventListener('click', confetti);
+addEventListener('resize', () => { if (fxRun) size(); });
+
+/* ---------- Loop ---------- */
+buildRing(); ringLunch(); fillSettings();
+let skew = 0;                                      // Test: simulierte Zeit
+function loop() { render(new Date(Date.now() + skew)); requestAnimationFrame(loop); }
+render(new Date(), true); requestAnimationFrame(loop);
+window.__fa = { status, weekendTarget, nextWorkStart, DEF, get cfg() { return cfg; }, setSkew(ms) { skew = ms; lastPhase = null; }, render, confetti };
+})();
+</script>
+</body>
+</html>

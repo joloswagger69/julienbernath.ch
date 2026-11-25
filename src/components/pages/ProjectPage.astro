@@ -1,0 +1,181 @@
+---
+/* Projektseite: Titel, Vorschaubild, Beschreibung und Eckdaten, Videos
+   (Klick zum Laden), Galerie im Editorial-Rhythmus mit Bildansicht,
+   «Nächster Clip». Alle Inhalte des bisherigen Viewers bleiben erhalten. */
+import { Image, getImage } from 'astro:assets';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import SiteGraphic from '../SiteGraphic.astro';
+import VideoEmbed from '../VideoEmbed.astro';
+import Viewer from '../Viewer.astro';
+import { PREVIEW } from '../../config';
+import {
+    KIND_LABEL, categoryLabel, coverAltOf, coverOf, getProjects, imageAlt, imagesOf, lengthLabel,
+    projectPath, slugOf, teamOf, videosOf, type Project
+} from '../../lib/projects';
+import { fmt, path, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang; project: Project }
+const { lang, project } = Astro.props;
+const t = useTranslations(lang);
+const d = project.data;
+const slug = slugOf(project);
+const { Content } = await render(project);
+
+const all = (await getProjects(lang)).map((p) => p.project);
+const idx = all.findIndex((p) => slugOf(p) === slug);
+const prev = all[(idx - 1 + all.length) % all.length];
+const next = all[(idx + 1) % all.length];
+const nextCover = coverOf(next);
+
+const cover = coverOf(project);
+const images = imagesOf(project);
+const videos = videosOf(project);
+const team = teamOf(project, PREVIEW);
+
+// Grosse Version für die Bildansicht: max. 2000 px, nie grösser als das Original
+const full = await Promise.all(images.map((m) => getImage({ src: m.src, width: Math.min(2000, m.src.width), format: 'webp' })));
+const ogImage = cover ? (await getImage({ src: cover, width: 1200, height: 630, fit: 'cover', format: 'jpg' })).src : undefined;
+
+// Galerie-Rhythmus: Querformate über die ganze Breite, Hochformate paarweise (Reihenfolge bleibt)
+type Item = { m: (typeof images)[number]; i: number };
+const rows: Item[][] = [];
+let pending: Item | null = null;
+images.forEach((m, i) => {
+    const landscape = m.src.width / m.src.height > 1.15;
+    if (landscape) { if (pending) { rows.push([pending]); pending = null; } rows.push([{ m, i }]); }
+    else if (pending) { rows.push([pending, { m, i }]); pending = null; }
+    else pending = { m, i };
+});
+if (pending) rows.push([pending]);
+---
+<Base lang={lang} alternates={{ de: projectPath(slug, 'de'), en: projectPath(slug, 'en') }}
+      title={`${d.title} | Julien Bernath`} description={`${d.title} – ${d.client}, ${d.year}. ${categoryLabel(d.category, lang)}. ${lang === 'de' ? 'Projekt von Julien Bernath, Mediamatiker EFZ.' : 'A project by Julien Bernath, Mediamatician.'}`}
+      ogImage={ogImage} ogImageAlt={coverAltOf(project)}>
+    <article>
+        <header class="wrap p-head" data-clip={d.title}>
+            <p class="p-kicker">
+                <span class="label" data-kind={d.kind}>{KIND_LABEL[d.kind][lang]}</span>
+                <span>{categoryLabel(d.category, lang)}</span>
+                <span class="tc muted">{lengthLabel(project, lang)}</span>
+            </p>
+            <h1 class="h1 p-title">{d.title}</h1>
+        </header>
+
+        <div class="wrap p-cover">
+            {cover
+                ? <Image src={cover} alt={coverAltOf(project)} width={2000} widths={[640, 860, 1200, 1600, 2000]} sizes="(max-width: 1440px) 100vw, 1360px" loading="eager" fetchpriority="high" />
+                : d.coverGraphic === 'site' && <div class="p-graphic"><SiteGraphic /></div>}
+        </div>
+
+        <section class="wrap p-info">
+            <div class="prose p-desc"><Content /></div>
+            <dl class="p-meta">
+                <div><dt>{t('project.client')}</dt><dd>{d.client}</dd></div>
+                <div><dt>{t('project.year')}</dt><dd class="tc">{d.year}</dd></div>
+                <div><dt>{t('project.role')}</dt><dd>{d.role}</dd></div>
+                <div><dt>{t('project.deliverables')}</dt><dd>{d.deliverables}</dd></div>
+                {d.software && <div><dt>{t('project.software')}</dt><dd>{d.software.join(', ')}</dd></div>}
+                {team && (
+                    <div><dt>{t('project.team')}</dt><dd>
+                        {team.names ? `${t('project.teamWith')} ${team.names.join(', ')}` : t('project.teamOnly')}
+                        {team.pending && team.names && <span class="pending tc"> {lang === 'de' ? '(Freigabe ausstehend – nur in der Vorschau sichtbar)' : '(approval pending – visible in preview only)'}</span>}
+                    </dd></div>
+                )}
+            </dl>
+        </section>
+
+        {videos.length > 0 && (
+            <section class="wrap p-block" data-clip={t('project.videos')}>
+                <h2 class="h3 p-sub">{t('project.videos')} <span class="tc muted">{videos.length}</span></h2>
+                <div class:list={['p-videos', { many: videos.length > 1 }]}>
+                    {videos.map((v) => <VideoEmbed lang={lang} video={v} title={`${d.title}: ${v.label}`} />)}
+                </div>
+            </section>
+        )}
+
+        {images.length > 0 && (
+            <section class="wrap p-block" data-clip={t('project.images')}>
+                <h2 class="h3 p-sub">{t('project.images')} <span class="tc muted">{images.length}</span></h2>
+                <div class="gallery">
+                    {rows.map((row) => (
+                        <div class:list={['g-row', row.length === 2 || row[0].m.src.width / row[0].m.src.height <= 1.15 ? 'pair' : 'single']}>
+                            {row.map(({ m, i }) => {
+                                const alt = imageAlt(project, m, `${d.title}, ${fmt(t('project.imageOf'), { n: i + 1, total: images.length })}`);
+                                return (
+                                    <a href={full[i].src} data-viewer class="g-item">
+                                        <Image src={m.src} alt={alt} width={1400} widths={[480, 800, 1400]}
+                                               sizes={row.length === 2 || m.src.width / m.src.height <= 1.15 ? '(max-width: 760px) 50vw, 680px' : '(max-width: 1440px) 100vw, 1360px'}
+                                               loading="lazy" />
+                                        <span class="tc g-num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+                <Viewer lang={lang} title={d.title} />
+            </section>
+        )}
+
+        <nav class="wrap p-next" aria-label={t('nav.work')}>
+            <a class="next-link" href={projectPath(slugOf(next), lang)}>
+                <span class="next-label muted">{t('project.nextClip')}</span>
+                <span class="next-title">{next.data.title}</span>
+                {nextCover && <Image class="next-img" src={nextCover} alt="" width={480} widths={[240, 480]} sizes="240px" />}
+            </a>
+            <p class="p-pager">
+                <a href={projectPath(slugOf(prev), lang)}>{t('project.prev')}: {prev.data.title}</a>
+                <a href={path('work', lang)}>{t('project.back')}</a>
+            </p>
+        </nav>
+    </article>
+</Base>
+
+<style>
+    .p-head { padding-top: clamp(28px, 5vw, 72px); }
+    .p-kicker { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--muted); font-size: var(--step--1); }
+    .p-title { margin-top: 14px; max-width: 18ch; }
+    .p-cover { margin-top: clamp(24px, 4vw, 48px); }
+    .p-cover :global(img) { width: 100%; max-height: 82vh; object-fit: cover; background: var(--panel); }
+    .p-graphic { background: var(--panel); padding: clamp(24px, 6vw, 96px); }
+    .p-graphic :global(svg) { max-width: 720px; margin-inline: auto; }
+
+    .p-info { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(28px, 5vw, 80px); padding-top: clamp(32px, 5vw, 64px); }
+    .p-desc { font-size: var(--step-1); line-height: 1.5; }
+    .p-meta { display: grid; gap: 18px; align-content: start; border-top: 1px solid var(--line-strong); padding-top: 18px; }
+    .p-meta dt { font-size: var(--step--1); color: var(--muted); }
+    .p-meta dd { font-weight: 550; }
+    .pending { font-size: 0.75rem; color: var(--red-ink); font-weight: 400; }
+
+    .p-block { padding-top: clamp(56px, 8vw, 112px); }
+    .p-sub { display: flex; gap: 12px; align-items: baseline; margin-bottom: 20px; }
+    .p-sub .tc { font-size: var(--step--1); font-weight: 400; }
+    .p-videos { display: grid; gap: 32px; }
+    .p-videos.many { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-items: start; }
+
+    .gallery { display: grid; gap: clamp(8px, 1.4vw, 20px); }
+    .g-row { display: grid; gap: clamp(8px, 1.4vw, 20px); }
+    .g-row.pair { grid-template-columns: 1fr 1fr; align-items: start; }
+    .g-item { position: relative; display: block; background: var(--panel); cursor: zoom-in; }
+    .g-item :global(img) { width: 100%; }
+    .g-num { position: absolute; left: 10px; bottom: 10px; font-size: 0.75rem; padding: 3px 6px; background: rgba(0, 0, 0, 0.55); color: #F1F1EC; opacity: 0; transition: opacity var(--cut) var(--ease); }
+    .g-item:hover .g-num, .g-item:focus-visible .g-num { opacity: 1; }
+
+    .p-next { padding-top: clamp(72px, 10vw, 144px); }
+    .next-link { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 4px 24px; align-items: end; text-decoration: none; border-top: 1px solid var(--line-strong); padding-top: 24px; }
+    .next-label { grid-column: 1; }
+    .next-title { grid-column: 1; font-size: var(--step-4); font-weight: 860; font-stretch: 66%; line-height: 0.95; text-transform: uppercase; transition: color var(--cut) var(--ease); }
+    .next-link:hover .next-title { color: var(--red-ink); }
+    .next-link :global(.next-img) { grid-column: 2; grid-row: 1 / span 2; width: clamp(120px, 18vw, 240px); aspect-ratio: 3 / 2; object-fit: cover; }
+    .p-pager { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; margin-top: 28px; color: var(--muted); }
+
+    @media (max-width: 860px) {
+        .p-info { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+        .next-link { grid-template-columns: 1fr; }
+        .next-link :global(.next-img) { grid-column: 1; grid-row: auto; width: 100%; }
+    }
+</style>

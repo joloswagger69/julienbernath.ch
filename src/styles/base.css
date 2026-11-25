@@ -1,0 +1,117 @@
+/* ==========================================================================
+   Grundstil: Reset, Typografie, Raster, Bedienelemente, Übergänge
+   ========================================================================== */
+
+/* Nur die benötigten Schriftschnitte; der Browser lädt dank unicode-range nur Latin */
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource/ibm-plex-mono/latin-400.css';
+@import '@fontsource/ibm-plex-mono/latin-500.css';
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    background: var(--base);
+    scroll-padding-top: calc(var(--top-h) + 16px);
+}
+@media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--base);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: var(--step-0);
+    line-height: 1.55;
+    font-kerning: normal;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    padding-bottom: var(--tl-h);
+}
+main { flex: 1; }
+/* Seite hinter offener Bildansicht nicht mitscrollen */
+html:has(dialog[open]) { overflow: hidden; }
+
+::selection { background: var(--red); color: #fff; }
+
+img, video, svg, iframe { display: block; max-width: 100%; }
+img { height: auto; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+a:hover { text-decoration-color: var(--red); }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+ul, ol { list-style: none; }
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+
+/* ---------- Typografie ---------- */
+h1, h2, h3 { font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; text-wrap: balance; }
+.display {
+    font-weight: 860;
+    font-stretch: 66%;
+    line-height: 0.88;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+}
+.h1 { font-size: var(--step-4); font-weight: 860; font-stretch: 70%; line-height: 0.95; }
+.h2 { font-size: var(--step-3); font-weight: 820; font-stretch: 75%; }
+.h3 { font-size: var(--step-1); font-weight: 750; }
+.lede { font-size: var(--step-1); line-height: 1.4; max-width: 34ch; }
+.prose { max-width: 66ch; }
+.prose p + p { margin-top: 0.9em; }
+.muted { color: var(--muted); }
+.tc { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+
+/* ---------- Raster ---------- */
+.wrap { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+.section { padding-block: clamp(56px, 9vw, 128px) 0; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 32px; margin-bottom: clamp(24px, 4vw, 48px); }
+
+/* ---------- Bedienelemente ---------- */
+.btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    min-height: 46px; padding: 0 20px;
+    border: 1px solid var(--ink); border-radius: 2px;
+    font-weight: 650; text-decoration: none; line-height: 1;
+    transition: background-color var(--cut) var(--ease), color var(--cut) var(--ease), border-color var(--cut) var(--ease);
+}
+.btn:hover { background: var(--ink); color: var(--base); }
+.btn-solid { background: var(--ink); color: var(--base); }
+.btn-solid:hover { background: var(--red); border-color: var(--red); color: #fff; }
+
+.rec-dot { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--red); flex: none; }
+@media (prefers-reduced-motion: no-preference) {
+    .rec-dot.is-live { animation: rec 1.6s steps(1) infinite; }
+}
+@keyframes rec { 50% { opacity: 0.2; } }
+
+/* Clip-Label (Kategorie) – Farbstreifen wie im Schnittprogramm */
+.label { display: inline-flex; align-items: center; gap: 8px; font-size: var(--step--1); color: var(--muted); }
+.label::before { content: ''; width: 12px; height: 12px; border-radius: 2px; background: var(--c, var(--line-strong)); }
+.label[data-kind='photo'] { --c: var(--label-photo); }
+.label[data-kind='video'] { --c: var(--label-video); }
+.label[data-kind='design'] { --c: var(--label-design); }
+
+/* ---------- Hilfen ---------- */
+.skip-link { position: absolute; left: 12px; top: -80px; z-index: 300; background: var(--ink); color: var(--base); padding: 12px 16px; }
+.skip-link:focus { top: 12px; }
+.visually-hidden {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- Seitenwechsel: harter Schnitt (CSS View Transitions, ohne JavaScript) ---------- */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--cut); animation-timing-function: steps(2, end); }
+
+@media (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: none; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

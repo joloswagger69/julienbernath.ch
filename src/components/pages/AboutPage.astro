@@ -1,0 +1,256 @@
+---
+/* Über mich: Text, Portrait-Takes mit Filmklappe (Steckbrief), Werdegang,
+   Skills in drei Stufen, Shotlist (abhaken, lokal gespeichert), Playlist (Klick zum Laden). */
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import { about, career, playlist, portraitAlts, portraits, slate } from '../../data/about';
+import { ai, craft, software } from '../../data/skills';
+import { shotlist } from '../../data/shotlist';
+import { meta } from '../../data/site';
+import { alternates, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const tiers = [
+    { title: t('about.skillsMain'), list: software[lang].main },
+    { title: t('about.skillsSolid'), list: software[lang].solid },
+    { title: t('about.skillsBasic'), list: software[lang].basic }
+];
+const a = about[lang], sl = shotlist, pl = playlist[lang];
+---
+<Base lang={lang} alternates={alternates('about')} title={meta[lang].about.title} description={meta[lang].about.description}>
+    <section class="wrap intro" data-clip={a.title}>
+        <div class="intro-text">
+            <h1 class="h1">{a.title}</h1>
+            <p class="lede intro-lead">{a.lead}</p>
+            <div class="prose intro-body">{a.paragraphs.map((p) => <p>{p}</p>)}</div>
+        </div>
+
+        <div class="takes">
+            <button type="button" class="portrait" data-take aria-label={t('about.take')}>
+                {portraits.map((src, i) => (
+                    <Image src={src} alt={portraitAlts[lang][i]} width={900} widths={[450, 900]} sizes="(max-width: 860px) 90vw, 36vw"
+                           loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} hidden={i !== 0} class="take-img" data-take-img />
+                ))}
+            </button>
+            <p class="take-cap"><span>julienbernath.ch</span><span class="tc" data-take-label aria-live="polite">Take 1</span></p>
+            <div class="slate" data-slate>
+                <div class="slate-sticks" aria-hidden="true"></div>
+                <dl class="slate-grid" aria-label={t('about.slate')}>
+                    {slate[lang].map((c) => <div class:list={['cell', { wide: 'wide' in c && c.wide }]}><dt>{c.label}</dt><dd>{c.value}</dd></div>)}
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <section class="section wrap" data-clip={t('about.career')} aria-labelledby="career-title">
+        <h2 id="career-title" class="h2 section-head">{t('about.career')}</h2>
+        <ol class="career">
+            {career[lang].map((c) => (
+                <li>
+                    <span class="tc career-years">{c.years}</span>
+                    <div>
+                        <h3 class="h3">{c.title}</h3>
+                        <p class="muted">{c.place}</p>
+                        <p class="prose career-text">{c.text}</p>
+                        {'completed' in c && <p class="career-done"><span class="rec-dot" aria-hidden="true"></span>{t('about.completed')}</p>}
+                    </div>
+                </li>
+            ))}
+        </ol>
+    </section>
+
+    <section class="section wrap" data-clip={t('about.skills')} aria-labelledby="skills-title">
+        <h2 id="skills-title" class="h2 section-head">{t('about.skills')}</h2>
+        <div class="tiers">
+            {tiers.map((tier) => (
+                <div class="tier">
+                    <h3 class="tier-title">{tier.title}</h3>
+                    <ul>{tier.list.map((s) => <li><strong>{s.name}</strong><span class="muted">{s.tags}</span></li>)}</ul>
+                </div>
+            ))}
+        </div>
+        <div class="tiers tiers-extra">
+            <div class="tier">
+                <h3 class="tier-title">{t('about.skillsAi')}</h3>
+                <ul><li><strong>{ai[lang].name}</strong><span class="muted">{ai[lang].tags}</span></li></ul>
+            </div>
+            <div class="tier tier-wide">
+                <h3 class="tier-title">{t('about.skillsCraft')}</h3>
+                <ul class="craft">{craft[lang].map((s) => <li><strong>{s.name}</strong><span class="muted">{s.tags}</span></li>)}</ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="section wrap extras" aria-label={`${sl.title[lang]}, ${pl.title}`}>
+        <details class="drawer">
+            <summary><span class="h3">{sl.title[lang]}</span><span class="muted">{sl.hint[lang]}</span></summary>
+            <div class="shot-bar">
+                <p class="muted drawer-note">{t('about.shotlistNote')}</p>
+                <p class="shot-actions">
+                    <span class="tc" data-shot-count data-template={t('about.shotlistDone')} aria-live="polite"></span>
+                    <button type="button" class="btn shot-reset" data-shot-reset data-done={t('about.shotlistResetDone')}>{t('about.shotlistReset')}</button>
+                </p>
+            </div>
+            <div class="shotlist" data-shotlist>
+                {sl.groups.map((g) => (
+                    <div data-group={g.group[lang]}>
+                        <h3 class="shot-group">{g.group[lang]}</h3>
+                        <ul>{g.items.map((it) => <li><label><input type="checkbox" checked={it.done} data-key={it.de} data-default={it.done ? '1' : '0'} /><span>{it[lang]}</span></label></li>)}</ul>
+                    </div>
+                ))}
+            </div>
+        </details>
+        <details class="drawer" data-playlist>
+            <summary><span class="h3">{pl.title}</span><span class="muted">{pl.hint}</span></summary>
+            <div class="playlist" data-embed-src={playlist.embed}>
+                <button type="button" class="btn" data-load>{t('about.playlistLoad')}</button>
+                <p class="muted">{t('about.playlistNote')}</p>
+            </div>
+            <p><a href={playlist.url} target="_blank" rel="noopener noreferrer">{t('about.openMusic')}</a></p>
+        </details>
+    </section>
+</Base>
+
+<script>
+    const fx = (id: string) => document.dispatchEvent(new CustomEvent('jb:fx', { detail: id }));
+
+    // Portrait-Takes: Klick = nächster Take, Filmklappe schlägt
+    const btn = document.querySelector<HTMLButtonElement>('[data-take]');
+    if (btn) {
+        const imgs = [...btn.querySelectorAll<HTMLImageElement>('[data-take-img]')];
+        const label = document.querySelector<HTMLElement>('[data-take-label]')!;
+        const slate = document.querySelector<HTMLElement>('[data-slate]')!;
+        let take = 0;
+        // Nächsten Take erst bei Interesse laden (Maus darüber, Fokus oder Klick)
+        const prep = (k: number) => { const im = imgs[k % imgs.length]; if (im.loading === 'lazy') im.loading = 'eager'; };
+        ['pointerenter', 'focus'].forEach((ev) => btn.addEventListener(ev, () => prep(take + 1)));
+        btn.addEventListener('click', () => {
+            take = (take + 1) % imgs.length;
+            imgs.forEach((im, k) => { im.hidden = k !== take; });
+            prep(take + 1);
+            label.textContent = `Take ${take + 1}`;
+            slate.classList.remove('is-clap'); void slate.offsetWidth; slate.classList.add('is-clap');
+            fx('take');
+        });
+    }
+
+    // Shotlist: Änderungen des Besuchers lokal speichern (gleicher Schlüssel wie bisher).
+    // Gespeichert wird nur, was der Besucher ändert; ohne Eintrag gilt der Stand von Julien.
+    const KEY = 'jb2-shotlist2';
+    let over: Record<string, boolean> = {};
+    try { over = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { over = {}; }
+    const boxes = [...document.querySelectorAll<HTMLInputElement>('[data-shotlist] input')];
+    const countEl = document.querySelector<HTMLElement>('[data-shot-count]');
+    const resetBtn = document.querySelector<HTMLButtonElement>('[data-shot-reset]');
+    const paint = () => {
+        const done = boxes.filter((b) => b.checked).length;
+        if (countEl) countEl.textContent = countEl.dataset.template!.replace('{n}', String(done)).replace('{total}', String(boxes.length));
+        if (resetBtn) resetBtn.disabled = Object.keys(over).length === 0;
+    };
+    const save = () => { try { Object.keys(over).length ? localStorage.setItem(KEY, JSON.stringify(over)) : localStorage.removeItem(KEY); } catch (e) { /* privater Modus */ } };
+    boxes.forEach((box) => {
+        const k = box.dataset.key!;
+        if (k in over) box.checked = !!over[k];
+        box.addEventListener('change', () => {
+            const def = box.dataset.default === '1';
+            if (box.checked === def) delete over[k]; else over[k] = box.checked;
+            save(); paint();
+            fx('check');
+        });
+    });
+    resetBtn?.addEventListener('click', () => {
+        over = {};
+        save();
+        boxes.forEach((b) => { b.checked = b.dataset.default === '1'; });
+        paint();
+        const label = resetBtn.textContent;
+        resetBtn.textContent = resetBtn.dataset.done!;
+        setTimeout(() => { resetBtn.textContent = label; paint(); }, 1600);
+    });
+    paint();
+
+    // Playlist erst auf Wunsch einbinden
+    const pl = document.querySelector<HTMLElement>('[data-embed-src]');
+    pl?.querySelector('[data-load]')?.addEventListener('click', () => {
+        const f = document.createElement('iframe');
+        f.src = pl.dataset.embedSrc!;
+        f.title = "Apple Music: Julien's Favorites";
+        f.height = '450';
+        f.loading = 'lazy';
+        f.allow = 'autoplay *; encrypted-media *;';
+        f.setAttribute('sandbox', 'allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation');
+        pl.replaceChildren(f);
+    }, { once: true });
+</script>
+
+<style>
+    .intro { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 96px); padding-top: clamp(32px, 6vw, 80px); align-items: start; }
+    .intro-lead { margin-top: 24px; max-width: 30ch; font-size: var(--step-2); line-height: 1.25; }
+    .intro-body { margin-top: 24px; }
+
+    .takes { position: sticky; top: calc(var(--top-h) + 24px); }
+    .portrait { display: grid; width: 100%; padding: 0; cursor: pointer; background: var(--panel); }
+    .portrait :global(.take-img) { grid-area: 1 / 1; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+    .take-cap { display: flex; justify-content: space-between; margin-top: 8px; font-size: var(--step--1); color: var(--muted); }
+
+    .slate { margin-top: 18px; background: #111; color: #F1F1EC; border-radius: 3px; overflow: hidden; }
+    .slate-sticks { height: 22px; background: repeating-linear-gradient(-45deg, #F1F1EC 0 16px, #111 16px 32px); transform-origin: 0 100%; }
+    .slate:global(.is-clap) .slate-sticks { animation: clap 0.28s var(--ease); }
+    @keyframes clap { 0% { transform: rotate(-10deg); } 60% { transform: rotate(0); } }
+    .slate-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .cell { padding: 10px 14px; border-top: 1px solid rgba(255, 255, 255, 0.18); }
+    .cell:nth-child(even):not(.wide) { border-left: 1px solid rgba(255, 255, 255, 0.18); }
+    .cell.wide { grid-column: 1 / -1; }
+    .cell dt { font-size: 0.75rem; color: #A3A49C; }
+    .cell dd { font-weight: 650; }
+
+    .career { display: grid; border-top: 1px solid var(--line-strong); }
+    .career li { display: grid; grid-template-columns: minmax(120px, 2fr) minmax(0, 10fr); gap: 24px; padding-block: 28px; border-bottom: 1px solid var(--line); }
+    .career-years { color: var(--red-ink); padding-top: 4px; }
+    .career-text { margin-top: 10px; }
+    .career-done { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-weight: 600; }
+
+    .tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; border-top: 1px solid var(--line-strong); padding-top: 24px; }
+    .tiers-extra { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); margin-top: 40px; }
+    .tier-title { font-size: var(--step-1); font-weight: 760; margin-bottom: 14px; }
+    .tier ul { display: grid; gap: 14px; }
+    .tier li { display: grid; gap: 2px; }
+    .tier li span { font-size: var(--step--1); }
+    .craft { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+    .extras { display: grid; gap: 0; }
+    .drawer { border-top: 1px solid var(--line-strong); }
+    .drawer:last-child { border-bottom: 1px solid var(--line-strong); }
+    .drawer summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; padding-block: 22px; cursor: pointer; list-style: none; }
+    .drawer summary::-webkit-details-marker { display: none; }
+    .drawer summary::after { content: '+'; font-family: var(--mono); font-size: 1.4rem; line-height: 1; margin-left: auto; }
+    .drawer[open] summary::after { content: '–'; }
+    .drawer summary .muted { font-size: var(--step--1); }
+    .drawer-note { font-size: var(--step--1); }
+    .shot-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; margin-bottom: 20px; }
+    .shot-actions { display: flex; align-items: center; gap: 16px; }
+    .shot-actions .tc { font-size: var(--step--1); color: var(--muted); }
+    .shot-reset { min-height: 40px; padding: 0 14px; }
+    .shot-reset:disabled { opacity: 0.45; cursor: not-allowed; }
+    .shot-reset:disabled:hover { background: none; color: inherit; }
+    .shotlist { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding-bottom: 32px; }
+    .shot-group { font-size: var(--step-0); margin-bottom: 10px; }
+    .shotlist ul { display: grid; gap: 4px; }
+    .shotlist label { display: flex; gap: 10px; align-items: baseline; cursor: pointer; }
+    .shotlist input { accent-color: var(--red); width: 16px; height: 16px; flex: none; translate: 0 2px; }
+    .shotlist input:checked + span { text-decoration: line-through; color: var(--muted); }
+    .playlist { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-bottom: 16px; }
+    .playlist :global(iframe) { width: 100%; height: 450px; border: 0; border-radius: 3px; }
+    [data-playlist] > p { padding-bottom: 24px; }
+
+    @media (max-width: 860px) {
+        .intro { grid-template-columns: 1fr; }
+        .takes { position: static; max-width: 460px; }
+        .tiers, .tiers-extra { grid-template-columns: 1fr; }
+        .shotlist { grid-template-columns: 1fr; }
+        .career li { grid-template-columns: 1fr; gap: 6px; }
+    }
+</style>

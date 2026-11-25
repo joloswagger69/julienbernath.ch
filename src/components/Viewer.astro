@@ -1,0 +1,183 @@
+---
+/* Bildansicht (Lightbox) für Galerien: öffnet Links mit data-viewer.
+   Bedienung: ← → blättern, Esc schliessen, F oder Knopf = Vollbild,
+   Klick / Doppeltipp / Knopf / + − = Zoom, im Zoom ziehen = verschieben,
+   seitlich wischen = blättern. Der native <dialog> hält den Fokus im Viewer
+   und gibt ihn beim Schliessen an das geöffnete Bild zurück.
+   Ohne JavaScript öffnen die Links einfach die grosse Bildversion. */
+import type { Lang } from '../i18n/ui';
+import { useTranslations } from '../i18n/utils';
+interface Props { lang: Lang; title: string }
+const { lang, title } = Astro.props;
+const t = useTranslations(lang);
+---
+<dialog class="viewer" data-viewer-dialog aria-label={`${t('viewer.label')}: ${title}`}>
+    <div class="v-top">
+        <span class="tc v-count" data-v-count aria-live="polite"></span>
+        <div class="v-tools">
+            <button type="button" class="v-btn" data-v-zoom aria-pressed="false">{t('viewer.zoomBtn')}</button>
+            <button type="button" class="v-btn" data-v-full hidden>{t('viewer.full')}</button>
+            <button type="button" class="v-btn v-close" data-v-close>{t('viewer.close')}</button>
+        </div>
+    </div>
+    <div class="v-stage" data-v-stage>
+        <img data-v-img alt="" decoding="async" draggable="false" />
+        <button type="button" class="v-nav v-prev" data-v-prev aria-label={t('viewer.prev')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button>
+        <button type="button" class="v-nav v-next" data-v-next aria-label={t('viewer.next')}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button>
+    </div>
+    <p class="v-cap"><span data-v-cap></span> <span class="v-help">{t('viewer.help')}</span></p>
+</dialog>
+
+<script>
+    const fx = (id: string) => document.dispatchEvent(new CustomEvent('jb:fx', { detail: id }));
+    const dlg = document.querySelector<HTMLDialogElement>('[data-viewer-dialog]');
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('a[data-viewer]')];
+    if (dlg && links.length) {
+        const img = dlg.querySelector<HTMLImageElement>('[data-v-img]')!;
+        const count = dlg.querySelector<HTMLElement>('[data-v-count]')!;
+        const cap = dlg.querySelector<HTMLElement>('[data-v-cap]')!;
+        const stage = dlg.querySelector<HTMLElement>('[data-v-stage]')!;
+        const zoomBtn = dlg.querySelector<HTMLButtonElement>('[data-v-zoom]')!;
+        const fullBtn = dlg.querySelector<HTMLButtonElement>('[data-v-full]')!;
+        let i = 0, opener: HTMLElement | null = null;
+        let zoomed = false, ox = 50, oy = 50;
+        const p2 = (n: number) => String(n).padStart(2, '0');
+        const preload = (k: number) => { const l = links[(k + links.length) % links.length]; if (l) new Image().src = l.href; };
+
+        const setOrigin = () => { img.style.transformOrigin = `${ox}% ${oy}%`; };
+        function setZoom(on: boolean, clientX?: number, clientY?: number) {
+            zoomed = on;
+            if (on && clientX !== undefined && clientY !== undefined) {
+                const r = img.getBoundingClientRect();
+                ox = Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100));
+                oy = Math.min(100, Math.max(0, ((clientY - r.top) / r.height) * 100));
+            } else if (on) { ox = 50; oy = 50; }
+            setOrigin();
+            img.classList.toggle('is-zoom', on);
+            stage.classList.toggle('is-zoomed', on);
+            zoomBtn.setAttribute('aria-pressed', String(on));
+            if (on) fx('loupe');
+        }
+        function show(k: number) {
+            i = (k + links.length) % links.length;
+            const l = links[i];
+            setZoom(false);
+            img.src = l.href;
+            img.alt = l.querySelector('img')?.alt ?? '';
+            count.textContent = `${p2(i + 1)} / ${p2(links.length)}`;
+            cap.textContent = img.alt;
+            preload(i + 1); preload(i - 1);
+        }
+
+        links.forEach((l, k) => l.addEventListener('click', (e) => {
+            e.preventDefault();
+            opener = l;
+            show(k);
+            dlg.showModal();
+        }));
+        if (document.fullscreenEnabled) fullBtn.hidden = false;
+        const toggleFull = () => {
+            if (!document.fullscreenEnabled) return;
+            document.fullscreenElement ? document.exitFullscreen() : dlg.requestFullscreen().then(() => fx('fullscreen')).catch(() => {});
+        };
+        fullBtn.addEventListener('click', toggleFull);
+        zoomBtn.addEventListener('click', () => setZoom(!zoomed));
+        dlg.querySelector('[data-v-close]')!.addEventListener('click', () => dlg.close());
+        dlg.querySelector('[data-v-prev]')!.addEventListener('click', () => show(i - 1));
+        dlg.querySelector('[data-v-next]')!.addEventListener('click', () => show(i + 1));
+        dlg.addEventListener('close', () => {
+            img.removeAttribute('src');
+            if (document.fullscreenElement) document.exitFullscreen();
+            opener?.focus();
+        });
+        dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+        dlg.addEventListener('keydown', (e) => {
+            const k = e.key;
+            if (k === 'ArrowRight' && !zoomed) { e.preventDefault(); show(i + 1); fx('arrows'); }
+            else if (k === 'ArrowLeft' && !zoomed) { e.preventDefault(); show(i - 1); fx('arrows'); }
+            else if (zoomed && k.startsWith('Arrow')) {
+                // Im Zoom verschieben die Pfeiltasten den Ausschnitt
+                e.preventDefault();
+                ox = Math.min(100, Math.max(0, ox + (k === 'ArrowRight' ? 8 : k === 'ArrowLeft' ? -8 : 0)));
+                oy = Math.min(100, Math.max(0, oy + (k === 'ArrowDown' ? 8 : k === 'ArrowUp' ? -8 : 0)));
+                setOrigin();
+            }
+            else if (k === '+' || k === '=') setZoom(true);
+            else if (k === '-' || k === '0') setZoom(false);
+            else if (k.toLowerCase() === 'f' && !(e.target as Element).closest('button')) toggleFull();
+        });
+
+        // Maus: Klick zoomt an die Stelle; im Zoom folgt der Ausschnitt der Maus
+        img.addEventListener('click', (e) => { if (!dragged && lastType === 'mouse') setZoom(!zoomed, e.clientX, e.clientY); });
+        img.addEventListener('mousemove', (e) => {
+            if (!zoomed || pointerDown) return;
+            const r = img.getBoundingClientRect();
+            ox = ((e.clientX - r.left) / r.width) * 100; oy = ((e.clientY - r.top) / r.height) * 100;
+            setOrigin();
+        });
+
+        // Touch: Doppeltipp = Zoom, im Zoom ziehen = verschieben, sonst seitlich wischen = blättern
+        let pointerDown = false, dragged = false, x0 = 0, y0 = 0, ox0 = 50, oy0 = 50, lastTap = 0, lastType = 'mouse';
+        stage.addEventListener('pointerdown', (e) => {
+            lastType = e.pointerType;
+            if ((e.target as Element).closest('button')) return;
+            pointerDown = true; dragged = false; x0 = e.clientX; y0 = e.clientY; ox0 = ox; oy0 = oy;
+        });
+        stage.addEventListener('pointermove', (e) => {
+            if (!pointerDown) return;
+            const dx = e.clientX - x0, dy = e.clientY - y0;
+            if (Math.abs(dx) + Math.abs(dy) > 6) dragged = true;
+            if (zoomed && e.pointerType !== 'mouse') {
+                const r = img.getBoundingClientRect();
+                ox = Math.min(100, Math.max(0, ox0 - (dx / r.width) * 100 * 2.2));
+                oy = Math.min(100, Math.max(0, oy0 - (dy / r.height) * 100 * 2.2));
+                setOrigin();
+            }
+        });
+        stage.addEventListener('pointerup', (e) => {
+            if (!pointerDown) return;
+            pointerDown = false;
+            const dx = e.clientX - x0, dy = e.clientY - y0;
+            if (e.pointerType !== 'mouse') {
+                if (!zoomed && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { show(i + (dx < 0 ? 1 : -1)); fx('swipe'); }
+                else if (!dragged && e.target === img) {
+                    const now = Date.now();
+                    if (now - lastTap < 320) { setZoom(!zoomed, e.clientX, e.clientY); lastTap = 0; } else lastTap = now;
+                }
+            }
+            setTimeout(() => { dragged = false; }, 0);
+        });
+        stage.addEventListener('pointercancel', () => { pointerDown = false; });
+    }
+</script>
+
+<style>
+    .viewer {
+        width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+        background: #0A0A09; color: #F1F1EC;
+        display: none; grid-template-rows: auto 1fr auto;
+    }
+    .viewer[open] { display: grid; }
+    .viewer::backdrop { background: #000; }
+    .v-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px var(--gutter); }
+    .v-count { font-size: 0.875rem; }
+    .v-tools { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .v-btn { min-height: 42px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 2px; font-weight: 600; }
+    .v-btn:hover, .v-btn[aria-pressed='true'] { background: #F1F1EC; color: #000; }
+    .v-stage { position: relative; min-height: 0; display: grid; place-items: center; overflow: hidden; padding: 0 clamp(8px, 6vw, 88px); background: #0A0A09; touch-action: pan-y; }
+    .v-stage.is-zoomed { touch-action: none; }
+    .v-stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; user-select: none; -webkit-user-drag: none; transition: transform 0.3s var(--ease); }
+    .v-stage img:global(.is-zoom) { transform: scale(2.4); cursor: zoom-out; transition: transform 0.3s var(--ease), transform-origin 0.08s linear; }
+    .v-nav { position: absolute; top: 50%; translate: 0 -50%; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: rgba(0, 0, 0, 0.5); }
+    .v-nav:hover { background: var(--red); }
+    .v-nav svg { width: 24px; height: 24px; fill: none; stroke: #fff; stroke-width: 2; }
+    .v-prev { left: 12px; }
+    .v-next { right: 12px; }
+    .v-cap { padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom)); font-size: var(--step--1); color: #B9BAB2; min-height: 44px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
+    .v-help { color: #8E8F88; }
+    @media (max-width: 600px) {
+        .v-help { display: none; }
+        .v-btn { padding: 0 10px; }
+        .v-nav { width: 44px; height: 44px; }
+    }
+</style>

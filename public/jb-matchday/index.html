@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Matchday | Spieltagsgrafiken</title>
+<meta name="description" content="Spieltags- und Resultatgrafiken für Instagram, direkt im Browser.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .stage { display: grid; place-items: center; background: repeating-conic-gradient(var(--line) 0 25%, transparent 0 50%) 0 0 / 20px 20px; border-radius: 6px; padding: 16px; }
+    #out { display: block; max-width: 100%; max-height: calc(100vh - 150px); box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .score { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+    .score span { font-weight: 800; }
+    [data-only="result"] { display: none; }
+    body.is-result [data-only="result"] { display: block; }
+    body.is-result [data-only="matchday"] { display: none; }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Matchday</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn solid" id="dl" type="button">PNG herunterladen</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap layout">
+    <div>
+        <div class="panel">
+            <h2>Vorlage</h2>
+            <div class="seg" id="kind">
+                <button type="button" data-v="matchday" aria-pressed="true">Matchday</button>
+                <button type="button" data-v="result" aria-pressed="false">Resultat</button>
+            </div>
+            <div class="field" style="margin-top:12px">
+                <span class="lbl">Format</span>
+                <div class="seg" id="format">
+                    <button type="button" data-v="1080x1350" aria-pressed="true">4:5 Post</button>
+                    <button type="button" data-v="1080x1080" aria-pressed="false">1:1</button>
+                    <button type="button" data-v="1080x1920" aria-pressed="false">9:16 Story</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Spiel</h2>
+            <div class="field"><label for="home">Heimteam</label><input id="home" type="text" value="UHC Gotthardblitz"></div>
+            <div class="field"><label for="away">Gastteam</label><input id="away" type="text" value="Floorball Seewald"></div>
+            <div data-only="result">
+                <div class="field"><span class="lbl">Resultat</span>
+                    <div class="score"><input id="sh" type="number" min="0" value="7"><span>:</span><input id="sa" type="number" min="0" value="4"></div>
+                </div>
+                <div class="field"><label for="extra">Zusatz</label><input id="extra" type="text" value="n.V." placeholder="z.B. n.V., n.P."></div>
+            </div>
+            <div class="row">
+                <div class="field"><label for="date">Datum</label><input id="date" type="date"></div>
+                <div class="field" data-only="matchday"><label for="time">Anpfiff</label><input id="time" type="time" value="19:30"></div>
+            </div>
+            <div class="field"><label for="venue">Ort</label><input id="venue" type="text" value="Sporthalle Mattenried"></div>
+            <div class="field"><label for="league">Liga / Runde</label><input id="league" type="text" value="2. Liga, Runde 7"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Look</h2>
+            <div class="field"><span class="lbl">Hintergrundfoto</span>
+                <label class="drop" id="drop"><input id="photo" type="file" accept="image/*" hidden><strong>Foto wählen</strong><span>oder hierher ziehen</span></label>
+            </div>
+            <div class="row">
+                <div class="field"><label for="accent">Akzent</label><input id="accent" type="color" value="#E30613"></div>
+                <div class="field"><label for="dark">Abdunkeln</label><input id="dark" type="range" min="0" max="90" value="55"></div>
+            </div>
+            <div class="row">
+                <div class="field"><span class="lbl">Logo Heim</span><input id="logoH" type="file" accept="image/*"></div>
+                <div class="field"><span class="lbl">Logo Gast</span><input id="logoA" type="file" accept="image/*"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stage preview"><canvas id="out" width="1080" height="1350"></canvas></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    const cv = $('#out'), ctx = cv.getContext('2d');
+    const state = { kind: 'matchday', w: 1080, h: 1350, photo: null, logoH: null, logoA: null };
+    $('#date').valueAsDate = new Date(Date.now() + 3 * 864e5);
+
+    function seg(id, key, cb) {
+        $(id).addEventListener('click', (e) => {
+            const b = e.target.closest('button'); if (!b) return;
+            [...$(id).children].forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+            cb(b.dataset.v);
+            draw();
+        });
+    }
+    seg('#kind', 'kind', (v) => { state.kind = v; document.body.classList.toggle('is-result', v === 'result'); });
+    seg('#format', 'format', (v) => { const [w, h] = v.split('x').map(Number); state.w = w; state.h = h; cv.width = w; cv.height = h; });
+
+    const loadImg = (file) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.src = URL.createObjectURL(file); });
+    $('#photo').addEventListener('change', async (e) => { if (e.target.files[0]) { state.photo = await loadImg(e.target.files[0]); draw(); } });
+    $('#logoH').addEventListener('change', async (e) => { if (e.target.files[0]) { state.logoH = await loadImg(e.target.files[0]); draw(); } });
+    $('#logoA').addEventListener('change', async (e) => { if (e.target.files[0]) { state.logoA = await loadImg(e.target.files[0]); draw(); } });
+    const drop = $('#drop');
+    ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('is-over'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, () => drop.classList.remove('is-over')));
+    drop.addEventListener('drop', async (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) { state.photo = await loadImg(f); draw(); } });
+    document.querySelectorAll('input').forEach(i => i.addEventListener('input', draw));
+
+    // Schriftbreite über font-stretch (Archivo hat eine Breiten-Achse)
+    const F = (w, wd, size) => `${w} ${wd <= 62 ? 'ultra-condensed' : wd <= 80 ? 'condensed' : 'normal'} ${size}px Archivo, Arial Narrow, sans-serif`;
+    function fitText(text, maxW, size, weight = 800) {
+        let s = size;
+        ctx.font = F(weight, 62, s);
+        while (ctx.measureText(text).width > maxW && s > 20) { s -= 4; ctx.font = F(weight, 62, s); }
+        return s;
+    }
+    function cover(img, x, y, w, h) {
+        const r = Math.max(w / img.width, h / img.height);
+        const iw = img.width * r, ih = img.height * r;
+        ctx.drawImage(img, x + (w - iw) / 2, y + (h - ih) / 2, iw, ih);
+    }
+    function logo(img, cx, cy, size, fallback) {
+        if (img) {
+            const r = Math.min(size / img.width, size / img.height);
+            ctx.drawImage(img, cx - img.width * r / 2, cy - img.height * r / 2, img.width * r, img.height * r);
+        } else {
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.arc(cx, cy, size / 2 - 4, 0, 6.283); ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = F(900, 100, size * 0.36);
+            ctx.fillText(fallback.split(/\s+/).filter(w => !/^(uhc|fc|ec|hc|sc|ev|ehc|fcw)$/i.test(w)).map(w => w[0]).join('').slice(0, 3).toUpperCase() || '?', cx, cy + 2);
+        }
+    }
+    const fmtDate = (v) => { if (!v) return ''; const d = new Date(v + 'T12:00'); return d.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }).toUpperCase(); };
+
+    function draw() {
+        const W = state.w, H = state.h, acc = $('#accent').value, pad = 72;
+        ctx.textBaseline = 'alphabetic';
+        // Hintergrund
+        ctx.fillStyle = '#0d0d0c'; ctx.fillRect(0, 0, W, H);
+        if (state.photo) cover(state.photo, 0, 0, W, H);
+        else {
+            const g = ctx.createLinearGradient(0, 0, W, H);
+            g.addColorStop(0, '#1b1c1a'); g.addColorStop(1, '#3a3b37');
+            ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+            ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 2;
+            for (let x = -H; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + H, H); ctx.stroke(); }
+        }
+        const dk = $('#dark').value / 100;
+        const g2 = ctx.createLinearGradient(0, 0, 0, H);
+        g2.addColorStop(0, `rgba(0,0,0,${dk * 0.5})`); g2.addColorStop(0.45, `rgba(0,0,0,${dk * 0.2})`); g2.addColorStop(1, `rgba(0,0,0,${Math.min(0.95, dk + 0.25)})`);
+        ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+
+        // Kopfzeile
+        ctx.fillStyle = acc; ctx.fillRect(pad, pad, 14, 70);
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+        ctx.font = F(600, 100, 30); ctx.fillText($('#league').value.toUpperCase(), pad + 36, pad + 30);
+        ctx.font = F(500, 100, 26); ctx.globalAlpha = 0.75; ctx.fillText($('#venue').value, pad + 36, pad + 66); ctx.globalAlpha = 1;
+
+        // Titel
+        const isRes = state.kind === 'result';
+        const title = isRes ? 'FINAL' : 'MATCHDAY';
+        const baseY = H - pad - (H > 1500 ? 380 : 300);
+        const ts = fitText(title, W - pad * 2, H > 1100 ? 250 : 210, 900);
+        ctx.font = F(900, 62, ts);
+        ctx.fillStyle = '#fff'; ctx.fillText(title, pad - 6, baseY - (isRes ? 210 : 190));
+        ctx.fillStyle = acc; ctx.fillRect(pad, baseY - (isRes ? 180 : 160), 180, 12);
+
+        // Teams
+        const home = $('#home').value || 'Heim', away = $('#away').value || 'Gast';
+        const cy = baseY + 10;
+        logo(state.logoH, pad + 70, cy, 140, home);
+        logo(state.logoA, W - pad - 70, cy, 140, away);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+        if (isRes) {
+            ctx.font = F(900, 62, 170);
+            ctx.fillText(`${$('#sh').value || 0}:${$('#sa').value || 0}`, W / 2, cy + 60);
+            if ($('#extra').value) { ctx.font = F(600, 100, 30); ctx.globalAlpha = 0.8; ctx.fillText($('#extra').value, W / 2, cy + 105); ctx.globalAlpha = 1; }
+        } else {
+            ctx.font = F(900, 62, 110); ctx.fillStyle = acc; ctx.fillText('VS', W / 2, cy + 38);
+        }
+        ctx.fillStyle = '#fff';
+        const ns = Math.min(fitText(home, W / 2 - pad - 30, 40, 700), fitText(away, W / 2 - pad - 30, 40, 700));
+        ctx.font = F(700, 80, ns);
+        ctx.textAlign = 'left'; ctx.fillText(home, pad, cy + 130);
+        ctx.textAlign = 'right'; ctx.fillText(away, W - pad, cy + 130);
+
+        // Fusszeile
+        ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(pad, H - pad - 70, W - pad * 2, 2);
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = F(600, 100, 34);
+        ctx.fillText(fmtDate($('#date').value), pad, H - pad - 20);
+        ctx.textAlign = 'right';
+        ctx.fillText(isRes ? 'Danke für den Support!' : `${$('#time').value} UHR`, W - pad, H - pad - 20);
+    }
+
+    $('#dl').addEventListener('click', () => {
+        cv.toBlob((b) => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = `${state.kind}-${($('#home').value || 'team').toLowerCase().replace(/\W+/g, '-')}.png`;
+            a.click();
+            const t = $('#toast'); t.textContent = 'Grafik gespeichert'; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2000);
+        }, 'image/png');
+    });
+
+    (document.fonts ? document.fonts.load('900 100px Archivo') : Promise.resolve()).then(draw, draw);
+    draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Palette | Farben aus Fotos</title>
+<meta name="description" content="Zieht die Farbpalette aus einem Foto, als HEX, CSS oder Bild.">
+<script src="../fehler.js?v=1" data-critical></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../extras.css?v=3.4">
+<link rel="icon" type="image/png" href="../favicon.png">
+<script>try{var t=localStorage.getItem('jb2-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+    .photo { position: relative; border-radius: 6px; overflow: hidden; background: var(--panel); border: 1px solid var(--line); min-height: 240px; display: grid; place-items: center; }
+    .photo img { display: block; width: 100%; max-height: 52vh; object-fit: contain; cursor: crosshair; }
+    .photo .drop { margin: 20px; width: calc(100% - 40px); }
+    .swatches { display: flex; height: 180px; border-radius: 6px; overflow: hidden; margin-top: 16px; }
+    .sw { flex: var(--share, 1); display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 6px; min-width: 0; overflow: hidden; border: 0; text-align: left; transition: flex .4s cubic-bezier(.2,.7,.1,1); }
+    .sw:hover { flex-grow: calc(var(--share, 1) * 1.6); }
+    .sw span { font-family: var(--mono); font-size: .82rem; font-weight: 500; }
+    .sw small { font-family: var(--mono); font-size: .7rem; opacity: .7; }
+    pre { background: #232421; color: #EDEDE8; padding: 14px; border-radius: 4px; font-family: var(--mono); font-size: .85rem; overflow-x: auto; cursor: copy; }
+    .picked { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-family: var(--mono); font-size: .9rem; }
+    .picked i { width: 26px; height: 26px; border-radius: 3px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header class="tbar">
+    <a class="brand" href="../index.html" aria-label="julienbernath.ch">J<b>B</b></a>
+    <h1>Palette</h1>
+    <span class="spacer"></span>
+    <div class="actions">
+        <button class="btn" id="newimg" type="button">Neues Bild</button>
+        <button class="btn" id="png" type="button">Palette als PNG</button>
+    </div>
+    <a class="btn back-btn" href="../index.html#extras"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Zurück<span class="long">&nbsp;zur Website</span></a>
+</header>
+
+<div class="wrap layout">
+    <div>
+        <div class="panel">
+            <h2>Einstellungen</h2>
+            <div class="field"><label for="n">Anzahl Farben: <b id="nVal">6</b></label><input id="n" type="range" min="3" max="10" value="6"></div>
+            <div class="field"><span class="lbl">Sortierung</span>
+                <div class="seg" id="sort"><button type="button" data-v="share" aria-pressed="true">Anteil</button><button type="button" data-v="light" aria-pressed="false">Helligkeit</button><button type="button" data-v="hue" aria-pressed="false">Farbton</button></div>
+            </div>
+            <div class="field"><label for="name">Name für CSS</label><input id="name" type="text" value="foto"></div>
+        </div>
+        <div class="panel">
+            <h2>Code</h2>
+            <pre id="css" title="Klicken zum Kopieren"></pre>
+            <p class="note" style="margin-top:8px">Klick auf eine Farbe kopiert den HEX-Wert. Klick ins Foto pipettiert.</p>
+            <div class="picked" id="picked" hidden><i></i><span></span></div>
+        </div>
+    </div>
+    <div class="preview">
+        <div class="photo" id="photo">
+            <label class="drop" id="drop"><input id="file" type="file" accept="image/*" hidden><strong>Foto wählen</strong><span>oder hierher ziehen</span></label>
+        </div>
+        <div class="swatches" id="swatches"></div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+    const $ = (s) => document.querySelector(s);
+    let pixels = null, palette = [], img = null;
+    const toast = (m) => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1500); };
+    const hex = (c) => '#' + c.slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+    const lum = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    const hue = (c) => { const [r, g, b] = c.map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return -1; let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (h * 60 + 360) % 360; };
+
+    function load(file) {
+        img = new Image();
+        img.onload = () => {
+            const ph = $('#photo'); ph.innerHTML = ''; ph.appendChild(img);
+            const s = Math.min(1, 160 / Math.max(img.width, img.height));
+            const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * s)); c.height = Math.max(1, Math.round(img.height * s));
+            const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+            const d = x.getImageData(0, 0, c.width, c.height).data;
+            pixels = [];
+            for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 128) pixels.push([d[i], d[i + 1], d[i + 2]]);
+            img.addEventListener('click', pick);
+            run();
+        };
+        img.src = URL.createObjectURL(file);
+    }
+
+    // k-means mit k-means++ Start
+    function kmeans(px, k) {
+        const cents = [px[Math.floor(Math.random() * px.length)].slice()];
+        while (cents.length < k) {
+            const d = px.map(p => Math.min(...cents.map(c => (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2)));
+            const sum = d.reduce((a, b) => a + b, 0); let r = Math.random() * sum, i = 0;
+            while (r > d[i] && i < d.length - 1) r -= d[i++];
+            cents.push(px[i].slice());
+        }
+        const assign = new Array(px.length).fill(0);
+        for (let it = 0; it < 12; it++) {
+            px.forEach((p, i) => { let best = 0, bd = Infinity; cents.forEach((c, j) => { const dd = (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2 + (p[2] - c[2]) ** 2; if (dd < bd) { bd = dd; best = j; } }); assign[i] = best; });
+            const acc = cents.map(() => [0, 0, 0, 0]);
+            px.forEach((p, i) => { const a = acc[assign[i]]; a[0] += p[0]; a[1] += p[1]; a[2] += p[2]; a[3]++; });
+            acc.forEach((a, j) => { if (a[3]) cents[j] = [a[0] / a[3], a[1] / a[3], a[2] / a[3]]; });
+        }
+        const counts = cents.map(() => 0); assign.forEach(a => counts[a]++);
+        return cents.map((c, j) => [...c, counts[j] / px.length]).filter(c => c[3] > 0);
+    }
+
+    function run() {
+        if (!pixels) return;
+        palette = kmeans(pixels, Number($('#n').value));
+        sortPal(); paint();
+    }
+    function sortPal() {
+        const s = $('#sort [aria-pressed="true"]').dataset.v;
+        palette.sort(s === 'share' ? (a, b) => b[3] - a[3] : s === 'light' ? (a, b) => lum(a) - lum(b) : (a, b) => hue(a) - hue(b));
+    }
+    function paint() {
+        $('#swatches').innerHTML = palette.map(c => {
+            const h = hex(c), fg = lum(c) > 140 ? '#000' : '#fff';
+            return `<button type="button" class="sw" style="background:${h};color:${fg};--share:${Math.max(0.5, c[3] * 10).toFixed(2)}" data-hex="${h}"><span>${h}</span><small>${Math.round(c[3] * 100)} %</small></button>`;
+        }).join('');
+        const name = ($('#name').value || 'foto').toLowerCase().replace(/[^a-z0-9-]/g, '');
+        $('#css').textContent = `:root {\n${palette.map((c, i) => `  --${name}-${i + 1}: ${hex(c)};`).join('\n')}\n}`;
+    }
+    function pick(e) {
+        const r = img.getBoundingClientRect(), c = document.createElement('canvas'); c.width = c.height = 1;
+        const x = c.getContext('2d');
+        const sx = (e.clientX - r.left) / r.width * img.naturalWidth, sy = (e.clientY - r.top) / r.height * img.naturalHeight;
+        x.drawImage(img, sx, sy, 1, 1, 0, 0, 1, 1);
+        const h = hex([...x.getImageData(0, 0, 1, 1).data]);
+        const pk = $('#picked'); pk.hidden = false; pk.querySelector('i').style.background = h; pk.querySelector('span').textContent = h;
+        navigator.clipboard?.writeText(h); toast(`${h} kopiert`);
+    }
+
+    $('#swatches').addEventListener('click', (e) => { const b = e.target.closest('.sw'); if (b) { navigator.clipboard?.writeText(b.dataset.hex); toast(`${b.dataset.hex} kopiert`); } });
+    $('#css').addEventListener('click', () => { navigator.clipboard?.writeText($('#css').textContent); toast('CSS kopiert'); });
+    $('#n').addEventListener('input', () => { $('#nVal').textContent = $('#n').value; run(); });
+    $('#name').addEventListener('input', paint);
+    $('#sort').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; [...$('#sort').children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); sortPal(); paint(); });
+    $('#png').addEventListener('click', () => {
+        if (!palette.length) { toast('Zuerst ein Foto laden'); return; }
+        const c = document.createElement('canvas'); c.width = 1200; c.height = 520;
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 1200, 520);
+        const w = 1200 / palette.length;
+        palette.forEach((p, i) => {
+            x.fillStyle = hex(p); x.fillRect(i * w, 0, w + 1, 420);
+            x.fillStyle = '#000'; x.font = '500 22px IBM Plex Mono, monospace'; x.fillText(hex(p), i * w + 16, 470);
+        });
+        c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'palette.png'; a.click(); });
+    });
+    // eigenes Datei-Feld, damit auch nach dem ersten Bild jederzeit ein neues gewählt werden kann
+    const picker = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*', hidden: true });
+    document.body.appendChild(picker);
+    picker.addEventListener('change', (e) => { if (e.target.files[0]) load(e.target.files[0]); picker.value = ''; });
+    $('#newimg').addEventListener('click', () => picker.click());
+    $('#file').addEventListener('change', (e) => e.target.files[0] && load(e.target.files[0]));
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) load(f); });
+    document.addEventListener('paste', (e) => { const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/')); if (f) load(f); });
+})();
+</script>
+</body>
+</html>
