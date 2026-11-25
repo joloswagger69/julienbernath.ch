@@ -43,7 +43,7 @@ const fields = [
 ---
 <Base lang={lang} alternates={alternates('home')} untranslated={lang !== 'de'}
       title={lang === 'de' ? meta.title : undefined} description={lang === 'de' ? meta.description : undefined}>
-    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
+    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd).replace(/</g, '\\u003c')} />
 
     <section class="hero wrap" data-clip={t('home.clip.intro')}>
         <div class="hero-text">
