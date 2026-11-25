@@ -1,7 +1,8 @@
 # ==========================================================================
 # Astro-Website bauen und auf GitHub Pages veröffentlichen
 #
-# STATUS: VORBEREITET, ABER INAKTIV (Phase 1)
+# STATUS: AKTIV AB GO-LIVE (Phase 7) – baut bei jedem Push auf main;
+#         veröffentlicht nur, wenn ASTRO_DEPLOY_ENABLED = true gesetzt ist
 #
 # Doppelte Sicherung, damit die bisherige Live-Website unverändert bleibt:
 #  1. Kein automatischer Start: Der Workflow läuft nur, wenn man ihn auf
@@ -27,8 +28,8 @@ name: Astro – Build & Deploy
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
 
 permissions:
   contents: read

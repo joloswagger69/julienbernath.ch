@@ -7,6 +7,6 @@
  * (noindex) und tragen den Hinweis «Vorschau». Erst beim Go-live (Phase 7)
  * auf false setzen.
  */
-export const PREVIEW = true;
+export const PREVIEW = false;
 
-export const VERSION = '3.0.0-alpha.2';
+export const VERSION = '3.0.0';

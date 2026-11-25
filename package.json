@@ -1,6 +1,6 @@
 {
   "name": "julienbernath-ch",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "description": "Portfolio von Julien Bernath, neu gebaut mit Astro.",
