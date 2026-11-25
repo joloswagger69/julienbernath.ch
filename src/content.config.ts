@@ -42,7 +42,7 @@ const projects = defineCollection({
             legacyLayout: z.string().optional(),
             media: z.array(
                 z.discriminatedUnion('type', [
-                    z.object({ type: z.literal('image'), src: image() }),
+                    z.object({ type: z.literal('image'), src: image(), alt: z.string().optional() }),
                     z.object({ type: z.literal('youtube'), id: z.string(), label: z.string(), portrait: z.boolean().optional() }),
                     z.object({ type: z.literal('tiktok'), id: z.string(), label: z.string() })
                 ])

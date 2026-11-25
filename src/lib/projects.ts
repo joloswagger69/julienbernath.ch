@@ -33,24 +33,29 @@ export const KIND_LABEL = {
     design: { de: 'Design', en: 'Design' }
 } as const;
 
-const CAT_DE: Record<string, string> = {
+const CAT: Record<Lang, Record<string, string>> = { de: {
     'PHOTOGRAPHY': 'Fotografie', 'VIDEO': 'Video', 'SOCIAL MEDIA': 'Social Media', 'PRINT DESIGN': 'Printdesign',
     'BRANDING': 'Branding', 'DESIGN': 'Design', 'GRAPHICS': 'Grafik', 'WEB DEVELOPMENT': 'Webentwicklung',
     'UI-UX': 'UI/UX', 'CONCEPT': 'Konzept', 'SPORT': 'Sport', 'ART': 'Freie Arbeit', 'NATURE': 'Natur'
-};
+}, en: {
+    'PHOTOGRAPHY': 'Photography', 'VIDEO': 'Video', 'SOCIAL MEDIA': 'Social media', 'PRINT DESIGN': 'Print design',
+    'BRANDING': 'Branding', 'DESIGN': 'Design', 'GRAPHICS': 'Graphics', 'WEB DEVELOPMENT': 'Web development',
+    'UI-UX': 'UI/UX', 'CONCEPT': 'Concept', 'SPORT': 'Sport', 'ART': 'Personal work', 'NATURE': 'Nature'
+} };
 
-/** "PHOTOGRAPHY / SPORT" → "Fotografie, Sport" (wie bisher im Viewer) */
-export const categoryLabel = (category: string) =>
-    category.split('/').map((x) => CAT_DE[x.trim()] ?? x.trim()).join(', ');
+/** "PHOTOGRAPHY / SPORT" → "Fotografie, Sport" bzw. "Photography, Sport" */
+export const categoryLabel = (category: string, lang: Lang = 'de') =>
+    category.split('/').map((x) => CAT[lang][x.trim()] ?? x.trim()).join(', ');
 
 export const imagesOf = (p: Project) => p.data.media.filter((m) => m.type === 'image');
 export const videosOf = (p: Project) => p.data.media.filter((m) => m.type !== 'image');
 
-/** "1 Video, 11 Bilder" – wie bisher auf den Projektkarten */
-export function lengthLabel(p: Project) {
+/** "1 Video, 11 Bilder" bzw. "1 video, 11 images" – wie bisher auf den Projektkarten */
+export function lengthLabel(p: Project, lang: Lang = 'de') {
     const v = videosOf(p).length, i = imagesOf(p).length, out: string[] = [];
-    if (v) out.push(`${v} ${v === 1 ? 'Video' : 'Videos'}`);
-    if (i) out.push(`${i} Bilder`);
+    const en = lang === 'en';
+    if (v) out.push(`${v} ${v === 1 ? (en ? 'video' : 'Video') : (en ? 'videos' : 'Videos')}`);
+    if (i) out.push(`${i} ${en ? 'images' : 'Bilder'}`);
     return out.join(', ') || 'Live';
 }
 
@@ -60,10 +65,11 @@ export const coverOf = (p: Project) => p.data.cover ?? imagesOf(p)[0]?.src;
 /** Bildbeschreibung des Vorschaubilds; ohne Vorschlag der Projekttitel */
 export const coverAltOf = (p: Project) => p.data.coverAlt ?? p.data.title;
 
-/** Bildbeschreibung eines Galeriebilds: Vorschlag, falls es das Vorschaubild ist, sonst Titel + Nummer */
-export function imageAlt(p: Project, src: { src: string }, fallback: string) {
+/** Bildbeschreibung eines Galeriebilds: eigener Text, sonst Text des Vorschaubilds, sonst Titel + Nummer */
+export function imageAlt(p: Project, m: { src: { src: string }; alt?: string }, fallback: string) {
+    if (m.alt) return m.alt;
     const cover = coverOf(p);
-    return cover && cover.src === src.src && p.data.coverAlt ? p.data.coverAlt : fallback;
+    return cover && cover.src === m.src.src && p.data.coverAlt ? p.data.coverAlt : fallback;
 }
 
 /**

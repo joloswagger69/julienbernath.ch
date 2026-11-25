@@ -51,14 +51,14 @@ images.forEach((m, i) => {
 if (pending) rows.push([pending]);
 ---
 <Base lang={lang} alternates={{ de: projectPath(slug, 'de'), en: projectPath(slug, 'en') }}
-      title={`${d.title} | Julien Bernath`} description={`${d.title} – ${d.client}, ${d.year}. ${categoryLabel(d.category)}.`}
-      ogImage={ogImage} untranslated={lang !== 'de'}>
+      title={`${d.title} | Julien Bernath`} description={`${d.title} – ${d.client}, ${d.year}. ${categoryLabel(d.category, lang)}. ${lang === 'de' ? 'Projekt von Julien Bernath, Mediamatiker EFZ.' : 'A project by Julien Bernath, Mediamatician.'}`}
+      ogImage={ogImage} ogImageAlt={coverAltOf(project)}>
     <article>
         <header class="wrap p-head" data-clip={d.title}>
             <p class="p-kicker">
                 <span class="label" data-kind={d.kind}>{KIND_LABEL[d.kind][lang]}</span>
-                <span>{categoryLabel(d.category)}</span>
-                <span class="tc muted">{lengthLabel(project)}</span>
+                <span>{categoryLabel(d.category, lang)}</span>
+                <span class="tc muted">{lengthLabel(project, lang)}</span>
             </p>
             <h1 class="h1 p-title">{d.title}</h1>
         </header>
@@ -80,7 +80,7 @@ if (pending) rows.push([pending]);
                 {team && (
                     <div><dt>{t('project.team')}</dt><dd>
                         {team.names ? `${t('project.teamWith')} ${team.names.join(', ')}` : t('project.teamOnly')}
-                        {team.pending && team.names && <span class="pending tc"> (Freigabe ausstehend – nur in der Vorschau sichtbar)</span>}
+                        {team.pending && team.names && <span class="pending tc"> {lang === 'de' ? '(Freigabe ausstehend – nur in der Vorschau sichtbar)' : '(approval pending – visible in preview only)'}</span>}
                     </dd></div>
                 )}
             </dl>
@@ -102,7 +102,7 @@ if (pending) rows.push([pending]);
                     {rows.map((row) => (
                         <div class:list={['g-row', row.length === 2 || row[0].m.src.width / row[0].m.src.height <= 1.15 ? 'pair' : 'single']}>
                             {row.map(({ m, i }) => {
-                                const alt = imageAlt(project, m.src, `${d.title}, ${fmt(t('project.imageOf'), { n: i + 1, total: images.length })}`);
+                                const alt = imageAlt(project, m, `${d.title}, ${fmt(t('project.imageOf'), { n: i + 1, total: images.length })}`);
                                 return (
                                     <a href={full[i].src} data-viewer class="g-item">
                                         <Image src={m.src} alt={alt} width={1400} widths={[480, 800, 1400]}

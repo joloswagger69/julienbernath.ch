@@ -4,6 +4,7 @@
 import Base from '../../layouts/Base.astro';
 import ProjectCard from '../ProjectCard.astro';
 import { KIND_LABEL, getProjects } from '../../lib/projects';
+import { meta } from '../../data/site';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
 
@@ -13,7 +14,7 @@ const t = useTranslations(lang);
 const projects = (await getProjects(lang)).map((p) => p.project);
 const kinds = (['photo', 'video', 'design'] as const).map((k) => ({ k, n: projects.filter((p) => p.data.kind === k).length }));
 ---
-<Base lang={lang} alternates={alternates('work')} title={`${t('work.all')} | Julien Bernath`} untranslated={lang !== 'de'}>
+<Base lang={lang} alternates={alternates('work')} title={meta[lang].work.title} description={meta[lang].work.description}>
     <section class="wrap head" data-clip={t('home.clip.work')}>
         <h1 class="h1">{t('work.all')}</h1>
         <div class="filters" role="group" aria-label={t('work.filter')} data-filters hidden>

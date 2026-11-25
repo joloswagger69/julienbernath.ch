@@ -7,7 +7,7 @@ import Monitor from '../Monitor.astro';
 import ProjectCard from '../ProjectCard.astro';
 import { coverAltOf, coverOf, getProjects, projectPath, slugOf, videosOf, type Project } from '../../lib/projects';
 import { alternates, path, useTranslations } from '../../i18n/utils';
-import { hero, meta, personJsonLd } from '../../data/site';
+import { hero, meta, personJsonLd, status } from '../../data/site';
 import { about, portraitAlts, portraits } from '../../data/about';
 import type { Lang } from '../../i18n/ui';
 
@@ -41,9 +41,8 @@ const fields = [
     { key: 'field.social', list: all.filter(isSocial) }
 ] as const;
 ---
-<Base lang={lang} alternates={alternates('home')} untranslated={lang !== 'de'}
-      title={lang === 'de' ? meta.title : undefined} description={lang === 'de' ? meta.description : undefined}>
-    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
+<Base lang={lang} alternates={alternates('home')} title={meta[lang].home.title} description={meta[lang].home.description}>
+    <script slot="head" type="application/ld+json" set:html={JSON.stringify(personJsonLd(lang))} />
 
     <section class="hero wrap" data-clip={t('home.clip.intro')}>
         <div class="hero-text">
@@ -51,11 +50,11 @@ const fields = [
                 <span aria-hidden="true">Julien</span>
                 <span aria-hidden="true" class="hero-last">Bernath</span>
             </h1>
-            <p class="lede hero-lede">{hero.lede}</p>
-            <p class="hero-status"><span class="rec-dot" aria-hidden="true"></span>{t('footer.status')}</p>
+            <p class="lede hero-lede">{hero[lang].lede}</p>
+            <p class="hero-status"><span class="rec-dot" aria-hidden="true"></span>{status[lang].line}</p>
             <p class="hero-actions">
-                <a class="btn btn-solid" href={path('work', lang)}>{hero.ctaWork}</a>
-                <a class="btn" href={path('contact', lang)}>{hero.ctaContact}</a>
+                <a class="btn btn-solid" href={path('work', lang)}>{hero[lang].ctaWork}</a>
+                <a class="btn" href={path('contact', lang)}>{hero[lang].ctaContact}</a>
             </p>
         </div>
         <div class="hero-monitor">
@@ -92,10 +91,10 @@ const fields = [
     </section>
 
     <section class="section wrap about" data-clip={t('home.clip.about')} aria-labelledby="about-title">
-        <Image class="about-img" src={portraits[0]} alt={portraitAlts[0]} width={720} widths={[360, 720]} sizes="(max-width: 760px) 60vw, 26vw" />
+        <Image class="about-img" src={portraits[0]} alt={portraitAlts[lang][0]} width={720} widths={[360, 720]} sizes="(max-width: 760px) 60vw, 26vw" />
         <div>
-            <h2 id="about-title" class="h2">{about.title}</h2>
-            <p class="lede about-lead">{about.lead}</p>
+            <h2 id="about-title" class="h2">{about[lang].title}</h2>
+            <p class="lede about-lead">{about[lang].lead}</p>
             <p class="about-more"><a class="btn" href={path('about', lang)}>{t('home.aboutMore')}</a></p>
         </div>
     </section>

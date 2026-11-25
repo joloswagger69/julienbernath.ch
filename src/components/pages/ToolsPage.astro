@@ -3,6 +3,7 @@
    in «Werkzeug» und «Spielwiese». Jede Zeile trägt die Erkennungsfarbe des Tools. */
 import Base from '../../layouts/Base.astro';
 import { toolGroups, toolHref, toolsIntro } from '../../data/tools';
+import { meta } from '../../data/site';
 import PlayModeToggle from '../PlayModeToggle.astro';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
@@ -18,22 +19,22 @@ const textOn = (hex: string) => {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.32 ? '#000' : '#fff';
 };
 ---
-<Base lang={lang} alternates={alternates('tools')} title={`${t('tools.title')} | Julien Bernath`} untranslated={lang !== 'de'}>
+<Base lang={lang} alternates={alternates('tools')} title={meta[lang].tools.title} description={meta[lang].tools.description}>
     <section class="wrap head" data-clip={t('tools.title')}>
         <h1 class="h1">{t('tools.title')} <span class="tc count">{count}</span></h1>
-        <p class="lede">{toolsIntro}</p>
+        <p class="lede">{toolsIntro[lang]}</p>
     </section>
 
     {toolGroups.map((g) => (
-        <section class="wrap group" data-clip={g.title} aria-labelledby={`g-${g.title}`}>
-            <h2 id={`g-${g.title}`} class="h2 group-title">{g.title} <span class="tc count">{g.tools.length}</span></h2>
+        <section class="wrap group" data-clip={g.title[lang]} aria-labelledby={`g-${g.title.de}`}>
+            <h2 id={`g-${g.title.de}`} class="h2 group-title">{g.title[lang]} <span class="tc count">{g.tools.length}</span></h2>
             <ul class="tools">
                 {g.tools.map((tool) => (
                     <li>
                         <a class="tool" href={toolHref(tool)} style={`--c:${tool.color};--on:${textOn(tool.color)}`}>
                             <span class="tool-chip" aria-hidden="true">{initials(tool.name)}</span>
                             <span class="tool-name">{tool.name}</span>
-                            <span class="tool-desc">{tool.desc}</span>
+                            <span class="tool-desc">{tool.desc[lang]}</span>
                             <span class="tool-open">{t('tools.open')}</span>
                         </a>
                     </li>

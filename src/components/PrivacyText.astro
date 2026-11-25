@@ -1,28 +1,88 @@
 ---
-/* Datenschutzerklärung – wortgleich aus der bisherigen index.html (Dialog #privacy, Zeilen 507–527).
-   Einzige Änderung: Abschnittstitel h3 → h2 (Überschriften-Reihenfolge). Hinweis: Abschnitt 5 nennt noch Google Fonts. Die neue Website hostet die Schriften selbst –
-   der Text wird nach dem Go-live angepasst (die unveränderten Tools laden Google Fonts weiterhin). */
+/* Datenschutzerklärung (Phase 5): auf Basis der bisherigen Erklärung überarbeitet und an die
+   tatsächlich verwendeten Dienste der neuen Website angepasst:
+   - Schriften selbst gehostet (kein Google Fonts mehr auf den Hauptseiten)
+   - Google Fonts nur noch in den 16 unveränderten Werkzeugen
+   - Einbettungen (YouTube-nocookie, TikTok, Apple Music) erst nach Klick
+   - vollständige Liste der lokal gespeicherten Einstellungen inkl. Spielmodus
+   Angaben zur Person: nur Name, Ort und E-Mail (Wunsch von Julien, keine Adresse).
+   Englische Fassung: Übersetzung; massgebend ist die deutsche Fassung. */
+import type { Lang } from '../i18n/ui';
+interface Props { lang?: Lang }
+const { lang = 'de' } = Astro.props;
+const mail = 'julien.bernath@gmx.ch';
 ---
+{lang === 'de' ? (
 <div class="privacy-body">
-    <p>Der Schutz persönlicher Daten ist mir wichtig. Hier steht kurz, welche Daten beim Besuch dieser Website verarbeitet werden können und wofür.</p>
+    <p>Der Schutz persönlicher Daten ist mir wichtig. Hier steht, welche Daten beim Besuch dieser Website bearbeitet werden, wofür und durch wen.</p>
+
     <h2>1. Verantwortliche Person</h2>
-    <p>Julien Bernath, Schweiz<br>E-Mail: <a href="mailto:julien.bernath@gmx.ch">julien.bernath@gmx.ch</a></p>
+    <p>Julien Bernath, Baden, Schweiz<br>E-Mail: <a href={`mailto:${mail}`}>{mail}</a></p>
+
     <h2>2. Zweck dieser Website</h2>
-    <p>Diese Website ist ein persönliches Portfolio. Sie zeigt Arbeiten, Projekte, Fähigkeiten und Kontaktmöglichkeiten von Julien Bernath.</p>
-    <h2>3. Technische Daten beim Besuch</h2>
-    <p>Beim Aufruf der Website kann der Hosting-Anbieter automatisch technische Daten verarbeiten, etwa IP-Adresse, Datum und Uhrzeit, aufgerufene Seiten, Browsertyp, Betriebssystem und Referrer-URL. Diese Daten dienen dazu, dass die Website angezeigt werden kann, sicher funktioniert und Fehler nachvollziehbar sind.</p>
+    <p>Diese Website ist ein persönliches Portfolio. Sie zeigt Arbeiten, Projekte und Fähigkeiten von Julien Bernath und bietet eine Möglichkeit zur Kontaktaufnahme.</p>
+
+    <h2>3. Hosting und technische Daten</h2>
+    <p>Die Website wird über GitHub Pages (GitHub, Inc., USA) bereitgestellt. Beim Aufruf verarbeitet der Anbieter automatisch technische Daten wie IP-Adresse, Datum und Uhrzeit, aufgerufene Adresse, Browsertyp und Betriebssystem. Diese Daten sind nötig, damit die Website ausgeliefert werden kann und sicher funktioniert. Ich selbst habe keinen Zugriff auf diese Protokolle und werte sie nicht aus.</p>
+
     <h2>4. Kontakt per E-Mail und Formular</h2>
-    <p>Wenn Sie mich per E-Mail kontaktieren, werden Ihre Angaben zur Bearbeitung der Anfrage verwendet und nicht ohne Einwilligung an Dritte weitergegeben.</p>
-    <p>Beim Kontaktformular werden Name, E-Mail-Adresse, gewähltes Thema und Ihre Nachricht über den Dienst Web3Forms (Web3Forms, USA) an mein E-Mail-Postfach zugestellt. Die Daten werden nur für die Bearbeitung Ihrer Anfrage verwendet. Das Formular wird erst gesendet, wenn Sie zustimmen und auf «Nachricht senden» klicken. Ist die Zustellung über den Dienst nicht möglich, wird stattdessen Ihr E-Mail-Programm geöffnet.</p>
-    <h2>5. Externe Dienste und Links</h2>
-    <p>Die Website nutzt Google Fonts, das Kontaktformular nutzt den Zustelldienst Web3Forms, und es werden Inhalte von YouTube, TikTok und Apple Music eingebunden. Videos und die Playlist werden erst geladen, wenn Sie sie öffnen. Dabei können Daten an die jeweiligen Anbieter übertragen werden; es gelten deren Datenschutzbestimmungen.</p>
-    <h2>6. Lokale Speicherung</h2>
-    <p>Einstellungen wie Licht, Hintergrund, Cursor, abgehakte Shotlist-Punkte und entdeckte Effekte sowie ein nicht gesendeter Entwurf des Kontaktformulars werden nur lokal in Ihrem Browser gespeichert und nie übertragen.</p>
-    <h2>7. Cookies und Tracking</h2>
-    <p>Diese Website verwendet kein eigenes Tracking und keine Analyse-Tools. Externe Anbieter können beim Abspielen ihrer Inhalte eigene Cookies setzen.</p>
-    <h2>8. Ihre Rechte</h2>
-    <p>Sie können im Rahmen des Schweizer Datenschutzrechts Auskunft über die Bearbeitung Ihrer Personendaten verlangen und je nach Situation deren Berichtigung oder Löschung.</p>
-    <h2>9. Änderungen</h2>
-    <p>Diese Erklärung kann angepasst werden, wenn sich die Website, die Dienste oder die rechtlichen Anforderungen ändern.</p>
+    <p>Wenn Sie mich per E-Mail kontaktieren, verwende ich Ihre Angaben nur zur Bearbeitung Ihrer Anfrage und gebe sie nicht ohne Ihre Einwilligung an Dritte weiter.</p>
+    <p>Beim Kontaktformular werden Name, E-Mail-Adresse, gewähltes Thema und Ihre Nachricht über den Dienst Web3Forms (Web3Forms, USA) an mein E-Mail-Postfach zugestellt. Das Formular wird erst gesendet, wenn Sie zustimmen und auf «Nachricht senden» klicken. Ist die Zustellung über den Dienst nicht möglich, können Sie stattdessen Ihr eigenes E-Mail-Programm verwenden.</p>
+
+    <h2>5. Eingebettete Inhalte</h2>
+    <p>Auf einigen Seiten können Videos von YouTube (im erweiterten Datenschutzmodus, Google, USA) und TikTok sowie eine Playlist von Apple Music angezeigt werden. Diese Inhalte werden <strong>erst geladen, wenn Sie sie anklicken</strong>. Vorher findet keine Verbindung zu diesen Anbietern statt. Nach dem Klick können Daten wie Ihre IP-Adresse an den jeweiligen Anbieter übertragen werden, und es gelten dessen Datenschutzbestimmungen. Dasselbe gilt, wenn Sie Links zu externen Seiten wie LinkedIn, YouTube oder TikTok öffnen.</p>
+
+    <h2>6. Schriften</h2>
+    <p>Die Schriften der Website werden von diesem Server geladen; dabei werden keine Daten an Dritte übertragen. Ausnahme: Die kleinen Werkzeuge im Bereich «Werkzeuge» laden ihre Schriften von Google Fonts (Google, USA). Beim Öffnen eines Werkzeugs wird Ihre IP-Adresse an Google übertragen.</p>
+
+    <h2>7. Lokale Speicherung im Browser</h2>
+    <p>Einige Einstellungen werden ausschliesslich in Ihrem Browser gespeichert und nie an mich oder Dritte übertragen: Hell- oder Dunkelmodus, der eingeschaltete Spielmodus und dessen Einstellungen (Hintergrund, Akzentfarbe, Cursor, entdeckte Effekte), abgehakte Punkte der Shotlist, ein noch nicht gesendeter Entwurf des Kontaktformulars sowie der Zeitpunkt der letzten Nachricht (verhindert doppeltes Senden). Sie können diese Daten jederzeit in den Einstellungen Ihres Browsers löschen.</p>
+
+    <h2>8. Cookies und Tracking</h2>
+    <p>Diese Website setzt keine eigenen Cookies und verwendet kein Tracking und keine Analyse-Tools. Externe Anbieter können eigene Cookies setzen, sobald Sie ihre Inhalte öffnen (siehe Abschnitt 5).</p>
+
+    <h2>9. Ihre Rechte</h2>
+    <p>Sie können im Rahmen des Schweizer Datenschutzrechts Auskunft über die Bearbeitung Ihrer Personendaten verlangen und je nach Situation deren Berichtigung oder Löschung. Eine kurze E-Mail genügt.</p>
+
+    <h2>10. Änderungen</h2>
+    <p>Diese Erklärung wird angepasst, wenn sich die Website, die verwendeten Dienste oder die rechtlichen Anforderungen ändern.</p>
     <p class="privacy-date">Stand: November 2026</p>
 </div>
+) : (
+<div class="privacy-body">
+    <p>Protecting personal data matters to me. This page explains which data is processed when you visit this website, for what purpose and by whom.</p>
+
+    <h2>1. Controller</h2>
+    <p>Julien Bernath, Baden, Switzerland<br>Email: <a href={`mailto:${mail}`}>{mail}</a></p>
+
+    <h2>2. Purpose of this website</h2>
+    <p>This website is a personal portfolio. It shows the work, projects and skills of Julien Bernath and offers a way to get in touch.</p>
+
+    <h2>3. Hosting and technical data</h2>
+    <p>The website is served via GitHub Pages (GitHub, Inc., USA). When you visit it, the provider automatically processes technical data such as your IP address, date and time, the requested address, browser type and operating system. This data is required to deliver the website and keep it secure. I have no access to these logs and do not analyse them.</p>
+
+    <h2>4. Contact by email and form</h2>
+    <p>If you contact me by email, I only use your details to handle your enquiry and do not pass them on to third parties without your consent.</p>
+    <p>When you use the contact form, your name, email address, chosen topic and message are delivered to my inbox via the service Web3Forms (Web3Forms, USA). The form is only sent once you give your consent and click «Send message». If delivery via the service fails, you can use your own email program instead.</p>
+
+    <h2>5. Embedded content</h2>
+    <p>Some pages can show videos from YouTube (privacy-enhanced mode, Google, USA) and TikTok, as well as an Apple Music playlist. This content is <strong>only loaded when you click on it</strong>. Until then, no connection to these providers is made. After the click, data such as your IP address may be transferred to the respective provider, and its privacy policy applies. The same applies when you open links to external sites such as LinkedIn, YouTube or TikTok.</p>
+
+    <h2>6. Fonts</h2>
+    <p>The website's fonts are loaded from this server; no data is sent to third parties. Exception: the small tools in the «Tools» section load their fonts from Google Fonts (Google, USA). When you open a tool, your IP address is transferred to Google.</p>
+
+    <h2>7. Local storage in your browser</h2>
+    <p>Some settings are stored only in your browser and are never sent to me or to third parties: light or dark mode, whether play mode is on and its settings (background, accent colour, cursor, discovered effects), ticked items on the shot list, an unsent draft of the contact form, and the time of your last message (to prevent double sending). You can delete this data at any time in your browser settings.</p>
+
+    <h2>8. Cookies and tracking</h2>
+    <p>This website does not set any cookies of its own and uses no tracking or analytics tools. External providers may set their own cookies once you open their content (see section 5).</p>
+
+    <h2>9. Your rights</h2>
+    <p>Under Swiss data protection law, you can request information about the processing of your personal data and, depending on the situation, its correction or deletion. A short email is enough.</p>
+
+    <h2>10. Changes</h2>
+    <p>This statement will be updated if the website, the services used or the legal requirements change.</p>
+    <p class="privacy-note">This is a translation for convenience. The German version is authoritative.</p>
+    <p class="privacy-date">Last updated: November 2026</p>
+</div>
+)}

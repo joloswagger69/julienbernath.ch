@@ -3,7 +3,7 @@
    unveränderte Web3Forms-Formular. */
 import Base from '../../layouts/Base.astro';
 import ContactForm from '../ContactForm.astro';
-import { contact, person } from '../../data/site';
+import { contact, meta, person } from '../../data/site';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
 
@@ -11,20 +11,20 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
-<Base lang={lang} alternates={alternates('contact')} title={`${t('contact.title')} | Julien Bernath`} untranslated={lang !== 'de'} footerCta={false}>
+<Base lang={lang} alternates={alternates('contact')} title={meta[lang].contact.title} description={meta[lang].contact.description} footerCta={false}>
     <section class="wrap contact" data-clip={t('contact.title')}>
         <div class="left">
-            <h1 class="h1">{contact.title}</h1>
-            <p class="lede">{contact.lede}</p>
+            <h1 class="h1">{contact[lang].title}</h1>
+            <p class="lede">{contact[lang].lede}</p>
             <a class="mail" id="contact-mail" href={`mailto:${person.email}`}>{person.email}</a>
             <p class="actions">
                 <button type="button" class="btn" data-copy={person.email} data-done={t('contact.copied')}>{t('contact.copy')}</button>
                 <a class="btn" href={person.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
             </p>
-            <p class="loc muted">{contact.location} <span><span class="visually-hidden">{t('contact.localTime')}: </span><span class="tc" data-clock></span></span></p>
+            <p class="loc muted">{contact[lang].location} <span><span class="visually-hidden">{t('contact.localTime')}: </span><span class="tc" data-clock></span></span></p>
         </div>
         <div class="right">
-            <ContactForm />
+            <ContactForm lang={lang} />
         </div>
     </section>
 </Base>

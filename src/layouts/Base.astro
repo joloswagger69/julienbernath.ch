@@ -9,6 +9,8 @@ import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Timeline from '../components/Timeline.astro';
+import { getImage } from 'astro:assets';
+import defaultOg from '../assets/projects/ehc-kloten/ehck-14.webp';
 import { PREVIEW } from '../config';
 import { defaultLang, locales, type Lang } from '../i18n/ui';
 import { useTranslations } from '../i18n/utils';
@@ -21,6 +23,8 @@ interface Props {
     description?: string;
     /** Vorschaubild für Social Media (absolute oder relative URL) */
     ogImage?: string;
+    /** Bildbeschreibung des Vorschaubilds */
+    ogImageAlt?: string;
     noindex?: boolean;
     /** Englische Seite zeigt noch den deutschen Originalinhalt */
     untranslated?: boolean;
@@ -28,14 +32,17 @@ interface Props {
     footerCta?: boolean;
 }
 
-const { lang, alternates, title, description, ogImage, noindex = false, untranslated = false, footerCta = true } = Astro.props;
+const { lang, alternates, title, description, ogImage, ogImageAlt, noindex = false, untranslated = false, footerCta = true } = Astro.props;
 const t = useTranslations(lang);
 
 const site = Astro.site ?? new URL('https://julienbernath.ch');
 const pageTitle = title ?? t('site.title');
 const pageDescription = description ?? t('site.description');
 const canonical = new URL(alternates[lang], site).href;
-const ogImageUrl = ogImage ? new URL(ogImage, site).href : undefined;
+// Ohne eigenes Bild: Vorschaubild aus der Fotoserie EHC Kloten (1200 × 630, wie es Social Media erwartet)
+const fallbackOg = ogImage ? null : await getImage({ src: defaultOg, width: 1200, height: 630, fit: 'cover', format: 'jpg' });
+const ogImageUrl = new URL(ogImage ?? fallbackOg!.src, site).href;
+const ogAlt = ogImageAlt ?? (lang === 'de' ? 'Zwei Spieler des EHC Kloten jubeln – Fotografie von Julien Bernath' : 'Two EHC Kloten players celebrating – photography by Julien Bernath');
 const langs = Object.keys(alternates) as Lang[];
 const robotsNoindex = noindex || PREVIEW;
 ---
@@ -65,8 +72,13 @@ const robotsNoindex = noindex || PREVIEW;
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:locale" content={locales[lang].og} />
-    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
-    <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogAlt} />
+    {langs.filter((c) => c !== lang).map((c) => <meta property="og:locale:alternate" content={locales[c].og} />)}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image:alt" content={ogAlt} />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

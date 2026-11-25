@@ -1,44 +1,53 @@
 ---
-/* Kontaktformular – Markup wortgleich aus der bisherigen index.html (Zeilen 380–443);
+/* Kontaktformular – deutsches Markup wortgleich aus der bisherigen index.html (Zeilen 380–443);
    einzige Änderung: Überschriften h3 → h2 (korrekte Überschriften-Reihenfolge).
-   Die Logik (Prüfung, Entwurf, Web3Forms-Versand, Mail-Fallback) kommt unverändert aus
-   public/scripts/contact.js, der Access Key unverändert aus public/scripts/form-config.js.
-   Gestaltung folgt in Phase 3. */
+   Englisch (Phase 5): gleiche Struktur und IDs, übersetzte Beschriftungen. Die Themen-Werte
+   (value) bleiben deutsch, damit Julien die Anfragen wie bisher erhält.
+   Logik: public/scripts/contact.js (Deutsch, unverändert) bzw. contact-en.js (englische Meldungen,
+   sonst identische Logik). Access Key unverändert aus public/scripts/form-config.js. */
+import type { Lang } from '../i18n/ui';
+interface Props { lang?: Lang }
+const { lang = 'de' } = Astro.props;
+const T = {
+    de: { title: 'Neue Nachricht', name: 'Name', email: 'E-Mail', topic: 'Worum geht es?', topics: ['Video', 'Foto', 'Grafik', 'Social Media', 'Anderes'],
+          msg: 'Nachricht', consent: 'Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden.', privacy: 'Datenschutz',
+          send: 'Nachricht senden', done: 'Gesendet', doneText: 'Danke, ich melde mich so schnell wie möglich.', again: 'Neue Nachricht', copy: 'Text kopieren', script: '/scripts/contact.js?v=1' },
+    en: { title: 'New message', name: 'Name', email: 'Email', topic: 'What is it about?', topics: ['Video', 'Photo', 'Graphics', 'Social media', 'Other'],
+          msg: 'Message', consent: 'I agree that my details may be used to handle my enquiry.', privacy: 'Privacy',
+          send: 'Send message', done: 'Sent', doneText: 'Thank you, I will get back to you as soon as possible.', again: 'New message', copy: 'Copy text', script: '/scripts/contact-en.js?v=1' }
+}[lang];
+const VALUES = ['Video', 'Foto', 'Grafik', 'Social Media', 'Anderes'];
 ---
 <div class="cform-wrap" id="cform-wrap">
     <form class="cform" id="cform" novalidate autocomplete="on" aria-labelledby="cf-title">
         <div class="cf-head">
             <span class="cf-rec" aria-hidden="true"></span>
-            <h2 class="cf-title" id="cf-title">Neue Nachricht</h2>
+            <h2 class="cf-title" id="cf-title">{T.title}</h2>
             <span class="cf-count tc" id="cf-count" aria-hidden="true">0000</span>
         </div>
 
         <div class="cf-row">
             <div class="cf-field">
-                <label for="cf-name">Name</label>
+                <label for="cf-name">{T.name}</label>
                 <input type="text" id="cf-name" name="name" maxlength="80" autocomplete="name" required>
                 <p class="cf-err" id="cf-name-err" role="alert"></p>
             </div>
             <div class="cf-field">
-                <label for="cf-email">E-Mail</label>
+                <label for="cf-email">{T.email}</label>
                 <input type="email" id="cf-email" name="email" maxlength="120" autocomplete="email" inputmode="email" required>
                 <p class="cf-err" id="cf-email-err" role="alert"></p>
             </div>
         </div>
 
         <fieldset class="cf-field cf-topics">
-            <legend>Worum geht es?</legend>
+            <legend>{T.topic}</legend>
             <div class="cf-chips" id="cf-topics">
-                <label><input type="radio" name="topic" value="Video" checked><span>Video</span></label>
-                <label><input type="radio" name="topic" value="Foto"><span>Foto</span></label>
-                <label><input type="radio" name="topic" value="Grafik"><span>Grafik</span></label>
-                <label><input type="radio" name="topic" value="Social Media"><span>Social Media</span></label>
-                <label><input type="radio" name="topic" value="Anderes"><span>Anderes</span></label>
+                {VALUES.map((v, i) => <label><input type="radio" name="topic" value={v} checked={i === 0}><span>{T.topics[i]}</span></label>)}
             </div>
         </fieldset>
 
         <div class="cf-field">
-            <label for="cf-msg">Nachricht</label>
+            <label for="cf-msg">{T.msg}</label>
             <textarea id="cf-msg" name="message" rows="6" maxlength="2000" required></textarea>
             <p class="cf-err" id="cf-msg-err" role="alert"></p>
         </div>
@@ -49,29 +58,29 @@
         </div>
 
         <div class="cf-field cf-consent">
-            <label class="cf-check"><input type="checkbox" id="cf-consent" name="consent" required><span class="cf-box" aria-hidden="true"></span><span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage verwendet werden. <button type="button" class="cf-link" id="cf-privacy">Datenschutz</button></span></label>
+            <label class="cf-check"><input type="checkbox" id="cf-consent" name="consent" required><span class="cf-box" aria-hidden="true"></span><span>{T.consent} <button type="button" class="cf-link" id="cf-privacy">{T.privacy}</button></span></label>
             <p class="cf-err" id="cf-consent-err" role="alert"></p>
         </div>
 
         <div class="cf-foot">
-            <button type="submit" class="btn btn-solid" id="cf-send"><span class="cf-send-label">Nachricht senden</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg></button>
+            <button type="submit" class="btn btn-solid" id="cf-send"><span class="cf-send-label">{T.send}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7-7-1z"/></svg></button>
             <p class="cf-status" id="cf-status" role="status" aria-live="polite"></p>
         </div>
     </form>
 
     <div class="cf-done" id="cf-done" hidden tabindex="-1">
         <svg class="cf-tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg>
-        <h2 id="cf-done-title">Gesendet</h2>
-        <p id="cf-done-text">Danke, ich melde mich so schnell wie möglich.</p>
+        <h2 id="cf-done-title">{T.done}</h2>
+        <p id="cf-done-text">{T.doneText}</p>
         <div class="cf-done-actions">
-            <button type="button" class="btn btn-line" id="cf-again">Neue Nachricht</button>
-            <button type="button" class="btn btn-line" id="cf-copy" hidden>Text kopieren</button>
+            <button type="button" class="btn btn-line" id="cf-again">{T.again}</button>
+            <button type="button" class="btn btn-line" id="cf-copy" hidden>{T.copy}</button>
         </div>
     </div>
 </div>
 
 <script is:inline src="/scripts/form-config.js?v=1" defer></script>
-<script is:inline src="/scripts/contact.js?v=1" defer></script>
+<script is:inline src={T.script} defer></script>
 
 <style is:global>
     /* Funktionsnotwendig (1:1 aus der bisherigen style.css): Bot-Lockfeld verstecken, Fehlertexte */

@@ -12,7 +12,7 @@ const t = useTranslations(lang);
 <footer class="footer" data-clip={t('footer.clip')}>
     {cta && (
         <div class="credits wrap">
-            <p class="credits-status"><span class="rec-dot is-live" aria-hidden="true"></span>{t('footer.status')}</p>
+            <p class="credits-status"><span class="rec-dot is-live" aria-hidden="true"></span>{status[lang].line}</p>
             <a class="credits-mail" href={`mailto:${person.email}`}>{person.email}</a>
             <p class="credits-links">
                 <a class="btn" href={path('contact', lang)}>{t('footer.write')}</a>
@@ -21,7 +21,7 @@ const t = useTranslations(lang);
         </div>
     )}
     <div class="legal wrap">
-        <span>© {new Date().getFullYear()} {person.name} · {status.qualification}</span>
+        <span>© {new Date().getFullYear()} {person.name} · {status[lang].qualification}</span>
         <a id="privacy-open" href={path('privacy', lang)}>{t('footer.privacy')}</a>
         <PlayModeToggle lang={lang} />
         <a href="#main" class="rewind" data-rewind>{t('footer.rewind')}</a>

@@ -6,6 +6,7 @@ import Base from '../../layouts/Base.astro';
 import { about, career, playlist, portraitAlts, portraits, slate } from '../../data/about';
 import { ai, craft, software } from '../../data/skills';
 import { shotlist } from '../../data/shotlist';
+import { meta } from '../../data/site';
 import { alternates, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
 
@@ -13,23 +14,24 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 const tiers = [
-    { title: t('about.skillsMain'), list: software.main },
-    { title: t('about.skillsSolid'), list: software.solid },
-    { title: t('about.skillsBasic'), list: software.basic }
+    { title: t('about.skillsMain'), list: software[lang].main },
+    { title: t('about.skillsSolid'), list: software[lang].solid },
+    { title: t('about.skillsBasic'), list: software[lang].basic }
 ];
+const a = about[lang], sl = shotlist, pl = playlist[lang];
 ---
-<Base lang={lang} alternates={alternates('about')} title={`${about.title} | Julien Bernath`} untranslated={lang !== 'de'}>
-    <section class="wrap intro" data-clip={about.title}>
+<Base lang={lang} alternates={alternates('about')} title={meta[lang].about.title} description={meta[lang].about.description}>
+    <section class="wrap intro" data-clip={a.title}>
         <div class="intro-text">
-            <h1 class="h1">{about.title}</h1>
-            <p class="lede intro-lead">{about.lead}</p>
-            <div class="prose intro-body">{about.paragraphs.map((p) => <p>{p}</p>)}</div>
+            <h1 class="h1">{a.title}</h1>
+            <p class="lede intro-lead">{a.lead}</p>
+            <div class="prose intro-body">{a.paragraphs.map((p) => <p>{p}</p>)}</div>
         </div>
 
         <div class="takes">
             <button type="button" class="portrait" data-take aria-label={t('about.take')}>
                 {portraits.map((src, i) => (
-                    <Image src={src} alt={portraitAlts[i]} width={900} widths={[450, 900]} sizes="(max-width: 860px) 90vw, 36vw"
+                    <Image src={src} alt={portraitAlts[lang][i]} width={900} widths={[450, 900]} sizes="(max-width: 860px) 90vw, 36vw"
                            loading={i === 0 ? 'eager' : 'lazy'} fetchpriority={i === 0 ? 'high' : 'low'} hidden={i !== 0} class="take-img" data-take-img />
                 ))}
             </button>
@@ -37,7 +39,7 @@ const tiers = [
             <div class="slate" data-slate>
                 <div class="slate-sticks" aria-hidden="true"></div>
                 <dl class="slate-grid" aria-label={t('about.slate')}>
-                    {slate.map((c) => <div class:list={['cell', { wide: 'wide' in c && c.wide }]}><dt>{c.label}</dt><dd>{c.value}</dd></div>)}
+                    {slate[lang].map((c) => <div class:list={['cell', { wide: 'wide' in c && c.wide }]}><dt>{c.label}</dt><dd>{c.value}</dd></div>)}
                 </dl>
             </div>
         </div>
@@ -46,7 +48,7 @@ const tiers = [
     <section class="section wrap" data-clip={t('about.career')} aria-labelledby="career-title">
         <h2 id="career-title" class="h2 section-head">{t('about.career')}</h2>
         <ol class="career">
-            {career.map((c) => (
+            {career[lang].map((c) => (
                 <li>
                     <span class="tc career-years">{c.years}</span>
                     <div>
@@ -73,18 +75,18 @@ const tiers = [
         <div class="tiers tiers-extra">
             <div class="tier">
                 <h3 class="tier-title">{t('about.skillsAi')}</h3>
-                <ul><li><strong>{ai.name}</strong><span class="muted">{ai.tags}</span></li></ul>
+                <ul><li><strong>{ai[lang].name}</strong><span class="muted">{ai[lang].tags}</span></li></ul>
             </div>
             <div class="tier tier-wide">
                 <h3 class="tier-title">{t('about.skillsCraft')}</h3>
-                <ul class="craft">{craft.map((s) => <li><strong>{s.name}</strong><span class="muted">{s.tags}</span></li>)}</ul>
+                <ul class="craft">{craft[lang].map((s) => <li><strong>{s.name}</strong><span class="muted">{s.tags}</span></li>)}</ul>
             </div>
         </div>
     </section>
 
-    <section class="section wrap extras" aria-label={`${shotlist.title}, ${playlist.title}`}>
+    <section class="section wrap extras" aria-label={`${sl.title[lang]}, ${pl.title}`}>
         <details class="drawer">
-            <summary><span class="h3">{shotlist.title}</span><span class="muted">{shotlist.hint}</span></summary>
+            <summary><span class="h3">{sl.title[lang]}</span><span class="muted">{sl.hint[lang]}</span></summary>
             <div class="shot-bar">
                 <p class="muted drawer-note">{t('about.shotlistNote')}</p>
                 <p class="shot-actions">
@@ -93,16 +95,16 @@ const tiers = [
                 </p>
             </div>
             <div class="shotlist" data-shotlist>
-                {shotlist.groups.map((g) => (
-                    <div data-group={g.group}>
-                        <h3 class="shot-group">{g.group}</h3>
-                        <ul>{g.items.map((it) => <li><label><input type="checkbox" checked={it.done} data-key={it.text} data-default={it.done ? '1' : '0'} /><span>{it.text}</span></label></li>)}</ul>
+                {sl.groups.map((g) => (
+                    <div data-group={g.group[lang]}>
+                        <h3 class="shot-group">{g.group[lang]}</h3>
+                        <ul>{g.items.map((it) => <li><label><input type="checkbox" checked={it.done} data-key={it.de} data-default={it.done ? '1' : '0'} /><span>{it[lang]}</span></label></li>)}</ul>
                     </div>
                 ))}
             </div>
         </details>
         <details class="drawer" data-playlist>
-            <summary><span class="h3">{playlist.title}</span><span class="muted">{playlist.hint}</span></summary>
+            <summary><span class="h3">{pl.title}</span><span class="muted">{pl.hint}</span></summary>
             <div class="playlist" data-embed-src={playlist.embed}>
                 <button type="button" class="btn" data-load>{t('about.playlistLoad')}</button>
                 <p class="muted">{t('about.playlistNote')}</p>

@@ -1,5 +1,6 @@
 ---
-# Übernommen aus script.js (kloten_tiktok). Texte wortgleich, ausser wo unten vermerkt.
+# Übernommen aus script.js (kloten_tiktok). Ursprüngliche Texte und alle Änderungen: docs/phase-5-texte.md.
+# Phase 5: Texte sprachlich überarbeitet (siehe docs/phase-5-texte.md), Alt-Text-Vorschläge ergänzt.
 legacyId: "kloten_tiktok"
 code: "JB-PRJ-02"
 order: 2
@@ -18,4 +19,4 @@ media:
   - { type: tiktok, id: "7332142480294464801", label: "TIKTOK_VIDEO.URL" }
 ---
 
-Energetisches Kurzvideo für den offiziellen TikTok-Kanal des EHC Kloten. Das Video kombiniert rasante Schnitte mit passenden Sound-Effekten, um die Interaktionsrate unter den Eishockey-Fans zu maximieren. Speziell optimiert für mobile Displays und virale Relevanz.
+Kurzvideo für den offiziellen TikTok-Kanal des EHC Kloten. Schnelle Schnitte und passende Soundeffekte sorgen für Tempo; das Video ist auf das Hochformat und das Publikum auf TikTok ausgelegt.
