@@ -188,7 +188,7 @@
             year: '2024 - 2026',
             role: 'Social Media Designer',
             deliverables: 'Photoshop Templates, Spieltagsankündigungen, Resultatgrafiken',
-            description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Live-Ergebnis-Posts der UHC Bulldogs Ehrendingen auf Instagram. Entwickelt in Figma für einfache, mobile Pflege durch den Verein.',
+            description: 'Konzeption und Gestaltung eines dynamischen Social-Media-Grafiksystems für die Matchday-Ankündigungen und Live-Ergebnis-Posts der UHC Bulldogs Ehrendingen auf Instagram. Gestaltet in Photoshop und Illustrator.',
             media: [
                 { type: 'youtube', id: 'KXqK217Yzi4', label: 'REEL_01.URL' },
                 { type: 'youtube', id: 'ByaoJRIcHjs', label: 'REEL_02.URL' },
