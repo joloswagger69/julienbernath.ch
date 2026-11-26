@@ -193,7 +193,7 @@
                 { type: 'youtube', id: 'KXqK217Yzi4', label: 'REEL_01.URL' },
                 { type: 'youtube', id: 'ByaoJRIcHjs', label: 'REEL_02.URL' },
                 { type: 'youtube', id: 'TEzgrs_WVZw', label: 'REEL_03.URL', portrait: true },
-                ...gallery('assets/images/uhc-grafiken/uhc-grafiken-', 'webp webp png png png png png png webp webp png webp', 0, 'GRAFIK-')
+                ...gallery('assets/images/uhc-grafiken/uhc-grafiken-', 'webp webp png png png png png png webp webp png webp webp webp webp webp webp webp', 0, 'GRAFIK-')
             ]
         },
         sonstiges: {
